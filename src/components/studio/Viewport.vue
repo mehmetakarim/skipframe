@@ -195,6 +195,7 @@ function clamp(v: number, lo: number, hi: number): number {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   background: var(--bg-base);
 }
 
@@ -227,11 +228,16 @@ function clamp(v: number, lo: number, hi: number): number {
   padding: var(--space-6);
 }
 
+/*
+ * A box of the export's aspect ratio, fitted inside whatever space is left. The height is the
+ * driver and `max-width` pulls it back when the frame is wider than the column — `aspect-ratio`
+ * carries the clamp across to the other axis, so the box shrinks rather than distorting.
+ */
 .frame {
   position: relative;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
-  height: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;

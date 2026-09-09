@@ -54,10 +54,22 @@ import { exportState } from '../stores/exportJob';
   grid-template-columns: var(--rail-left-width) 1fr var(--rail-right-width);
 }
 
+/*
+ * Grid and flex items default to min-height:auto, which lets them push past their track. The
+ * viewport is sized from an aspect ratio, so without this the box takes its width from the
+ * column, derives a taller height from the ratio, grows the column to fit, and repeats — the
+ * timeline and the export bar end up off the bottom of the window.
+ */
+.columns > * {
+  min-width: 0;
+  min-height: 0;
+}
+
 .centre {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 /* The viewport takes the height the timeline does not need. */
