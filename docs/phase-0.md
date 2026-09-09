@@ -64,11 +64,12 @@ hash, parse, encode, write cache, hand 22.5 MB across IPC, wrap in TypedArrays:
 
 | Build                                       |  Round trip |
 | ------------------------------------------- | ----------: |
+| `tauri dev --release`                       |  **247 ms** |
 | `tauri dev` (debug shell, optimised parser) | 843–1070 ms |
-| `tauri dev --release`                       |   _pending_ |
 
-The parser is compiled at `opt-level = 3` even in dev builds, so the debug figure is dominated by
-the unoptimised shell and IPC layer, not by parsing.
+The parser is compiled at `opt-level = 3` even in dev builds, so the gap between the two rows is
+the unoptimised shell and IPC layer, not parsing. 247 ms is what a user actually waits for on a
+cold open of a 750 000-path file, cache miss included.
 
 ---
 
@@ -80,11 +81,11 @@ the app's WebView2.
 
 | Metric                                       | Value                                         |
 | -------------------------------------------- | --------------------------------------------- |
-| Frame interval                               | p50 **4.20 ms**, p95 4.30 ms, max 17.4 ms     |
+| Frame interval                               | p50 **4.20 ms**, p95 4.30 ms, max 17.0 ms     |
 | Frames within a 60 Hz budget                 | 100 %                                         |
 | Mean rate                                    | ~238 fps                                      |
 | `renderer.render()` CPU cost                 | p50 0.10 ms, p95 0.20 ms                      |
-| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 0.90 ms, p95 1.86 ms                      |
+| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 1.04 ms, p95 2.03 ms                      |
 | Draw calls per frame                         | 3 (print, bed grid, bed outline)              |
 | Context                                      | WebGL2, ANGLE / D3D11, NVIDIA RTX 5060 Laptop |
 
@@ -118,14 +119,31 @@ and muxed with `mp4-muxer`.
 | `avc1.4d0028` (Main 4.0), `prefer-hardware`   | supported |
 | `avc1.42002a` (Baseline 4.0), `no-preference` | supported |
 
-| Metric      | Value                                       |
-| ----------- | ------------------------------------------- |
-| Encode rate | **235–237 fps** (render + capture + encode) |
-| 180 frames  | 0.76 s                                      |
-| Muxing      | 6–9 ms total                                |
-| Output      | 4.77 MB, 2 keyframes, playable MP4          |
+| Metric      | Value                                   |
+| ----------- | --------------------------------------- |
+| Encode rate | **262 fps** (render + capture + encode) |
+| 180 frames  | 0.69 s                                  |
+| Muxing      | 7 ms total                              |
+| Output      | 4.77 MB, 2 keyframes                    |
 
-A 30-second Reel is 1800 frames, so this is roughly **8 seconds of export for 30 seconds of
+The output was written to disk and read back with `ffprobe`, so "it produced bytes" is not
+standing in for "it produced a video":
+
+```
+codec_name=h264   profile=High   level=42   pix_fmt=yuv420p
+width=1080        height=1920    r_frame_rate=60/1
+nb_frames=180     duration=2.983 bit_rate=12799845
+```
+
+Decoded frames 60 and 170 show the print at two different heights, with the printed material in
+grey and the layer being laid down in gold — so the frame-index animation, the draw range and the
+capture are all doing what they claim.
+
+| frame 60                          | frame 170                          |
+| --------------------------------- | ---------------------------------- |
+| ![frame 60](phase0-frame-060.png) | ![frame 170](phase0-frame-170.png) |
+
+A 30-second Reel is 1800 frames, so this is roughly **7 seconds of export for 30 seconds of
 video**, with the renderer in the loop.
 
 **Verdict on Windows: pass.**
