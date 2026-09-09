@@ -1,0 +1,6 @@
+# Keep line endings identical on every platform so rustfmt and Prettier agree in CI.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.icns binary
