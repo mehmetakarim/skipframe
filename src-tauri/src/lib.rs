@@ -20,6 +20,7 @@ pub fn run() {
             commands::file_cache_key,
             commands::cache_stats,
             commands::clear_cache,
+            commands::bench_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running SkipFrame");

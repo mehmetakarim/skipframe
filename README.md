@@ -105,6 +105,16 @@ cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
+Phase-0 measurements — parse speed, render speed, WebCodecs encoding — and how to re-take them
+are in [docs/phase-0.md](docs/phase-0.md). The harness runs inside the app:
+
+```bash
+VITE_BENCH=1 VITE_BENCH_FILE=/abs/path/to/file.gcode npx tauri dev --release
+```
+
+or in a plain browser tab at `http://localhost:1420/#bench`, where it falls back to a synthetic
+model and needs no fixture. That second form is how the macOS WebCodecs answer gets taken.
+
 The parser can be exercised without the app:
 
 ```bash
@@ -112,6 +122,9 @@ cargo run --release -p skipframe-gcode --bin sf-gcode -- parse path/to/file.gcod
 cargo run --release -p skipframe-gcode --bin sf-gcode -- plates path/to/file.gcode.3mf
 cargo run --release -p skipframe-gcode --bin sf-gcode -- synth big.gcode --layers 570 --per-layer 1316
 ```
+
+`synth` writes a benchmark file rather than shipping a hundred megabytes of fixtures in the
+repository; `--dialect`, `--feature-every` and `--retract-every` shape what it produces.
 
 ---
 

@@ -155,10 +155,27 @@ fn cmd_synth(args: &[String]) -> Res {
         .transpose()?
         .unwrap_or(1316);
     let dialect = flag(args, "--dialect").unwrap_or_else(|| "prusa".into());
+    // Real slicer output changes feature far more often than four times a layer. Lowering this
+    // multiplies the number of comment lines the parser has to classify.
+    let feature_every: u32 = flag(args, "--feature-every")
+        .map(|v| v.parse())
+        .transpose()?
+        .unwrap_or(per_layer.max(4) / 4);
+    let retract_every: u32 = flag(args, "--retract-every")
+        .map(|v| v.parse())
+        .transpose()?
+        .unwrap_or(0);
 
     let file = std::fs::File::create(&out)?;
     let mut w = std::io::BufWriter::with_capacity(1 << 20, file);
-    write_synth(&mut w, &dialect, layers, per_layer)?;
+    write_synth(
+        &mut w,
+        &dialect,
+        layers,
+        per_layer,
+        feature_every.max(1),
+        retract_every,
+    )?;
     w.flush()?;
 
     let size = std::fs::metadata(&out)?.len();
@@ -178,6 +195,8 @@ fn write_synth(
     dialect: &str,
     layers: u32,
     per_layer: u32,
+    feature_every: u32,
+    retract_every: u32,
 ) -> std::io::Result<()> {
     let (banner, layer_marker, type_marker, emits_width) = match dialect {
         "cura" => (
@@ -239,15 +258,20 @@ fn write_synth(
         }
         // A travel to the start of the layer, then a spiral of extrusions.
         writeln!(w, "G1 X100.000 Y100.000 Z{z:.3} F9000")?;
-        let mut feature_idx = usize::MAX;
         for i in 0..per_layer {
-            let f = (i as usize * 4 / per_layer.max(1) as usize).min(3);
-            if f != feature_idx {
-                feature_idx = f;
+            if i % feature_every == 0 {
+                let f = ((i / feature_every) % 4) as usize;
                 writeln!(w, ";{type_marker}:{}", features[f])?;
                 if emits_width {
                     writeln!(w, ";WIDTH:0.45")?;
                 }
+            }
+            if retract_every > 0 && i % retract_every == 0 && i > 0 {
+                // A retract / travel / prime triplet: three lines that must produce at most one
+                // segment, which is the shape most likely to hide an off-by-one in `emit`.
+                writeln!(w, "G1 E-0.8 F2400")?;
+                writeln!(w, "G1 X100.000 Y100.000 F9000")?;
+                writeln!(w, "G1 E0.8 F2400")?;
             }
             let a = i as f32 * 0.05 + layer as f32 * 0.01;
             let r = 20.0 + (i as f32 * 0.01) % 40.0;

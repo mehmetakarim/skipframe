@@ -77,3 +77,13 @@ pub fn cache_stats(app: AppHandle) -> Result<cache::CacheStats, String> {
 pub fn clear_cache(app: AppHandle) -> Result<(), String> {
     cache::clear(&app)
 }
+
+/// Print a line from the phase-0 harness so it lands in the terminal that started `tauri dev`.
+///
+/// It prints unconditionally, because the numbers that matter come from a release build. In a
+/// bundled app there is no console attached on Windows and nothing reads stdout on macOS, so
+/// this is inert unless someone launched the binary from a terminal.
+#[tauri::command]
+pub fn bench_log(line: String) {
+    println!("[bench] {line}");
+}
