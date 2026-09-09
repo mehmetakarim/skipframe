@@ -66,8 +66,60 @@ const FRAGMENT_SHADER = /* glsl */ `
   }
 `;
 
+/**
+ * The background, drawn as a full-screen triangle before anything else.
+ *
+ * It has to live in the canvas rather than in CSS, because the exporter captures the canvas and
+ * a page background would not be in the video.
+ */
+const BACKGROUND_VERTEX = /* glsl */ `
+  out vec2 vUv;
+
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`;
+
+const BACKGROUND_FRAGMENT = /* glsl */ `
+  in vec2 vUv;
+
+  uniform vec3 uTop;
+  uniform vec3 uBottom;
+  uniform float uVignette;
+
+  out vec4 fragColor;
+
+  void main() {
+    vec3 colour = mix(uBottom, uTop, vUv.y);
+
+    if (uVignette > 0.001) {
+      vec2 d = vUv - 0.5;
+      float falloff = smoothstep(0.75, 0.15, length(d));
+      colour *= mix(1.0, falloff, uVignette);
+    }
+
+    fragColor = vec4(colour, 1.0);
+  }
+`;
+
 /** A little air around the print so it never touches the frame edge. */
 const FRAME_MARGIN = 1.12;
+
+export interface PlateOptions {
+  style: 'grid' | 'solid' | 'none';
+  /** Grid spacing in millimetres. */
+  spacing: number;
+  showOutline: boolean;
+  showOrigin: boolean;
+}
+
+export interface BackgroundOptions {
+  style: 'solid' | 'gradient';
+  top: string;
+  bottom: string;
+  vignette: number;
+}
 
 export interface PrintSceneOptions {
   /** Device pixel ratio cap. Export overrides this to 1 and drives the size itself. */
@@ -90,13 +142,25 @@ export class PrintScene {
   private layer = 0;
   private maxPixelRatio: number;
 
-  /** Orbit state, kept here so export can set an exact camera without a controls dependency. */
-  private orbit = { azimuth: Math.PI * 0.25, elevation: Math.PI * 0.22, distance: 400 };
+  /** What the studio last told us to look at. The renderer holds no other view state. */
+  private view = { azimuth: Math.PI * 0.25, elevation: 0.23, zoom: 1 };
   private target = new THREE.Vector3();
   /** Radius of the sphere the framing has to keep on screen. Zero until a file is loaded. */
   private frameRadius = 0;
-  /** True while the camera is auto-framed; a manual zoom hands control to the user. */
-  private autoFrame = true;
+
+  private plateOptions: PlateOptions = {
+    style: 'grid',
+    spacing: 10,
+    showOutline: true,
+    showOrigin: false,
+  };
+  private bedSize: [number, number] | null = null;
+  private bedOrigin: [number, number] = [0, 0];
+
+  /** Background is its own scene so it can be drawn behind everything without a depth trick. */
+  private readonly backgroundScene = new THREE.Scene();
+  private readonly backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  private readonly backgroundMaterial: THREE.ShaderMaterial;
 
   constructor(canvas: HTMLCanvasElement, options: PrintSceneOptions = {}) {
     this.maxPixelRatio = options.maxPixelRatio ?? 2;
@@ -127,6 +191,53 @@ export class PrintScene {
     this.paletteTexture.magFilter = THREE.NearestFilter;
     this.paletteTexture.minFilter = THREE.NearestFilter;
     this.paletteTexture.needsUpdate = true;
+
+    this.backgroundMaterial = new THREE.ShaderMaterial({
+      glslVersion: THREE.GLSL3,
+      vertexShader: BACKGROUND_VERTEX,
+      fragmentShader: BACKGROUND_FRAGMENT,
+      depthTest: false,
+      depthWrite: false,
+      uniforms: {
+        uTop: { value: new THREE.Color(0x0b0b0b) },
+        uBottom: { value: new THREE.Color(0x0b0b0b) },
+        uVignette: { value: 0 },
+      },
+    });
+    this.backgroundScene.add(
+      new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.backgroundMaterial),
+    );
+  }
+
+  // -- 04 background ----------------------------------------------------------------------
+
+  setBackground(options: BackgroundOptions): void {
+    const u = this.backgroundMaterial.uniforms;
+    (u.uTop!.value as THREE.Color).set(options.top);
+    (u.uBottom!.value as THREE.Color).set(
+      options.style === 'gradient' ? options.bottom : options.top,
+    );
+    u.uVignette!.value = Math.min(1, Math.max(0, options.vignette));
+  }
+
+  // -- 02 filament ------------------------------------------------------------------------
+
+  /**
+   * Paint every extrusion in the filament's colour, leaving travels in their own grey.
+   *
+   * Feature colouring and filament colour are the same mechanism — a 16-entry palette texture —
+   * so switching between them costs a 64-byte upload rather than touching the vertex buffer.
+   */
+  setFilamentColour(hex: string): void {
+    const colour = new THREE.Color(hex);
+    const rgb: [number, number, number] = [
+      Math.round(colour.r * 255),
+      Math.round(colour.g * 255),
+      Math.round(colour.b * 255),
+    ];
+    const palette: Palette = { ...MONOCHROME };
+    for (let feature = 1; feature < PALETTE_SIZE; feature++) palette[feature] = rgb;
+    this.setPalette(palette);
   }
 
   // -- data -----------------------------------------------------------------------------
@@ -166,7 +277,7 @@ export class PrintScene {
     this.lines.frustumCulled = false;
     this.root.add(this.lines);
 
-    this.buildBed(ir);
+    this.buildBed(ir.meta.bedSize ?? [220, 220], ir.meta.bedOrigin ?? [0, 0]);
     this.frameToPrint(ir);
     this.setLayer(ir.layerCount - 1);
   }
@@ -192,13 +303,23 @@ export class PrintScene {
 
   // -- animation ------------------------------------------------------------------------
 
-  /** Show layers `0 .. layer` inclusive. This is the only thing the animation ever changes. */
+  /**
+   * Show layers `0 .. layer` inclusive, or nothing at all for -1.
+   *
+   * This is the only thing the animation ever changes. -1 is what a hold on the empty plate at
+   * the start of a clip looks like.
+   */
   setLayer(layer: number): void {
     const ir = this.ir;
     if (!ir || !this.geometry || !this.material) return;
 
-    const clamped = Math.max(0, Math.min(Math.floor(layer), ir.layerCount - 1));
+    const clamped = Math.max(-1, Math.min(Math.floor(layer), ir.layerCount - 1));
     this.layer = clamped;
+
+    if (clamped < 0) {
+      this.geometry.setDrawRange(0, 0);
+      return;
+    }
 
     const start = (ir.layerStart[clamped] ?? 0) * 2;
     const end = (ir.layerStart[clamped + 1] ?? ir.segmentCount) * 2;
@@ -214,33 +335,32 @@ export class PrintScene {
 
   // -- camera ---------------------------------------------------------------------------
 
-  orbitBy(deltaAzimuth: number, deltaElevation: number): void {
-    this.orbit.azimuth += deltaAzimuth;
-    this.orbit.elevation = clamp(this.orbit.elevation + deltaElevation, -1.4, 1.4);
+  /**
+   * Place the camera.
+   *
+   * `zoom` multiplies the automatic fit rather than being a distance in millimetres, so the same
+   * view survives a change of print, of aspect ratio or of field of view. The studio's camera
+   * and motion sections are the only source of these values; the renderer holds no view state
+   * of its own beyond what it was last told.
+   */
+  setView(azimuth: number, elevation: number, zoom = 1): void {
+    this.view = {
+      azimuth,
+      elevation: clamp(elevation, -1.4, 1.4),
+      zoom: clamp(zoom, 0.2, 20),
+    };
     this.applyCamera();
   }
 
-  zoomBy(factor: number): void {
-    this.autoFrame = false;
-    this.orbit.distance = clamp(this.orbit.distance * factor, 20, 4000);
-    this.applyCamera();
-  }
-
-  /** Re-frame the print, undoing any manual zoom. */
-  frameAll(): void {
-    this.autoFrame = true;
-    this.fitCamera();
-  }
-
-  /** Exact camera placement, for deterministic export and for saved viewpoints. */
-  setCamera(azimuth: number, elevation: number, distance: number): void {
-    this.autoFrame = false;
-    this.orbit = { azimuth, elevation, distance };
+  setFov(degrees: number): void {
+    this.camera.fov = clamp(degrees, 10, 90);
+    this.camera.updateProjectionMatrix();
     this.applyCamera();
   }
 
   private applyCamera(): void {
-    const { azimuth, elevation, distance } = this.orbit;
+    const { azimuth, elevation, zoom } = this.view;
+    const distance = this.fitDistance() / zoom;
     const cosE = Math.cos(elevation);
     this.camera.position.set(
       this.target.x + distance * cosE * Math.sin(azimuth),
@@ -269,51 +389,100 @@ export class PrintScene {
     const dy = Math.max(b[4] - b[1], 1);
     this.frameRadius = 0.5 * Math.sqrt(dx * dx + dy * dy + height * height);
 
-    this.autoFrame = true;
-    this.fitCamera();
+    this.applyCamera();
   }
 
   /**
-   * Distance at which the print's bounding sphere fits, for the canvas as it is right now.
+   * Distance at which the print's bounding sphere fills the frame.
    *
    * A 9:16 canvas is the binding case: its horizontal field of view is far narrower than the
-   * vertical one Three.js is configured with, so framing on the vertical alone crops the print.
+   * vertical one, so fitting on the vertical alone crops the print. Recomputed on every use
+   * rather than cached, because it depends on the aspect ratio and the field of view, both of
+   * which change from under it.
    */
-  private fitCamera(): void {
-    if (this.frameRadius <= 0) return;
+  private fitDistance(): number {
+    if (this.frameRadius <= 0) return 400;
     const vFov = (this.camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
     const tightest = Math.min(vFov, hFov);
-    this.orbit.distance = (this.frameRadius / Math.sin(tightest / 2)) * FRAME_MARGIN;
-    this.applyCamera();
+    return (this.frameRadius / Math.sin(tightest / 2)) * FRAME_MARGIN;
   }
 
   // -- bed ------------------------------------------------------------------------------
 
-  private buildBed(ir: Ir): void {
+  /** 03 Build plate. Rebuilt rather than toggled, because it is a handful of lines. */
+  setPlate(options: PlateOptions): void {
+    this.plateOptions = { ...this.plateOptions, ...options };
+    if (this.bedSize) this.buildBed(this.bedSize, this.bedOrigin);
+  }
+
+  private buildBed(size: [number, number], origin: [number, number]): void {
     this.bed.clear();
-    const [w, d] = ir.meta.bedSize ?? [220, 220];
+    this.bedSize = size;
+    this.bedOrigin = origin;
+    const [w, d] = size;
+    const { style, spacing, showOutline, showOrigin } = this.plateOptions;
 
-    const grid = new THREE.GridHelper(Math.max(w, d), Math.round(Math.max(w, d) / 10));
-    const gridMaterial = grid.material as THREE.LineBasicMaterial;
-    gridMaterial.color = new THREE.Color(0x2a2a2a);
-    gridMaterial.transparent = true;
-    gridMaterial.opacity = 0.6;
-    this.bed.add(grid);
+    if (style === 'grid') {
+      const span = Math.max(w, d);
+      const divisions = Math.max(1, Math.round(span / Math.max(1, spacing)));
+      const grid = new THREE.GridHelper(span, divisions, 0x2a2a2a, 0x2a2a2a);
+      const gridMaterial = grid.material as THREE.LineBasicMaterial;
+      gridMaterial.transparent = true;
+      gridMaterial.opacity = 0.6;
+      this.bed.add(grid);
+    } else if (style === 'solid') {
+      const plate = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, d),
+        new THREE.MeshBasicMaterial({ color: 0x171717 }),
+      );
+      plate.rotation.x = -Math.PI / 2;
+      // Just below zero so the first layer is never in a depth fight with the plate.
+      plate.position.y = -0.05;
+      this.bed.add(plate);
+    }
 
-    const outline = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.PlaneGeometry(w, d)),
-      new THREE.LineBasicMaterial({ color: 0x3f4441 }),
-    );
-    outline.rotation.x = -Math.PI / 2;
-    this.bed.add(outline);
+    if (showOutline && style !== 'none') {
+      const outline = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.PlaneGeometry(w, d)),
+        new THREE.LineBasicMaterial({ color: 0x3f4441 }),
+      );
+      outline.rotation.x = -Math.PI / 2;
+      this.bed.add(outline);
+    }
+
+    if (showOrigin) {
+      // A cross at the machine's own 0,0, which is not the middle of the plate on every printer.
+      const [ox, oy] = origin;
+      const x = ox + w / 2;
+      const z = -(oy + d / 2);
+      const arm = Math.min(w, d) * 0.06;
+      const points = new Float32Array([
+        -arm + x,
+        0,
+        z,
+        arm + x,
+        0,
+        z,
+        x,
+        0,
+        -arm + z,
+        x,
+        0,
+        arm + z,
+      ]);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+      this.bed.add(
+        new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: 0x7c817b })),
+      );
+    }
 
     // The bed is drawn centred on the world origin, so the print is shifted by wherever the
     // bed's own origin sits. Most printers put 0,0 at the front-left corner, but a
     // centre-origin machine reports bed_origin = -w/2,-d/2 and would otherwise print into a
     // corner of its own plate.
-    const [ox, oy] = ir.meta.bedOrigin ?? [0, 0];
-    this.root.position.set(-(ox + w / 2), 0, oy + d / 2);
+    this.root.position.set(-(origin[0] + w / 2), 0, origin[1] + d / 2);
   }
 
   // -- frame ----------------------------------------------------------------------------
@@ -324,11 +493,15 @@ export class PrintScene {
     this.camera.aspect = width / Math.max(height, 1);
     this.camera.updateProjectionMatrix();
     // Switching from 16:9 to 9:16 changes which field of view is the binding one, so the
-    // framing distance has to be recomputed rather than carried over.
-    if (this.autoFrame) this.fitCamera();
+    // camera has to be placed again rather than left where it was.
+    this.applyCamera();
   }
 
   render(): void {
+    // Background first, into a cleared buffer; then the scene on top without clearing again.
+    this.renderer.autoClear = false;
+    this.renderer.clear();
+    this.renderer.render(this.backgroundScene, this.backgroundCamera);
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -346,6 +519,7 @@ export class PrintScene {
   dispose(): void {
     this.disposeGeometry();
     this.paletteTexture.dispose();
+    this.backgroundMaterial.dispose();
     this.renderer.dispose();
   }
 }

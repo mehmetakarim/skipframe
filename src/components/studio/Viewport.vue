@@ -11,9 +11,10 @@ import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue
 import SfTabs from '../ui/SfTabs.vue';
 import { PrintScene } from '../../render/PrintScene';
 import { setActiveScene } from '../../render/activeScene';
+import { applySceneTo, applyViewTo } from '../../render/applyScene';
 import { ir } from '../../stores/project';
 import { exportState, running as exporting } from '../../stores/exportJob';
-import { ASPECTS, currentLayer, scene } from '../../stores/scene';
+import { ASPECTS, currentLayer, currentView, scene } from '../../stores/scene';
 import { integer } from '../../lib/format';
 
 const canvasRef = useTemplateRef<HTMLCanvasElement>('canvas');
@@ -28,13 +29,26 @@ const aspectRatio = computed(() => {
   return `${w} / ${h}`;
 });
 
+/** Dragging writes to the store, which is why the camera section's numbers move as you drag. */
+function applyScene() {
+  if (printScene) applySceneTo(printScene);
+}
+
+function applyView() {
+  if (printScene) applyViewTo(printScene);
+}
+
+function draw() {
+  printScene?.render();
+}
+
 function resize() {
   const frame = frameRef.value;
   if (!frame || !printScene) return;
   const { width, height } = frame.getBoundingClientRect();
   if (width < 1 || height < 1) return;
   printScene.resize(width, height);
-  printScene.render();
+  draw();
 }
 
 onMounted(() => {
@@ -47,12 +61,8 @@ onMounted(() => {
   observer = new ResizeObserver(resize);
   if (frameRef.value) observer.observe(frameRef.value);
 
-  if (ir.value) {
-    printScene.setIr(ir.value);
-    printScene.setShowTravel(!scene.hideTravel);
-    // setIr leaves the whole print visible; the playhead decides what is actually shown.
-    printScene.setLayer(currentLayer.value);
-  }
+  if (ir.value) printScene.setIr(ir.value);
+  applyScene();
   resize();
 });
 
@@ -66,36 +76,56 @@ onBeforeUnmount(() => {
 watch(ir, (next) => {
   if (!printScene || !next) return;
   printScene.setIr(next);
-  printScene.setShowTravel(!scene.hideTravel);
-  printScene.setLayer(currentLayer.value);
+  applyScene();
   resize();
 });
 
+// The frame index moves far more often than anything else, so it gets its own narrow watcher.
 watch(currentLayer, (layer) => {
   printScene?.setLayer(layer);
-  printScene?.render();
+  draw();
+});
+
+watch(currentView, () => {
+  applyView();
+  draw();
 });
 
 watch(
-  () => scene.hideTravel,
-  (hidden) => {
-    printScene?.setShowTravel(!hidden);
-    printScene?.render();
+  () => [
+    scene.plate,
+    scene.background,
+    scene.filamentIndex,
+    scene.filaments,
+    scene.hideTravel,
+    scene.highlightCurrentLayer,
+    scene.camera.fovDeg,
+  ],
+  () => {
+    applyScene();
+    draw();
   },
+  { deep: true },
 );
 
 watch(() => scene.aspect, resize);
 
-// Orbit and zoom, so the viewport is inspectable while the scene controls are still being built.
+// Dragging and the wheel write to the store, not to the renderer, so the camera section and the
+// viewport can never disagree about where the camera is.
 function onPointerDown(e: PointerEvent) {
   dragging = { x: e.clientX, y: e.clientY };
   (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 }
 
 function onPointerMove(e: PointerEvent) {
-  if (!dragging || !printScene) return;
-  printScene.orbitBy((e.clientX - dragging.x) * -0.008, (e.clientY - dragging.y) * 0.008);
-  printScene.render();
+  if (!dragging) return;
+  const degrees = 0.45;
+  scene.camera.azimuthDeg = wrap(scene.camera.azimuthDeg - (e.clientX - dragging.x) * degrees);
+  scene.camera.elevationDeg = clamp(
+    scene.camera.elevationDeg + (e.clientY - dragging.y) * degrees,
+    -80,
+    80,
+  );
   dragging = { x: e.clientX, y: e.clientY };
 }
 
@@ -106,8 +136,15 @@ function onPointerUp(e: PointerEvent) {
 
 function onWheel(e: WheelEvent) {
   e.preventDefault();
-  printScene?.zoomBy(e.deltaY > 0 ? 1.08 : 1 / 1.08);
-  printScene?.render();
+  scene.camera.zoom = clamp(scene.camera.zoom * (e.deltaY > 0 ? 1 / 1.08 : 1.08), 0.3, 8);
+}
+
+function wrap(deg: number): number {
+  return ((deg % 360) + 360) % 360;
+}
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, v));
 }
 </script>
 
@@ -191,16 +228,13 @@ function onWheel(e: WheelEvent) {
 }
 
 .frame {
+  position: relative;
   max-width: 100%;
   max-height: 100%;
   height: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-}
-
-.frame {
-  position: relative;
 }
 
 .exporting {

@@ -112,7 +112,8 @@ rather than a JSON array of numbers, and it is written to exactly the path the s
 returned.
 
 Export walks the frame index one step at a time with no clock involved, using the same
-`layerForFrame` the preview scrubber uses. Two separate runs of the same export produce
+`layerForFrame` and `viewForFrame` the preview does — so the camera move, the easing and the
+holds at either end are baked into the file exactly as they looked in the studio. Two separate runs of the same export produce
 bit-identical decoded frames; see [docs/phase-0.md](docs/phase-0.md).
 
 External FFmpeg for ProRes, CRF and alpha is not wired up yet. Nothing will ever be bundled: if

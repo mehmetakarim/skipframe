@@ -42,6 +42,33 @@ const layerStats = computed(() => {
   return { moves, extrudedMm };
 });
 
+const cameraLabel = computed(
+  () =>
+    `Yörünge ${Math.round(scene.camera.azimuthDeg)}° · ${Math.round(scene.camera.elevationDeg)}°`,
+);
+
+const motionLabel = computed(() => {
+  const { orbitDeg, riseDeg, zoomTo } = scene.motion;
+  const parts: string[] = [];
+  if (orbitDeg !== 0) parts.push(`dönüş ${Math.round(orbitDeg)}°`);
+  if (riseDeg !== 0) parts.push(`yükselme ${Math.round(riseDeg)}°`);
+  if (zoomTo !== 1) parts.push(`yakınlık ${zoomTo.toFixed(2)}×`);
+  return parts.length ? parts.join(' · ') : 'Sabit';
+});
+
+const backgroundLabel = computed(() =>
+  scene.background.style === 'gradient'
+    ? `Geçişli ${scene.background.top.toUpperCase()}`
+    : `Düz ${scene.background.top.toUpperCase()}`,
+);
+
+const plateLabel = computed(() => {
+  const size = ir.value?.meta.bedSize;
+  const styles: Record<string, string> = { grid: 'Izgara', solid: 'Düz', none: 'Yok' };
+  const style = styles[scene.plate.style] ?? '—';
+  return size ? `${style} · ${Math.round(size[0])}×${Math.round(size[1])}` : style;
+});
+
 const featureSummary = computed(() => {
   const model = ir.value;
   if (!model || !model.meta.hasFeatureTypes) return null;
@@ -114,8 +141,20 @@ const featureSummary = computed(() => {
         <span class="val word">{{ meta?.printerModel ?? 'Jenerik tabla' }}</span>
       </div>
       <div class="row">
+        <span class="key">Kamera</span>
+        <span class="val word">{{ cameraLabel }}</span>
+      </div>
+      <div class="row">
+        <span class="key">Hareket</span>
+        <span class="val word">{{ motionLabel }}</span>
+      </div>
+      <div class="row">
+        <span class="key">Arka plan</span>
+        <span class="val word">{{ backgroundLabel }}</span>
+      </div>
+      <div class="row">
         <span class="key">Tabla</span>
-        <span class="val">{{ meta?.bedSize ? meta.bedSize.join(' × ') : '—' }}</span>
+        <span class="val word">{{ plateLabel }}</span>
       </div>
       <div class="row">
         <span class="key">Hareketler</span>

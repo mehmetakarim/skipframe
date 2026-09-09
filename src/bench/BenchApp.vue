@@ -11,6 +11,8 @@ import { PrintScene } from '../render/PrintScene';
 import { runRenderBench, type RenderBenchResult } from './renderBench';
 import { runEncodeBench, type EncodeBenchResult } from './encodeBench';
 import { runExport } from '../export/runExport';
+import { applyPreset, layerTiming } from '../stores/scene';
+import { applySceneTo } from '../render/applyScene';
 import { FrameSequenceSink, Mp4Sink } from '../export/sinks';
 import { makeSyntheticIr } from './syntheticIr';
 import type { Ir } from '../ir/types';
@@ -121,6 +123,10 @@ async function run() {
     // without a save dialog.
     const out = import.meta.env.VITE_BENCH_OUT as string | undefined;
     if (inTauri && out) {
+      // A preset with a camera move and holds at both ends, so the export check covers the
+      // scene sections too and not just the encoder.
+      applyPreset('showcase');
+      applySceneTo(scene);
       const frames = 90;
       const t0 = performance.now();
       const sink = new Mp4Sink(out, 1080, 1920, 30);
@@ -131,6 +137,7 @@ async function run() {
         target: { width: 1080, height: 1920 },
         frameCount: frames,
         layerCount: ir.layerCount,
+        timing: layerTiming(),
         signal: new AbortController().signal,
         onProgress: () => {},
       });
@@ -154,6 +161,7 @@ async function run() {
         target: { width: 1080, height: 1920 },
         frameCount: seqFrames,
         layerCount: ir.layerCount,
+        timing: { holdStart: 0, holdEnd: 0, easing: 'linear', layerSkip: 1 },
         signal: new AbortController().signal,
         onProgress: () => {},
       });

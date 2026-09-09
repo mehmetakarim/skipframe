@@ -7,7 +7,7 @@ import { defaultBitrate } from '../export/h264';
 import { revealFile, stemOf } from '../export/writeFile';
 import type { ExportProgress, ExportSettings } from '../export/types';
 import { ir } from './project';
-import { ASPECTS, scene } from './scene';
+import { ASPECTS, layerTiming, scene } from './scene';
 
 /** The export dialog's own state: the settings being chosen and the job running, if any. */
 
@@ -121,6 +121,7 @@ export async function startExport(): Promise<void> {
       target: { width, height },
       frameCount,
       layerCount: model.layerCount,
+      timing: layerTiming(),
       signal: controller.signal,
       onProgress: (patch) => Object.assign(exportState.progress, patch),
     });

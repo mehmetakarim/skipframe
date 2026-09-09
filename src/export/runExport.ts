@@ -1,5 +1,5 @@
 import type { PrintScene } from '../render/PrintScene';
-import { layerForFrame } from '../stores/scene';
+import { layerForFrame, viewForFrame, type LayerTiming } from '../stores/scene';
 import type { FrameSink } from './sinks';
 import type { ExportProgress, ExportTarget } from './types';
 
@@ -22,6 +22,8 @@ export interface RunExportOptions {
   target: ExportTarget;
   frameCount: number;
   layerCount: number;
+  /** Holds, easing and layer skip. Passed in rather than read, so the caller owns the shape. */
+  timing: LayerTiming;
   signal: AbortSignal;
   onProgress: (progress: Partial<ExportProgress>) => void;
 }
@@ -30,7 +32,8 @@ export interface RunExportOptions {
 const YIELD_EVERY = 4;
 
 export async function runExport(options: RunExportOptions): Promise<number> {
-  const { scene, canvas, sink, target, frameCount, layerCount, signal, onProgress } = options;
+  const { scene, canvas, sink, target, frameCount, layerCount, timing, signal, onProgress } =
+    options;
 
   // Remember the viewport's own size so the studio looks untouched afterwards.
   const restoreWidth = canvas.clientWidth;
@@ -56,7 +59,11 @@ export async function runExport(options: RunExportOptions): Promise<number> {
         return 0;
       }
 
-      scene.setLayer(layerForFrame(frame, frameCount, layerCount));
+      // Both the layer and the camera are pure functions of the frame index — the same two the
+      // preview calls — so the run is reproducible and the camera move is baked in.
+      const view = viewForFrame(frame, frameCount);
+      scene.setView(view.azimuth, view.elevation, view.zoom);
+      scene.setLayer(layerForFrame(frame, frameCount, layerCount, timing));
       scene.render();
       await sink.write(canvas, frame);
 

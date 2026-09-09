@@ -1,12 +1,7 @@
 <script setup lang="ts">
 /** Scene presets. One is always active; the active one is the only gold thing in this bar. */
 import SfButton from '../ui/SfButton.vue';
-import { PRESETS, scene, type PresetId } from '../../stores/scene';
-
-function choose(id: PresetId) {
-  scene.preset = id;
-  scene.presetDirty = false;
-}
+import { PRESETS, applyPreset, scene } from '../../stores/scene';
 </script>
 
 <template>
@@ -20,7 +15,7 @@ function choose(id: PresetId) {
         type="button"
         :class="['preset', { active: scene.preset === preset.id }]"
         :aria-pressed="scene.preset === preset.id"
-        @click="choose(preset.id)"
+        @click="applyPreset(preset.id)"
       >
         {{ preset.label }}
       </button>
