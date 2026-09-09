@@ -1,0 +1,32 @@
+# deps
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# rust
+target/
+**/*.rs.bk
+
+# tauri
+src-tauri/gen/
+src-tauri/target/
+
+# signing keys — NEVER commit
+.keys/
+*.key
+*.key.pub.local
+
+# editors / os
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.local
+
+# benchmark fixtures (large g-code files)
+fixtures/*.gcode
+fixtures/*.gcode.3mf
+fixtures/*.bgcode
+bench-out/

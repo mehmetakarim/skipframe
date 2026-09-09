@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkipFrame by StepperSkip — Marka ve Logo Kiti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght400;500;700&family=JetBrains+Mono:wght400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#EBB60E;
+  --ink:#101010;
+  --paper:#FFFFFF;
+  --plate:#E7E8E4;
+  --steel:#3F4441;
+  --line:#C9CCC6;
+  --line-soft:#E0E2DD;
+  --maxw:1080px;
+  --display:"Archivo Black","Space Grotesk",system-ui,sans-serif;
+  --body:"Space Grotesk",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background-color:var(--plate);
+  background-image:
+    linear-gradient(to right, rgba(16,16,16,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16,16,16,.055) 1px, transparent 1px);
+  background-size:40px 40px;
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+.mono{font-family:var(--mono)}
+
+/* ---------- job header ---------- */
+.job{background:var(--ink);color:#fff;border-bottom:10px solid var(--gold)}
+.job .wrap{padding-top:44px;padding-bottom:0}
+.job-tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.job-logo{margin:26px 0 10px;max-width:430px}
+.job-logo svg{display:block;width:100%;height:auto}
+.job h1{font-family:var(--display);font-size:clamp(26px,4.4vw,44px);line-height:1.05;margin:18px 0 6px;letter-spacing:-.01em}
+.job p.lede{max-width:56ch;color:#C9CCC6;margin:0 0 26px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:#2A2A2A;border-top:1px solid #2A2A2A;margin:0 -20px}
+.meta div{background:var(--ink);padding:14px 20px}
+.meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#7C817B;margin:0 0 4px}
+.meta dd{margin:0;font-size:14px;font-weight:500}
+
+/* ---------- sections ---------- */
+section{padding:56px 0 8px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.sec-num{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink);background:var(--gold);padding:3px 8px;border-radius:3px}
+h2{font-family:var(--display);font-size:clamp(21px,3vw,30px);margin:0;letter-spacing:-.01em}
+.sec-lede{max-width:64ch;color:var(--steel);margin:10px 0 26px}
+h3{font-family:var(--display);font-size:15px;margin:0 0 8px;letter-spacing:0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:24px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+.note{font-size:13.5px;color:var(--steel);margin:8px 0 0}
+.stage{display:flex;align-items:center;justify-content:center;padding:26px;border-radius:3px;min-height:120px}
+.lg{display:block;width:100%;height:auto}
+.mk{display:block;height:auto}
+
+/* ---------- variants ---------- */
+.variant{background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden;display:flex;flex-direction:column}
+.variant .stage{flex:1}
+.variant .body{padding:14px 16px 16px;border-top:1px solid var(--line-soft)}
+.variant h3{margin-bottom:3px}
+.variant p{font-size:13px;color:var(--steel);margin:0}
+.bg-light{background:var(--paper)}
+.bg-plate{background:var(--plate)}
+.bg-ink{background:var(--ink)}
+.bg-gold{background:var(--gold)}
+.chk{background-image:linear-gradient(45deg,#E0E2DD 25%,transparent 25%),linear-gradient(-45deg,#E0E2DD 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#E0E2DD 75%),linear-gradient(-45deg,transparent 75%,#E0E2DD 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0px;background-color:#fff}
+
+/* ---------- concept directions ---------- */
+.dir{background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.dir .stage{background:var(--plate);min-height:210px;gap:26px}
+.dir .body{padding:20px 22px 22px;border-top:1px solid var(--line-soft)}
+.dir .verdict-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:3px;margin-bottom:10px}
+.tag-yes{background:var(--gold);color:var(--ink)}
+.tag-no{background:var(--plate);color:var(--steel);border:1px solid var(--line)}
+
+/* ---------- anatomy ---------- */
+.anat{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:clamp(16px,3vw,28px)}
+.anat svg{display:block;width:100%;height:auto;max-width:460px;margin:0 auto}
+.dims{list-style:none;margin:0;padding:0}
+.dims li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.dims li:last-child{border-bottom:0}
+.dims b{font-weight:500;color:var(--steel)}
+.dims span{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+
+/* ---------- icon tiles ---------- */
+.tiles{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end}
+.tile{display:flex;flex-direction:column;align-items:center;gap:9px}
+.tile svg{display:block}
+.tile .px{font-family:var(--mono);font-size:10px;color:var(--steel);letter-spacing:.06em}
+.tile .frame{display:flex;align-items:center;justify-content:center;background:var(--paper);border:1px solid var(--line-soft);border-radius:3px;padding:10px}
+.big-icon{display:block;width:100%;height:auto;max-width:340px;margin:0 auto}
+
+/* ---------- clear space ---------- */
+.clearbox{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:clamp(16px,3vw,30px)}
+.clearbox svg{display:block;width:100%;height:auto}
+
+/* ---------- labs ---------- */
+.lab{background:var(--ink);color:#fff;border-radius:4px;padding:24px}
+.lab .label{color:#8A8F88}
+.lab-stage{border-radius:3px;padding:34px 20px;display:flex;align-items:center;justify-content:center;transition:background-color .18s ease;margin:14px 0 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.sw{width:36px;height:36px;border-radius:3px;border:2px solid #2E2E2E;cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 2px rgba(235,182,14,.28)}
+.sw:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.verdict{margin-top:16px;border-top:1px solid #2A2A2A;padding-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.verdict b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8A8F88;font-weight:400;margin-bottom:3px}
+.verdict span{font-size:14px;font-weight:500}
+.ok{color:var(--gold)}
+input[type=range]{width:100%;accent-color:var(--gold);margin:10px 0 0}
+.ruler{display:flex;align-items:center;justify-content:center;min-height:150px;background:#fff;border-radius:3px;padding:20px}
+
+/* ---------- color ---------- */
+.swatch{border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--paper)}
+.swatch .chip{height:104px}
+.swatch .info{padding:12px 14px}
+.swatch .info b{display:block;font-family:var(--display);font-size:13px;margin-bottom:5px}
+.swatch .info span{display:block;font-family:var(--mono);font-size:11.5px;color:var(--steel);line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel);font-weight:400}
+td.m{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.pass{color:#1E6B33;font-weight:700}
+.fail{color:#9A2A1E;font-weight:700}
+
+/* ---------- typography sample ---------- */
+.readout{display:flex;flex-wrap:wrap;gap:1px;background:#2A2A2A;border-radius:3px;overflow:hidden;margin-top:14px}
+.readout div{background:var(--ink);padding:12px 16px;flex:1 1 auto;min-width:110px}
+.readout dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#7C817B;margin:0 0 4px}
+.readout dd{margin:0;font-family:var(--mono);font-size:17px;font-weight:700;color:#fff}
+.readout dd em{font-style:normal;color:var(--gold)}
+
+/* ---------- do / dont ---------- */
+.dont{background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.dont .stage{background:var(--plate);min-height:130px;overflow:hidden}
+.dont .cap{display:flex;gap:9px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line-soft)}
+.badge{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;line-height:18px;text-align:center;margin-top:1px}
+.dont p{margin:0;font-size:13px;color:var(--steel)}
+.dont p b{color:var(--ink);display:block;font-size:13.5px}
+.d-stretch{transform:scaleX(1.6)}
+.d-hue{filter:hue-rotate(150deg) saturate(1.5)}
+.d-shadow{filter:drop-shadow(6px 7px 0 rgba(16,16,16,.4))}
+.d-rotate{transform:rotate(-14deg)}
+.d-fade{opacity:.3}
+.d-photo{background:repeating-linear-gradient(48deg,#8b8f86 0 12px,#b6bab1 12px 24px,#6f7369 24px 36px)}
+.d-gradient{filter:sepia(1) hue-rotate(320deg) saturate(3)}
+
+/* ---------- code ---------- */
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.7;background:#F3F4F1;border:1px solid var(--line-soft);border-radius:3px;padding:14px;overflow-x:auto;margin:0;color:var(--ink)}
+
+.files td:first-child{font-family:var(--mono);font-size:12.5px}
+footer{background:var(--ink);color:#8A8F88;margin-top:64px;padding:34px 0}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+footer strong{color:#fff}
+hr.rule{border:0;border-top:1px solid var(--line);margin:44px 0 0}
+media (max-width:640px){
+  .job .wrap{padding-top:30px}
+  section{padding:38px 0 6px}
+  .card{padding:18px}
+}
+media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+
+<!-- ===== ÇERÇEVELİ İŞARET — kelime işareti, kilit ad ve site kullanımı için =====
+     Katmanlar yatayda ORTALANIR. Sola yaslı düzen metin satırı gibi okunduğu için bırakıldı.
+     Kütle tabladan ayrıktır: iç alt kenarla taban arasında sabit bir tabla boşluğu vardır. -->
+
+<!-- Çerçeveli işaret — tam detay (L1, ≥96 px) -->
+<symbol id="sf-mark" viewBox="0 0 100 100">
+  <rect x="10" y="10" width="80" height="80" rx="10" fill="none" stroke="currentColor" stroke-width="10"/>
+  <g fill="currentColor">
+    <rect x="25" y="72" width="50" height="10"/>
+    <rect x="30" y="57" width="40" height="10"/>
+    <rect x="35" y="42" width="30" height="10"/>
+  </g>
+  <rect x="40" y="27" width="20" height="10" fill="var(--acc,currentColor)"/>
+</symbol>
+
+<!-- Çerçeveli işaret — orta detay (L2, 32–64 px) -->
+<symbol id="sf-mark-mid" viewBox="0 0 100 100">
+  <rect x="11" y="11" width="78" height="78" rx="10" fill="none" stroke="currentColor" stroke-width="12"/>
+  <rect x="27" y="62" width="46" height="17" fill="currentColor"/>
+  <rect x="36" y="39" width="28" height="17" fill="var(--acc,currentColor)"/>
+</symbol>
+
+<!-- Çerçeveli işaret — sade (L3, ≤24 px ve menü çubuğu şablonu)
+     Yan boşluklar eşit (11 · 11), taban boşluğu 7 birim: tek renk varyantta
+     çubuk çerçeveye kaynaşmaz. -->
+<symbol id="sf-mark-sm" viewBox="0 0 100 100">
+  <rect x="12" y="12" width="76" height="76" rx="8" fill="none" stroke="currentColor" stroke-width="14"/>
+  <rect x="30" y="56" width="40" height="18" fill="currentColor"/>
+  <rect x="38" y="31" width="24" height="18" fill="var(--acc,currentColor)"/>
+</symbol>
+
+<!-- ===== ÇERÇEVESİZ İKON İŞARETİ — yalnızca uygulama ikonu =====
+     Squircle / ikon tuvali çerçeve görevini üstlenir; işaret kendi çerçevesini taşımaz. -->
+
+<!-- İkon işareti — tam (I1, ≥32 px) -->
+<symbol id="sf-icon" viewBox="0 0 100 100">
+  <g fill="currentColor">
+    <rect x="12" y="73" width="76" height="14" rx="2"/>
+    <rect x="19" y="53" width="62" height="14" rx="2"/>
+    <rect x="26" y="33" width="48" height="14" rx="2"/>
+  </g>
+  <rect x="33" y="13" width="34" height="14" rx="2" fill="var(--acc,currentColor)"/>
+</symbol>
+
+<!-- İkon işareti — sade (I2, ≤24 px) -->
+<symbol id="sf-icon-sm" viewBox="0 0 100 100">
+  <rect x="12" y="55" width="76" height="24" rx="2" fill="currentColor"/>
+  <rect x="28" y="21" width="44" height="24" rx="2" fill="var(--acc,currentColor)"/>
+</symbol>
+
+<!-- ===== Kelime işareti ===== -->
+<symbol id="sf-word" viewBox="0 0 500 110">
+  <text x="0" y="80" font-family="'Space Grotesk',system-ui,sans-serif" font-size="100" font-weight="700" textLength="492" lengthAdjust="spacing" fill="currentColor">SkipFrame</text>
+</symbol>
+
+<!-- ===== Onay satırı ===== -->
+<symbol id="sf-by" viewBox="0 0 320 40">
+  <text x="0" y="30" font-family="'JetBrains Mono',ui-monospace,monospace" font-size="30" font-weight="700" textLength="316" lengthAdjust="spacing" fill="currentColor">BY STEPPERSKIP</text>
+</symbol>
+
+<!-- ===== Yatay kilit ad ===== -->
+<symbol id="sf-lock-h" viewBox="0 0 626 140">
+  <use href="#sf-mark" x="0" y="15" width="110" height="110"/>
+  <use href="#sf-word" x="138" y="8" width="485" height="106.7"/>
+  <!-- Onay satırı sağa yaslı: sağ kenarı kelime işaretinin sağ kenarıyla hizalanır (615.24).
+       Sola yaslandığında "Skip"teki p'nin alt uzantısıyla çakışıyordu. -->
+  <use href="#sf-by" x="328.9" y="95" width="290" height="36.25"/>
+</symbol>
+
+<!-- ===== Yatay kilit ad, onay satırsız ===== -->
+<symbol id="sf-lock-h-short" viewBox="0 0 626 122">
+  <use href="#sf-mark" x="0" y="6" width="110" height="110"/>
+  <use href="#sf-word" x="138" y="8" width="485" height="106.7"/>
+</symbol>
+
+<!-- ===== Dikey kilit ad ===== -->
+<symbol id="sf-lock-v" viewBox="0 0 400 230">
+  <use href="#sf-mark" x="145" y="0" width="110" height="110"/>
+  <use href="#sf-word" x="30" y="128" width="340" height="74.8"/>
+  <use href="#sf-by" x="118.3" y="202" width="160" height="20"/>
+</symbol>
+
+<!-- ===== Elenen yön A: ofset çerçeve çifti ===== -->
+<symbol id="sf-dir-a" viewBox="0 0 100 100">
+  <rect x="26" y="10" width="62" height="62" rx="8" fill="none" stroke="var(--acc,currentColor)" stroke-width="9"/>
+  <rect x="12" y="26" width="62" height="62" rx="8" fill="none" stroke="currentColor" stroke-width="9"/>
+</symbol>
+
+<!-- ===== Yanlış kullanım örneği: katman sayısı değiştirilmiş ===== -->
+<symbol id="sf-mark-wrong" viewBox="0 0 100 100">
+  <rect x="10" y="10" width="80" height="80" rx="10" fill="none" stroke="currentColor" stroke-width="10"/>
+  <g fill="currentColor">
+    <rect x="25" y="76" width="50" height="6"/>
+    <rect x="27.5" y="67" width="45" height="6"/>
+    <rect x="30" y="58" width="40" height="6"/>
+    <rect x="33" y="49" width="34" height="6"/>
+    <rect x="36" y="40" width="28" height="6"/>
+    <rect x="39" y="31" width="22" height="6"/>
+  </g>
+</symbol>
+
+<symbol id="ss-full" viewBox="0 0 1137 544">
+<g transform="translate(0.000000,544.000000) scale(0.100000,-0.100000)" fill="#EBB60E"><path d="M1290 5309 c-155 -31 -227 -53 -345 -109 -193 -92 -381 -249 -477
+-400 -124 -194 -172 -359 -172 -600 -1 -150 2 -184 29 -285 19 -71 110 -264
+156 -331 l32 -47 -39 -35 c-86 -76 -148 -140 -186 -191 -52 -69 -123 -219
+-143 -301 -22 -92 -31 -303 -16 -380 24 -120 81 -267 139 -356 62 -96 157
+-206 231 -267 136 -112 144 -118 252 -175 55 -29 123 -56 184 -72 17 -5 68
+-19 115 -33 197 -58 421 -60 631 -8 117 29 141 38 259 94 97 47 166 92 260
+173 130 110 207 208 302 382 35 63 44 73 62 68 97 -28 237 -28 341 -1 140 37
+220 75 313 150 37 30 73 55 80 55 8 0 27 -9 43 -21 16 -11 78 -34 137 -51 98
+-27 120 -30 257 -29 104 0 168 5 210 16 126 34 126 34 138 -55 11 -77 26 -116
+72 -185 51 -75 56 -81 105 -115 19 -13 37 -27 40 -30 9 -10 104 -48 160 -64
+158 -45 353 -16 490 73 28 18 76 64 106 102 71 88 103 176 112 313 l7 99 45
+15 c25 8 60 21 78 28 18 8 39 14 47 14 13 0 35 -75 35 -123 1 -61 68 -190 128
+-245 58 -53 109 -84 197 -116 55 -21 85 -26 161 -26 89 0 95 -1 103 -22 5 -13
+25 -72 45 -133 25 -74 53 -135 87 -187 57 -87 58 -101 1 -137 -40 -25 -139
+-141 -175 -206 -39 -68 -95 -255 -108 -355 -30 -245 40 -489 199 -687 56 -71
+56 -71 151 -151 40 -35 85 -69 100 -75 14 -6 45 -24 68 -39 23 -15 48 -28 55
+-28 8 0 18 -4 24 -8 12 -12 134 -49 225 -69 94 -21 392 -24 494 -5 130 24 325
+92 390 136 22 14 47 31 55 36 8 6 34 23 56 38 68 45 170 139 206 191 59 86
+133 196 144 216 10 17 26 21 125 26 63 4 132 10 154 14 49 9 187 77 227 111
+17 13 33 23 36 21 91 -47 168 -60 302 -55 90 4 116 10 185 38 44 19 93 44 109
+57 17 14 35 22 45 18 9 -4 65 -9 124 -12 87 -5 110 -9 114 -22 56 -175 180
+-304 358 -370 47 -18 81 -22 179 -23 70 -1 139 4 165 11 229 65 376 236 402
+466 6 49 15 93 21 96 6 4 43 17 82 29 132 42 221 99 341 217 57 55 90 98 113
+146 19 37 44 82 56 100 30 44 41 76 70 192 38 156 48 246 48 430 -1 253 -37
+437 -117 600 -70 141 -110 193 -219 282 -75 61 -102 76 -183 103 -86 29 -105
+32 -216 31 -161 -1 -300 -28 -375 -73 -31 -19 -38 -20 -130 -8 -53 8 -102 17
+-107 21 -6 4 -17 25 -24 46 -29 78 -95 175 -154 223 -60 49 -67 53 -152 92
+-44 20 -66 22 -190 23 -131 0 -145 -2 -209 -28 -115 -47 -217 -128 -291 -230
+-36 -51 -75 -120 -91 -160 -15 -40 -29 -75 -33 -78 -3 -4 -36 -9 -74 -13 -94
+-9 -97 6 -14 87 57 57 107 136 131 210 9 29 19 193 20 337 l1 134 25 7 c147
+41 238 88 301 156 45 47 108 157 129 222 24 76 40 233 33 326 -7 84 -42 207
+-79 276 -68 125 -222 260 -334 293 -120 35 -211 42 -312 22 -42 -8 -100 -27
+-129 -41 -52 -27 -53 -27 -145 -14 -76 10 -107 10 -166 -1 -76 -13 -180 -55
+-225 -90 -28 -22 -64 -26 -93 -10 -39 21 -233 42 -330 37 -174 -11 -363 -92
+-517 -223 -50 -43 -73 -54 -73 -34 0 6 -6 10 -14 10 -7 0 -19 7 -26 15 -15 18
+-133 75 -205 100 -65 22 -195 36 -265 29 -93 -9 -223 -46 -301 -85 -28 -14
+-44 -16 -75 -9 -68 16 -213 11 -297 -10 -87 -22 -103 -29 -168 -76 -26 -19
+-51 -34 -57 -34 -5 0 -52 17 -103 37 -92 36 -97 37 -229 38 -146 0 -183 -7
+-315 -60 -76 -31 -84 -32 -145 -23 -90 13 -261 2 -336 -23 -34 -11 -83 -33
+-109 -50 -55 -35 -67 -35 -180 0 -159 50 -369 34 -560 -41 -55 -22 -117 -49
+-137 -60 l-37 -21 -63 26 c-35 14 -70 28 -79 30 -12 4 -20 27 -29 74 -23 133
+-100 237 -217 293 -59 29 -79 33 -173 37 -105 5 -190 -8 -338 -49 l-52 -15
+-105 103 c-58 56 -117 109 -132 117 -16 8 -71 37 -123 65 -120 64 -191 87
+-336 112 -123 21 -320 25 -404 9z"/></g>
+<g transform="translate(0.000000,544.000000) scale(0.100000,-0.100000)" fill="#000000"><path d="M1365 5150 c-255 -23 -521 -160 -686 -354 -87 -102 -161 -245 -195
+-381 -23 -91 -25 -114 -21 -250 4 -128 8 -161 31 -228 55 -164 110 -252 238
+-377 l90 -88 -42 -7 c-84 -14 -197 -82 -286 -171 -68 -68 -91 -99 -128 -176
+-58 -119 -76 -197 -76 -328 0 -246 88 -440 284 -627 356 -341 900 -415 1336
+-182 243 130 426 349 500 599 13 41 24 76 25 78 2 2 25 -8 52 -22 173 -87 422
+-70 589 40 49 33 133 114 166 162 l16 23 77 -50 c226 -148 532 -154 792 -16
+46 24 85 40 88 35 3 -5 9 -78 14 -163 8 -136 12 -161 36 -216 55 -122 165
+-189 326 -198 138 -9 247 27 320 104 78 82 102 173 97 366 l-3 127 55 0 c115
+0 285 67 392 154 31 25 59 46 62 46 3 0 6 -64 6 -142 0 -177 12 -255 51 -335
+34 -71 83 -114 167 -149 80 -33 209 -33 305 0 37 12 70 19 73 15 2 -4 9 -55
+14 -114 18 -189 89 -341 220 -473 73 -74 89 -102 58 -102 -6 0 -38 -14 -71
+-31 -203 -103 -327 -286 -358 -529 -20 -159 19 -348 102 -485 19 -32 71 -96
+115 -144 159 -168 366 -259 634 -277 155 -11 372 26 513 88 230 100 402 266
+508 492 21 46 39 89 39 94 0 20 16 21 76 6 41 -11 90 -15 164 -12 93 3 112 7
+171 36 67 32 97 56 156 125 l32 37 61 -39 c34 -22 83 -47 109 -56 64 -21 183
+-22 253 -1 52 15 155 81 186 119 13 15 18 14 65 -6 44 -18 70 -21 172 -21 80
+1 136 6 168 16 26 9 49 12 52 8 3 -4 9 -50 15 -101 5 -52 14 -111 20 -131 16
+-57 100 -142 178 -180 64 -32 71 -33 187 -33 120 0 122 0 198 38 84 41 131 89
+169 173 21 44 23 64 23 195 l0 147 67 6 c185 17 372 119 475 260 154 209 226
+537 189 856 -38 334 -155 549 -353 649 -150 75 -365 64 -548 -30 l-78 -39 -51
+18 c-74 28 -134 34 -209 22 -36 -5 -72 -13 -80 -16 -11 -4 -16 15 -25 85 -15
+121 -41 179 -113 245 -73 68 -143 96 -240 96 -111 0 -201 -36 -292 -116 -94
+-83 -153 -202 -165 -334 -7 -73 -8 -75 -32 -70 -14 3 -65 5 -115 5 -81 0 -96
+-3 -143 -29 -29 -16 -78 -56 -109 -88 -32 -32 -61 -58 -65 -58 -5 0 -8 60 -8
+133 0 162 -18 252 -68 350 -2 4 9 7 25 7 41 0 145 52 175 88 50 59 53 85 53
+398 l0 291 85 -1 c119 -1 201 28 278 99 100 93 142 199 143 365 3 247 -115
+431 -320 500 -105 35 -216 23 -335 -36 l-69 -35 -74 17 c-96 21 -210 15 -276
+-14 -27 -12 -71 -46 -100 -75 l-51 -54 -61 28 c-96 45 -179 63 -290 63 -240
+-1 -424 -100 -614 -329 l-33 -40 -16 25 c-9 14 -43 52 -77 86 -126 126 -317
+181 -497 143 -60 -13 -163 -57 -209 -90 -31 -22 -31 -22 -83 -3 -74 27 -210
+25 -302 -3 -76 -24 -152 -81 -180 -134 -8 -16 -19 -29 -24 -29 -5 0 -29 14
+-54 30 -126 86 -277 123 -409 101 -76 -13 -193 -57 -247 -95 -32 -22 -37 -23
+-63 -10 -63 33 -222 35 -332 5 -57 -15 -126 -61 -154 -103 l-25 -36 -79 39
+c-113 55 -205 73 -336 66 -168 -8 -298 -54 -438 -154 l-72 -51 -25 33 c-36 47
+-121 86 -201 93 -74 5 -70 -2 -79 143 -7 121 -48 192 -131 229 -67 31 -121 33
+-249 10 -131 -22 -202 -50 -259 -100 -21 -18 -39 -31 -41 -29 -2 2 -16 28 -32
+58 -39 74 -170 210 -259 269 -186 125 -434 184 -680 162z"/></g>
+<g transform="translate(0.000000,544.000000) scale(0.100000,-0.100000)" fill="#FFFFFF"><path d="M1275 4964 c-222 -48 -441 -197 -544 -372 -66 -112 -94 -208 -99
+-348 -5 -142 14 -236 73 -357 88 -181 205 -276 595 -487 213 -116 317 -207
+372 -328 59 -130 46 -307 -30 -417 -95 -137 -318 -186 -484 -107 -117 55 -178
+143 -178 256 1 74 28 127 93 174 62 46 73 75 56 152 -15 73 -74 135 -147 156
+-177 52 -368 -47 -462 -240 -136 -278 -25 -632 255 -812 217 -138 529 -177
+800 -99 180 52 311 130 435 262 148 156 220 349 220 588 0 273 -90 474 -293
+654 -99 87 -207 158 -446 292 -300 167 -366 235 -365 375 0 121 52 201 168
+262 43 22 64 26 136 26 89 0 129 -13 178 -58 46 -41 57 -74 55 -176 -2 -113
+10 -146 68 -186 34 -23 53 -28 123 -32 67 -4 91 -1 127 15 107 48 158 130 167
+269 15 253 -182 473 -481 535 -112 23 -290 24 -392 3z M8575 4791 c-48 -22
+-108 -80 -142 -138 -14 -24 -29 -43 -33 -43 -5 0 -11 14 -15 30 -10 45 -63 96
+-114 110 -70 19 -168 -6 -191 -49 -6 -13 -8 -216 -3 -616 l6 -597 24 -28 c31
+-37 104 -54 200 -47 41 3 85 12 98 21 l24 16 3 422 c4 455 8 490 59 544 26 27
+74 32 105 10 15 -12 19 -25 17 -68 -4 -78 11 -115 53 -128 60 -20 153 14 198
+73 40 53 56 111 56 206 0 148 -42 236 -133 280 -56 27 -156 28 -212 2z M7451
+4679 c-195 -33 -386 -219 -459 -449 -37 -116 -46 -183 -47 -330 0 -160 15
+-245 65 -356 71 -159 220 -245 425 -246 111 -1 182 15 275 62 115 58 210 175
+210 257 0 80 -54 143 -122 143 -53 0 -87 -20 -126 -73 -45 -64 -92 -90 -161
+-91 -77 -1 -118 24 -155 96 -15 31 -31 76 -33 101 l-5 44 70 6 c133 13 306 81
+406 160 53 42 103 124 122 199 24 91 15 227 -18 299 -69 148 -234 213 -447
+178z m94 -304 c42 -17 55 -46 55 -119 0 -102 -76 -179 -210 -210 -36 -9 -68
+-16 -72 -16 -12 0 -10 72 3 132 22 100 78 185 141 213 41 18 42 18 83 0z
+M2630 4610 c-58 -9 -125 -33 -134 -49 -3 -5 -11 -56 -16 -113 -16 -158 -51
+-282 -83 -293 -7 -2 -31 -9 -55 -15 -24 -6 -48 -20 -57 -33 -18 -28 -36 -189
+-27 -242 l8 -40 84 0 85 0 6 -395 c6 -431 10 -461 68 -565 22 -40 40 -56 86
+-80 53 -27 68 -30 149 -30 152 0 247 45 315 147 52 77 68 149 49 225 -8 36
+-21 61 -35 70 -20 13 -25 11 -77 -41 -72 -72 -119 -76 -154 -12 -15 28 -17 67
+-15 364 0 184 3 335 5 337 2 3 45 9 96 15 112 12 139 24 162 69 36 72 53 228
+30 272 -14 25 -74 25 -187 2 -45 -9 -85 -15 -88 -12 -3 3 -10 95 -15 204 -5
+110 -14 203 -20 209 -13 13 -113 17 -180 6z M6330 4574 c-78 -21 -154 -70
+-213 -136 l-51 -57 -20 36 c-31 54 -64 74 -133 80 -82 7 -148 -4 -179 -30
+l-25 -22 -1 -875 c-1 -621 2 -883 10 -901 37 -90 254 -118 339 -45 l27 23 4
+327 5 326 53 -49 c30 -28 74 -56 100 -65 60 -20 155 -21 222 -1 70 21 169 90
+215 150 135 178 197 493 152 772 -46 286 -150 433 -333 472 -68 14 -104 13
+-172 -5z m38 -363 c141 -100 145 -561 5 -693 -54 -52 -111 -60 -179 -28 -86
+42 -134 161 -134 337 0 105 17 210 44 275 21 49 73 107 111 125 41 18 116 11
+153 -16z M5000 4427 c-75 -31 -140 -78 -187 -132 l-39 -46 -25 38 c-13 22 -43
+48 -69 61 -39 20 -55 23 -122 19 -88 -6 -138 -28 -148 -67 -4 -14 -2 -149 3
+-300 7 -182 6 -452 -1 -800 -11 -572 -8 -654 24 -696 37 -50 89 -69 184 -69
+106 1 153 24 170 83 6 21 10 162 10 335 0 163 2 297 3 297 2 0 23 -18 46 -40
+70 -67 93 -75 212 -75 101 0 108 1 181 38 167 82 275 259 313 514 34 226 4
+496 -71 645 -36 71 -104 140 -177 179 -56 30 -72 34 -157 36 -82 3 -103 0
+-150 -20z m61 -350 c77 -52 125 -208 116 -382 -9 -194 -60 -312 -148 -349 -65
+-26 -108 -16 -163 37 -71 69 -90 133 -91 302 0 157 18 240 74 327 52 83 144
+111 212 65z M3753 4309 c-185 -31 -371 -176 -465 -364 -120 -237 -129 -608
+-20 -810 64 -117 183 -212 317 -250 76 -23 218 -23 308 -1 137 33 294 132 331
+210 37 77 8 209 -53 240 -60 31 -135 16 -164 -33 -27 -46 -102 -109 -143 -120
+-57 -16 -74 -14 -130 14 -67 34 -106 94 -128 202 l-7 31 68 7 c259 27 478 145
+553 299 52 106 57 268 10 373 -71 161 -255 239 -477 202z m131 -338 c57 -60
+43 -174 -30 -248 -43 -42 -113 -71 -218 -88 l-39 -6 6 68 c11 122 72 254 135
+287 15 9 48 15 73 16 37 0 50 -5 73 -29z"/></g>
+<g transform="translate(0.000000,544.000000) scale(0.100000,-0.100000)" fill="#EBB60E"><path d="M9265 3248 c-94 -35 -157 -115 -171 -216 -9 -71 2 -117 38 -158 47
+-53 83 -68 163 -68 82 1 131 22 186 81 53 55 69 93 69 161 0 75 -31 136 -88
+177 -34 23 -54 30 -105 32 -34 1 -75 -3 -92 -9z M7995 3144 c-82 -20 -106 -29
+-125 -49 l-22 -23 1 -868 c1 -476 4 -879 8 -893 11 -44 33 -69 81 -93 80 -39
+255 -27 294 19 10 12 14 81 18 282 l5 266 72 -95 c40 -52 114 -151 165 -220
+118 -158 150 -182 256 -188 65 -4 85 -1 118 16 69 35 133 140 134 216 0 38 -6
+46 -126 160 -123 117 -334 348 -334 364 0 8 167 211 296 359 88 100 99 124 84
+182 -6 25 -20 60 -30 76 -25 40 -88 75 -134 75 -76 0 -97 -20 -342 -329 l-159
+-200 -6 423 c-7 461 -7 464 -66 499 -31 18 -146 31 -188 21z M6966 3109 c-113
+-15 -185 -37 -291 -89 -200 -97 -325 -255 -369 -472 -20 -98 -20 -169 0 -266
+46 -224 142 -336 425 -493 342 -191 410 -242 463 -351 71 -146 50 -319 -53
+-431 -106 -115 -317 -130 -452 -32 -120 87 -124 266 -8 348 46 33 56 62 39
+114 -20 60 -46 90 -106 119 -174 85 -396 -61 -458 -303 -33 -127 -16 -285 44
+-409 114 -234 447 -359 795 -298 420 73 698 372 722 776 7 118 -8 222 -49 335
+-38 106 -89 183 -169 258 -81 75 -142 116 -310 206 -74 39 -172 92 -218 117
+-151 81 -211 155 -211 262 0 95 57 186 145 233 31 16 59 21 120 21 69 1 85 -2
+114 -23 40 -29 70 -91 71 -146 1 -72 17 -118 54 -152 60 -55 153 -65 246 -27
+139 58 181 253 94 440 -49 105 -204 216 -347 249 -86 19 -209 25 -291 14z
+M10307 2891 c-61 -20 -114 -51 -185 -108 l-42 -35 -35 31 c-44 39 -105 55
+-175 47 -67 -8 -108 -31 -135 -76 -24 -41 -23 14 -10 -990 11 -795 5 -739 90
+-780 89 -43 265 -14 290 48 4 9 6 146 6 305 -2 196 1 287 8 287 6 0 32 -15 58
+-34 67 -47 112 -59 202 -54 238 14 428 246 482 591 15 99 6 271 -21 392 -40
+178 -133 317 -243 366 -73 32 -209 37 -290 10z m83 -367 c65 -55 91 -144 91
+-311 0 -122 -21 -220 -62 -291 -36 -63 -78 -92 -137 -92 -57 0 -95 21 -130 73
+-52 75 -65 129 -66 267 -1 160 23 248 87 317 50 54 66 62 134 62 42 1 57 -4
+83 -25z M9240 2703 c-52 -9 -88 -24 -110 -49 l-24 -24 12 -293 c7 -160 13
+-368 13 -462 1 -361 17 -447 89 -472 80 -27 241 -9 280 32 35 37 38 79 29 342
+-5 136 -13 378 -18 536 -11 339 -14 350 -97 379 -46 16 -117 21 -174 11z"/></g>
+</symbol>
+<symbol id="ss-mark" viewBox="0 0 1137 544"><g transform="translate(0.000000,544.000000) scale(0.100000,-0.100000)" fill="currentColor"><path d="M1275 4964 c-222 -48 -441 -197 -544 -372 -66 -112 -94 -208 -99
+-348 -5 -142 14 -236 73 -357 88 -181 205 -276 595 -487 213 -116 317 -207
+372 -328 59 -130 46 -307 -30 -417 -95 -137 -318 -186 -484 -107 -117 55 -178
+143 -178 256 1 74 28 127 93 174 62 46 73 75 56 152 -15 73 -74 135 -147 156
+-177 52 -368 -47 -462 -240 -136 -278 -25 -632 255 -812 217 -138 529 -177
+800 -99 180 52 311 130 435 262 148 156 220 349 220 588 0 273 -90 474 -293
+654 -99 87 -207 158 -446 292 -300 167 -366 235 -365 375 0 121 52 201 168
+262 43 22 64 26 136 26 89 0 129 -13 178 -58 46 -41 57 -74 55 -176 -2 -113
+10 -146 68 -186 34 -23 53 -28 123 -32 67 -4 91 -1 127 15 107 48 158 130 167
+269 15 253 -182 473 -481 535 -112 23 -290 24 -392 3z M8575 4791 c-48 -22
+-108 -80 -142 -138 -14 -24 -29 -43 -33 -43 -5 0 -11 14 -15 30 -10 45 -63 96
+-114 110 -70 19 -168 -6 -191 -49 -6 -13 -8 -216 -3 -616 l6 -597 24 -28 c31
+-37 104 -54 200 -47 41 3 85 12 98 21 l24 16 3 422 c4 455 8 490 59 544 26 27
+74 32 105 10 15 -12 19 -25 17 -68 -4 -78 11 -115 53 -128 60 -20 153 14 198
+73 40 53 56 111 56 206 0 148 -42 236 -133 280 -56 27 -156 28 -212 2z M7451
+4679 c-195 -33 -386 -219 -459 -449 -37 -116 -46 -183 -47 -330 0 -160 15
+-245 65 -356 71 -159 220 -245 425 -246 111 -1 182 15 275 62 115 58 210 175
+210 257 0 80 -54 143 -122 143 -53 0 -87 -20 -126 -73 -45 -64 -92 -90 -161
+-91 -77 -1 -118 24 -155 96 -15 31 -31 76 -33 101 l-5 44 70 6 c133 13 306 81
+406 160 53 42 103 124 122 199 24 91 15 227 -18 299 -69 148 -234 213 -447
+178z m94 -304 c42 -17 55 -46 55 -119 0 -102 -76 -179 -210 -210 -36 -9 -68
+-16 -72 -16 -12 0 -10 72 3 132 22 100 78 185 141 213 41 18 42 18 83 0z
+M2630 4610 c-58 -9 -125 -33 -134 -49 -3 -5 -11 -56 -16 -113 -16 -158 -51
+-282 -83 -293 -7 -2 -31 -9 -55 -15 -24 -6 -48 -20 -57 -33 -18 -28 -36 -189
+-27 -242 l8 -40 84 0 85 0 6 -395 c6 -431 10 -461 68 -565 22 -40 40 -56 86
+-80 53 -27 68 -30 149 -30 152 0 247 45 315 147 52 77 68 149 49 225 -8 36
+-21 61 -35 70 -20 13 -25 11 -77 -41 -72 -72 -119 -76 -154 -12 -15 28 -17 67
+-15 364 0 184 3 335 5 337 2 3 45 9 96 15 112 12 139 24 162 69 36 72 53 228
+30 272 -14 25 -74 25 -187 2 -45 -9 -85 -15 -88 -12 -3 3 -10 95 -15 204 -5
+110 -14 203 -20 209 -13 13 -113 17 -180 6z M6330 4574 c-78 -21 -154 -70
+-213 -136 l-51 -57 -20 36 c-31 54 -64 74 -133 80 -82 7 -148 -4 -179 -30
+l-25 -22 -1 -875 c-1 -621 2 -883 10 -901 37 -90 254 -118 339 -45 l27 23 4
+327 5 326 53 -49 c30 -28 74 -56 100 -65 60 -20 155 -21 222 -1 70 21 169 90
+215 150 135 178 197 493 152 772 -46 286 -150 433 -333 472 -68 14 -104 13
+-172 -5z m38 -363 c141 -100 145 -561 5 -693 -54 -52 -111 -60 -179 -28 -86
+42 -134 161 -134 337 0 105 17 210 44 275 21 49 73 107 111 125 41 18 116 11
+153 -16z M5000 4427 c-75 -31 -140 -78 -187 -132 l-39 -46 -25 38 c-13 22 -43
+48 -69 61 -39 20 -55 23 -122 19 -88 -6 -138 -28 -148 -67 -4 -14 -2 -149 3
+-300 7 -182 6 -452 -1 -800 -11 -572 -8 -654 24 -696 37 -50 89 -69 184 -69
+106 1 153 24 170 83 6 21 10 162 10 335 0 163 2 297 3 297 2 0 23 -18 46 -40
+70 -67 93 -75 212 -75 101 0 108 1 181 38 167 82 275 259 313 514 34 226 4
+496 -71 645 -36 71 -104 140 -177 179 -56 30 -72 34 -157 36 -82 3 -103 0
+-150 -20z m61 -350 c77 -52 125 -208 116 -382 -9 -194 -60 -312 -148 -349 -65
+-26 -108 -16 -163 37 -71 69 -90 133 -91 302 0 157 18 240 74 327 52 83 144
+111 212 65z M3753 4309 c-185 -31 -371 -176 -465 -364 -120 -237 -129 -608
+-20 -810 64 -117 183 -212 317 -250 76 -23 218 -23 308 -1 137 33 294 132 331
+210 37 77 8 209 -53 240 -60 31 -135 16 -164 -33 -27 -46 -102 -109 -143 -120
+-57 -16 -74 -14 -130 14 -67 34 -106 94 -128 202 l-7 31 68 7 c259 27 478 145
+553 299 52 106 57 268 10 373 -71 161 -255 239 -477 202z m131 -338 c57 -60
+43 -174 -30 -248 -43 -42 -113 -71 -218 -88 l-39 -6 6 68 c11 122 72 254 135
+287 15 9 48 15 73 16 37 0 50 -5 73 -29z M9265 3248 c-94 -35 -157 -115 -171
+-216 -9 -71 2 -117 38 -158 47 -53 83 -68 163 -68 82 1 131 22 186 81 53 55
+69 93 69 161 0 75 -31 136 -88 177 -34 23 -54 30 -105 32 -34 1 -75 -3 -92 -9z
+M7995 3144 c-82 -20 -106 -29 -125 -49 l-22 -23 1 -868 c1 -476 4 -879 8 -893
+11 -44 33 -69 81 -93 80 -39 255 -27 294 19 10 12 14 81 18 282 l5 266 72 -95
+c40 -52 114 -151 165 -220 118 -158 150 -182 256 -188 65 -4 85 -1 118 16 69
+35 133 140 134 216 0 38 -6 46 -126 160 -123 117 -334 348 -334 364 0 8 167
+211 296 359 88 100 99 124 84 182 -6 25 -20 60 -30 76 -25 40 -88 75 -134 75
+-76 0 -97 -20 -342 -329 l-159 -200 -6 423 c-7 461 -7 464 -66 499 -31 18
+-146 31 -188 21z M6966 3109 c-113 -15 -185 -37 -291 -89 -200 -97 -325 -255
+-369 -472 -20 -98 -20 -169 0 -266 46 -224 142 -336 425 -493 342 -191 410
+-242 463 -351 71 -146 50 -319 -53 -431 -106 -115 -317 -130 -452 -32 -120 87
+-124 266 -8 348 46 33 56 62 39 114 -20 60 -46 90 -106 119 -174 85 -396 -61
+-458 -303 -33 -127 -16 -285 44 -409 114 -234 447 -359 795 -298 420 73 698
+372 722 776 7 118 -8 222 -49 335 -38 106 -89 183 -169 258 -81 75 -142 116
+-310 206 -74 39 -172 92 -218 117 -151 81 -211 155 -211 262 0 95 57 186 145
+233 31 16 59 21 120 21 69 1 85 -2 114 -23 40 -29 70 -91 71 -146 1 -72 17
+-118 54 -152 60 -55 153 -65 246 -27 139 58 181 253 94 440 -49 105 -204 216
+-347 249 -86 19 -209 25 -291 14z M10307 2891 c-61 -20 -114 -51 -185 -108
+l-42 -35 -35 31 c-44 39 -105 55 -175 47 -67 -8 -108 -31 -135 -76 -24 -41
+-23 14 -10 -990 11 -795 5 -739 90 -780 89 -43 265 -14 290 48 4 9 6 146 6
+305 -2 196 1 287 8 287 6 0 32 -15 58 -34 67 -47 112 -59 202 -54 238 14 428
+246 482 591 15 99 6 271 -21 392 -40 178 -133 317 -243 366 -73 32 -209 37
+-290 10z m83 -367 c65 -55 91 -144 91 -311 0 -122 -21 -220 -62 -291 -36 -63
+-78 -92 -137 -92 -57 0 -95 21 -130 73 -52 75 -65 129 -66 267 -1 160 23 248
+87 317 50 54 66 62 134 62 42 1 57 -4 83 -25z M9240 2703 c-52 -9 -88 -24
+-110 -49 l-24 -24 12 -293 c7 -160 13 -368 13 -462 1 -361 17 -447 89 -472 80
+-27 241 -9 280 32 35 37 38 79 29 342 -5 136 -13 378 -18 536 -11 339 -14 350
+-97 379 -46 16 -117 21 -174 11z"/></g></symbol>
+<symbol id="ss-s" viewBox="0 0 174 275"><g transform="translate(0.000000,275.000000) scale(0.100000,-0.100000)" fill="currentColor"><path d="M906 2659 c-113 -15 -185 -37 -291 -89 -200 -97 -325 -255 -369 -472
+-20 -98 -20 -169 0 -266 46 -224 142 -336 425 -493 342 -191 410 -242 463
+-351 71 -146 50 -319 -53 -431 -106 -115 -317 -130 -452 -32 -120 87 -124 266
+-8 348 46 33 56 62 39 114 -20 60 -46 90 -106 119 -174 85 -396 -61 -458 -303
+-33 -127 -16 -285 44 -409 114 -234 447 -359 795 -298 420 73 698 372 722 776
+7 118 -8 222 -49 335 -38 106 -89 183 -169 258 -81 75 -142 116 -310 206 -74
+39 -172 92 -218 117 -151 81 -211 155 -211 262 0 95 57 186 145 233 31 16 59
+21 120 21 69 1 85 -2 114 -23 40 -29 70 -91 71 -146 1 -72 17 -118 54 -152 60
+-55 153 -65 246 -27 139 58 181 253 94 440 -49 105 -204 216 -347 249 -86 19
+-209 25 -291 14z"/></g></symbol>
+</svg>
+
+<header class="job">
+  <div class="wrap">
+    <p class="job-tag">Ürün Marka Kılavuzu · Sürüm 1.0 · 08.09.2026</p>
+    <div class="job-logo"><svg viewBox="0 0 626 140" style="color:#fff;--acc:#EBB60E" role="img" aria-label="SkipFrame by StepperSkip"><use href="#sf-lock-h"/></svg></div>
+    <h1>Marka ve Logo Kiti</h1>
+    <p class="lede">SkipFrame, G-code dosyalarından sinematik baskı animasyonları üreten bir masaüstü uygulaması. Bu kılavuz ürünün işaretini, kilit adını ve ikon sistemini tanımlar. Ana kural: işaret ürettiği görüntünün önüne geçmez.</p>
+    <dl class="meta">
+      <div><dt>Ana marka</dt><dd>StepperSkip</dd></div>
+      <div><dt>Ürün</dt><dd>SkipFrame</dd></div>
+      <div><dt>Platform</dt><dd>Windows · macOS</dd></div>
+      <div><dt>Lisans</dt><dd>MIT · açık kaynak</dd></div>
+      <div><dt>Palet</dt><dd>Devralındı · yeni renk yok</dd></div>
+    </dl>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="marka">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Marka ve ürün ilişkisi</h2></div>
+  <p class="sec-lede">SkipFrame bağımsız bir marka değil. StepperSkip'in ürettiği bir araç ve her zaman onun altında konumlanır. İki markanın işi farklı: StepperSkip insanlarla konuşur, SkipFrame işi yapar. Bu yüzden ton da farklı — ana marka sıcak ve oyuncu kalır, ürün sakin ve ölçülüdür.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <p class="label">Ana marka</p>
+      <div style="background:var(--plate);border-radius:3px;padding:22px;margin:12px 0 16px"><svg class="lg" viewBox="0 0 1137 544" role="img" aria-label="StepperSkip logosu"><use href="#ss-full"/></svg></div>
+      <h3>StepperSkip — topluluk</h3>
+      <p class="note">Türkçe soru-cevap platformu. Baloncuk hatlı, kalın konturlu, sticker gibi basılabilen bir kelime işareti. Yaklaşılabilirlik onun görevi.</p>
+    </div>
+    <div class="card">
+      <p class="label">Ürün</p>
+      <div style="background:var(--plate);border-radius:3px;padding:22px;margin:12px 0 16px;display:flex;justify-content:center"><svg style="width:100%;max-width:300px;height:auto;--acc:#EBB60E" viewBox="0 0 626 140" role="img" aria-label="SkipFrame kilit adı"><use href="#sf-lock-h"/></svg></div>
+      <h3>SkipFrame — araç</h3>
+      <p class="note">Render aracı. Geometrik bir işaret ve düz bir kelime işareti. Sessizlik onun görevi: kullanıcının ürettiği videonun yanında durur, üstüne çıkmaz.</p>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><p class="label">Devralınan</p><h3>Palet ve yazı tipi ailesi</h3><p class="note">Altın, siyah, gri skalası ve üç yazı tipi ailesi aynen ana markadan gelir. SkipFrame için yeni renk ya da yeni font üretilmez.</p></div>
+    <div class="card"><p class="label">Devralınan</p><h3>Basamak kuralı</h3><p class="note">Ana logoda “Skip”, “Stepper”a göre bir kademe aşağıda ve sağdadır. SkipFrame bu kaymayı tipografiyle değil, işaretin geometrisiyle tekrar eder. Akrabalık buradan kurulur.</p></div>
+    <div class="card"><p class="label">Devralınmayan</p><h3>Kelime işaretinin çizimi</h3><p class="note">Ana markanın baloncuk tipografisi ve kalın konturu SkipFrame'e taşınmaz. 16 px'te yaşayamaz ve ürünün tonuna aykırıdır.</p></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Ad kullanımı</h3>
+    <p class="note" style="margin-bottom:14px">Tam ad “SkipFrame by StepperSkip”. Kısa ad “SkipFrame”. Aşağıdaki tablo hangisinin nerede geçerli olduğunu bağlar.</p>
+    <table>
+      <tr><th>Bağlam</th><th>Kullanılacak ad</th><th>Neden</th></tr>
+      <tr><td>Uygulamanın kendi arayüzü</td><td class="m">SkipFrame</td><td>Kullanıcı zaten uygulamanın içinde; onay satırı gürültü olur.</td></tr>
+      <tr><td>Uygulama ikonu ve pencere başlığı</td><td class="m">SkipFrame</td><td>Sistemde tek kelime görünür.</td></tr>
+      <tr><td>Açılış ekranı, hakkında penceresi</td><td class="m">SkipFrame by StepperSkip</td><td>Ürünün kime ait olduğunun görüldüğü tek yer.</td></tr>
+      <tr><td>GitHub deposu, README başlığı</td><td class="m">SkipFrame by StepperSkip</td><td>Depoyu StepperSkip dışından bulan biri bağlamı burada kurar.</td></tr>
+      <tr><td>İndirme sayfası, sürüm notları</td><td class="m">SkipFrame by StepperSkip</td><td>İlk temas noktası; sahiplik burada kurulur.</td></tr>
+      <tr><td>Sosyal medya paylaşımı, kapak görseli</td><td class="m">SkipFrame by StepperSkip</td><td>Bağımsız bir araç sanılmaması için.</td></tr>
+      <tr><td>stepperskip.com içindeki ürün sayfası</td><td class="m">SkipFrame</td><td>Sayfa zaten StepperSkip'in; onay satırı kendini tekrar eder.</td></tr>
+      <tr><td>Videoya gömülü filigran</td><td class="m">İşaret + SkipFrame</td><td>Küçük ve hareketli; onay satırı okunmaz.</td></tr>
+    </table>
+    <p class="note"><b>Yazım:</b> tek kelime, iki büyük harf: <span class="mono">SkipFrame</span>. “Skipframe”, “Skip Frame”, “SKIPFRAME” ve “skipFrame” yanlıştır. Dosya adları ve komutlarda küçük harf tek kelime kullanılır: <span class="mono">skipframe</span>.</p>
+    <p class="note"><b>Onay satırı:</b> kilit adın içinde “by StepperSkip” dizgidir, ana markanın logosu değil. İki logo yan yana kilitlenmez. StepperSkip logosu yalnızca StepperSkip'in kendi asıl marka olduğu işlerde kullanılır.</p>
+  </div>
+</section>
+
+<section id="kavram">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Kavramsal yön</h2></div>
+  <p class="sec-lede">“Frame” hem video karesi hem baskının katman çerçevesi. İki yön geliştirildi; ikisi de bu ikiliği taşıyor ama farklı yerden. Aşağıda ikisi de gerçek çizimle, sonra tavsiye ve gerekçesi.</p>
+
+  <div class="grid g2">
+    <div class="dir">
+      <div class="stage">
+        <svg width="112" height="112" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön A eskizi"><use href="#sf-dir-a"/></svg>
+        <svg width="48" height="48" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön A, 48 piksel"><use href="#sf-dir-a"/></svg>
+        <svg width="24" height="24" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön A, 24 piksel"><use href="#sf-dir-a"/></svg>
+      </div>
+      <div class="body">
+        <span class="verdict-tag tag-no">Yön A · geliştirildi, seçilmedi</span>
+        <h3>Ofset çerçeve çifti</h3>
+        <p class="note">İki aynı çerçeve, biri diğerinden bir kademe kaydırılmış. Üst üste binen kareler hem art arda gelen iki video karesini hem üst üste binen iki katmanı anlatıyor. Kavram doğrudan ve anlatması kolay; ana markanın basamak kaymasını da birebir tekrar ediyor.</p>
+        <p class="note"><b>Neden seçilmedi:</b> iki sorun var. Birincisi ölçek — 24 px'te iki ince kontur birbirine yapışıyor ve işaret tanınmaz bir ızgaraya dönüşüyor; kalınlaştırınca iç boşluklar kapanıyor. İkincisi anlam — üst üste binen iki dikdörtgen, arayüz dünyasında zaten “kopyala / çoğalt” ikonu. Ürünün yaptığı işle ilgisi olmayan bir şeyi çağırıyor.</p>
+      </div>
+    </div>
+
+    <div class="dir">
+      <div class="stage">
+        <svg width="112" height="112" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön B eskizi"><use href="#sf-mark"/></svg>
+        <svg width="48" height="48" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön B, 48 piksel"><use href="#sf-mark-mid"/></svg>
+        <svg width="24" height="24" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Yön B, 24 piksel"><use href="#sf-mark-sm"/></svg>
+      </div>
+      <div class="body">
+        <span class="verdict-tag tag-yes">Yön B · tavsiye edilen</span>
+        <h3>Çerçeve ve içindeki basamak</h3>
+        <p class="note">Tek bir çerçeve ve içinde tabladan yükselen basamaklı bir kütle. Çerçeve video karesinin kenarı; içindeki basamaklar hem katman katman yükselen baskı hem zamanla ilerleyen bir dizi. Basamaklar sağa doğru iniyor — ana logodaki “Skip” kaymasının aynı yönü.</p>
+        <p class="note"><b>Neden bu:</b> içi dolu bir kütle, ince konturdan çok daha dayanıklı. 16 px'te çerçeve tek bir kare, içindeki kütle tek bir siluet olarak kalıyor; hiçbir şey birbirine yapışmıyor. Akrabalık tipografiden değil orandan geliyor, yani ana markanın çizgi film hattını taşımadan aynı aileden görünüyor.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Elenen üçüncü yön: film şeridi</h3>
+    <p class="note">Kenarında perforasyon delikleri olan yatay bir şerit denendi. Kavram olarak en okunaklı olanıydı ama üç nedenle bırakıldı: yatay bir form kare uygulama ikonuna oturmuyor, perforasyon delikleri 32 px'in altında kayboluyor, ve film şeridi bugün video değil nostalji anlatıyor. SkipFrame dijital bir render aracı.</p>
+  </div>
+</section>
+
+<section id="anatomi">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Anatomi</h2></div>
+  <p class="sec-lede">İşaret 100 birimlik kare bir ızgarada kurulur. Bütün ölçüler bu ızgaranın katlarıdır; hiçbiri gözle ayarlanmaz. Ölçek değişince oranlar değişmez, yalnızca detay seviyesi değişir (bkz. bölüm 06).</p>
+  <div class="grid g2">
+    <div class="anat">
+      <svg viewBox="-6 -6 112 112" role="img" aria-label="İşaretin ızgara üzerinde anatomisi">
+        <g stroke="#E0E2DD" stroke-width=".5">
+          <path d="M0 0H100M0 12.5H100M0 25H100M0 37.5H100M0 50H100M0 62.5H100M0 75H100M0 87.5H100M0 100H100"/>
+          <path d="M0 0V100M12.5 0V100M25 0V100M37.5 0V100M50 0V100M62.5 0V100M75 0V100M87.5 0V100M100 0V100"/>
+        </g>
+        <rect x="0" y="0" width="100" height="100" fill="none" stroke="#C9CCC6" stroke-width=".8"/>
+        <g style="color:#101010;--acc:#EBB60E"><use href="#sf-mark" width="100" height="100"/></g>
+        <g stroke="#EBB60E" stroke-width=".9" fill="none">
+          <path d="M5 -3.5H95"/><path d="M5 -5.5V-1.5M95 -5.5V-1.5"/>
+          <path d="M103.5 30V40"/><path d="M101.5 30H105.5M101.5 40H105.5"/>
+        </g>
+        <text x="50" y="-6.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="4.6" fill="#3F4441">90 birim</text>
+        <text x="103.5" y="27" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="4.6" fill="#3F4441">10</text>
+      </svg>
+    </div>
+    <div class="card">
+      <h3>Ölçüler</h3>
+      <ul class="dims" style="margin-top:12px">
+        <li><b>Izgara</b><span>100 × 100 birim</span></li>
+        <li><b>İşaretin kapladığı alan</b><span>90 × 90 birim</span></li>
+        <li><b>Çerçeve kontur kalınlığı</b><span>10 birim</span></li>
+        <li><b>Çerçeve dış köşe yarıçapı</b><span>15 birim</span></li>
+        <li><b>Çerçeve iç köşe yarıçapı</b><span>5 birim</span></li>
+        <li><b>Çerçeve iç açıklığı</b><span>70 × 70 birim</span></li>
+        <li><b>Katman yüksekliği</b><span>10 birim</span></li>
+        <li><b>Katman arası boşluk</b><span>5 birim</span></li>
+        <li><b>Katman genişlikleri</b><span>50 · 40 · 30 · 20</span></li>
+        <li><b>Basamak (her yan)</b><span>5 birim</span></li>
+        <li><b>Katman sayısı</b><span>4</span></li>
+        <li><b>Yatay hiza</b><span>ortalı, x = 50</span></li>
+        <li><b>Yan boşluk</b><span>10 · 10 birim, eşit</span></li>
+        <li><b>Tabla boşluğu</b><span>3 birim</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><p class="label">Kural</p><h3>Katman yüksekliği = kontur kalınlığı</h3><p class="note">İkisi de 10 birim. Bu eşitlik işaretin her yerinde aynı çizgi ağırlığını verir; küçüldüğünde hiçbir parça diğerinden önce kaybolmaz.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Boşluk, katmanın yarısı</h3><p class="note">Katmanlar arası boşluk 5 birim, yani katman yüksekliğinin yarısı. Bu oran değişmez; katmanlar birbirine yapıştırılmaz, aralık açılmaz.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Katmanlar ortalanır</h3><p class="note">Her katman bir alttakinden 10 birim dardır ve daralma iki yana eşit dağılır. Sola yaslı düzen bırakıldı: soldan hizalı, yukarı doğru kısalan çubuklar bir metin bloğu gibi okunuyordu.</p></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Tabla boşluğu</h3>
+    <p class="note">Kütlenin tabanı çerçevenin iç alt kenarına <b>değmez</b>; arada 3 birimlik sabit bir tabla boşluğu vardır. Bu boşluk anlamdan değil, üretimden geliyor: taban çerçeveye değdiğinde tek renk varyantlarda ikisi tek bir kütleye kaynaşıyor, işaret “içi dolu bir kutu” haline geliyor ve menü çubuğu şablon görüntüsünde tamamen okunmaz oluyordu. Küçük seviyelerde boşluk büyür (L2'de 4, L3'te 7 birim) çünkü ölçek düştükçe boşluğun piksel karşılığı korunmalı.</p>
+    <p class="note">Yığın yine de aşağıya yaslıdır — dikeyde ortalanmaz. Üstte kalan geniş boşluk baskının henüz bitmediğini, aşağıdaki dar boşluk ise kütlenin tablaya ait olduğunu söyler.</p>
+  </div>
+</section>
+
+<section id="versiyonlar">
+  <div class="sec-head"><span class="sec-num">04</span><h2>Versiyonlar</h2></div>
+  <p class="sec-lede">Resmî versiyonlar bunlar; yenisi üretilmez. Karşılaşılan her durum bu sekiz kullanımdan biriyle çözülür. Renk mantığı tek cümlede: yapı siyahtır, yalnızca en üstteki katman altındır — o katman “şu an işlenen” katmandır.</p>
+  <div class="grid g3">
+    <div class="variant">
+      <div class="stage bg-light"><svg style="width:100%;max-width:260px;height:auto;color:#101010;--acc:#EBB60E" viewBox="0 0 626 140" role="img" aria-label="Ana logo"><use href="#sf-lock-h"/></svg></div>
+      <div class="body"><p class="label">01 · Birincil</p><h3>Ana logo</h3><p>Varsayılan tercih. Beyaz ve çok açık zeminlerde. İndirme sayfası, README, sunum kapağı.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-ink"><svg style="width:100%;max-width:260px;height:auto;color:#FFFFFF;--acc:#EBB60E" viewBox="0 0 626 140" role="img" aria-label="Koyu zeminde ana logo"><use href="#sf-lock-h"/></svg></div>
+      <div class="body"><p class="label">02 · Birincil / koyu</p><h3>Koyu zemin</h3><p>Yapı beyaza döner, altın katman aynı kalır. Uygulamanın koyu arayüzü, video kapakları.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-light"><svg style="width:100%;max-width:260px;height:auto;color:#101010" viewBox="0 0 626 140" role="img" aria-label="Tek renk siyah logo"><use href="#sf-lock-h"/></svg></div>
+      <div class="body"><p class="label">03 · Tek renk</p><h3>Mono siyah</h3><p>Tek renk baskı, kaşe, faks, orta tonlu zeminler. Altın katman da siyaha döner.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-ink"><svg style="width:100%;max-width:260px;height:auto;color:#FFFFFF" viewBox="0 0 626 140" role="img" aria-label="Tek renk beyaz logo"><use href="#sf-lock-h"/></svg></div>
+      <div class="body"><p class="label">04 · Tek renk</p><h3>Mono beyaz</h3><p>Fotoğraf üzeri, koyu bloklar, video filigranı. Zemin yeterince koyu değilse kullanılmaz.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-ink"><svg style="width:100%;max-width:260px;height:auto;color:#EBB60E" viewBox="0 0 626 140" role="img" aria-label="Tek renk altın logo"><use href="#sf-lock-h"/></svg></div>
+      <div class="body"><p class="label">05 · Tek renk</p><h3>Mono altın</h3><p>Yalnızca siyah ve çok koyu zeminde. Beyaz üzerinde kontrast 1,87:1 — kullanılmaz.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-plate"><svg width="96" height="96" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" role="img" aria-label="Sadece işaret"><use href="#sf-mark"/></svg></div>
+      <div class="body"><p class="label">06 · İşaret</p><h3>Sadece işaret</h3><p>Favicon, avatar, pencere başlığı ve kilit adın sığmadığı her yer. Uygulama ikonu bunu değil, bölüm 05'teki çerçevesiz çizimi kullanır.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-light"><svg style="width:100%;max-width:260px;height:auto;color:#101010;--acc:#EBB60E" viewBox="0 0 626 122" role="img" aria-label="Yatay kilit ad, onay satırsız"><use href="#sf-lock-h-short"/></svg></div>
+      <div class="body"><p class="label">07 · Kilit ad</p><h3>Yatay, onay satırsız</h3><p>Uygulamanın kendi içinde ve dar başlık çubuklarında. “SkipFrame” tek başına yeter.</p></div>
+    </div>
+    <div class="variant">
+      <div class="stage bg-light"><svg style="width:100%;max-width:170px;height:auto;color:#101010;--acc:#EBB60E" viewBox="0 0 400 230" role="img" aria-label="Dikey kilit ad"><use href="#sf-lock-v"/></svg></div>
+      <div class="body"><p class="label">08 · Kilit ad</p><h3>Dikey</h3><p>Kare alanlar: açılış ekranı, sosyal medya kapağı, sunum kapağı, dikey video başlığı.</p></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Kilit adın oranları</h3>
+    <p class="note" style="margin-bottom:12px">Kilit ad elle dizilmez; aşağıdaki oranlar işaretin yüksekliğine (100 birim) bağlıdır ve hiçbir versiyonda değişmez.</p>
+    <table>
+      <tr><th>Ölçü</th><th>Yatay</th><th>Dikey</th></tr>
+      <tr><td>İşaret yüksekliği</td><td class="m">100 birim</td><td class="m">100 birim</td></tr>
+      <tr><td>Kelime işareti versal yüksekliği</td><td class="m">62 birim</td><td class="m">44 birim</td></tr>
+      <tr><td>İşaret ile kelime arası</td><td class="m">25 birim (yatay)</td><td class="m">18 birim (dikey)</td></tr>
+      <tr><td>Onay satırı versal yüksekliği</td><td class="m">18 birim</td><td class="m">12 birim</td></tr>
+      <tr><td>Kelime ile onay satırı arası</td><td class="m">15 birim</td><td class="m">18 birim</td></tr>
+      <tr><td>Onay satırının hizası</td><td><b>Sağa yaslı</b> — sağ kenarı kelime işaretinin son harfiyle aynı dikeyde biter</td><td>Ortalanır</td></tr>
+      <tr><td>Hizalama</td><td>İşaretin optik merkezi, sağdaki bloğun merkezine oturur</td><td>Hepsi ortalanır</td></tr>
+    </table>
+    <p class="note"><b>Onay satırı neden sağa yaslı:</b> “SkipFrame” içinde alt uzantısı olan tek harf <b>p</b>, ve o harf kelimenin ilk yarısında. Onay satırı sola yaslandığında p'nin kuyruğu satırın ilk harflerinin üstüne biniyor. Sağa yaslandığında satır kelimenin alt uzantısı olmayan yarısının altında kalır; çakışma ortadan kalkar ve iki blok sağdan tek bir kenar oluşturur. Bu hiza tercih değil, kilit adın parçasıdır — ortalanmaz, sola alınmaz.</p>
+  </div>
+</section>
+
+<section id="ikonisareti">
+  <div class="sec-head"><span class="sec-num">05</span><h2>İkon işareti</h2></div>
+  <p class="sec-lede">İşaretin iki çizimi var. <b>Çerçeveli işaret</b> kelime işareti, kilit ad ve site kullanımında geçerlidir. <b>Çerçevesiz ikon işareti</b> yalnızca uygulama ikonunda kullanılır. Sebep basit: squircle'ın kendisi zaten bir çerçeve. İşaretin kendi yuvarlak karesi onun içine girince ikonda iç içe iki çerçeve oluşuyor ve sonuç bir doküman ya da not uygulamasına benziyor — SkipFrame'in yaptığı işe değil.</p>
+
+  <div class="grid g2">
+    <div class="dont" style="border-color:var(--line)">
+      <div class="stage bg-plate" style="min-height:180px">
+        <svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="Çerçeveli işaretin ikon içindeki hali">
+          <rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/>
+          <g transform="translate(25.06,25.06) scale(0.499)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-mark" width="100" height="100"/></g>
+        </svg>
+      </div>
+      <div class="cap"><span class="badge">✕</span><p><b>Çerçeveli işaret ikonda kullanılmaz</b>Squircle bir çerçeve, işaretin kendi konturu ikinci çerçeve. İç içe iki kenarlık ikonu doküman ikonuna çeviriyor ve katmanlara kalan alan daralıyor.</p></div>
+    </div>
+    <div class="dir">
+      <div class="stage bg-plate" style="min-height:180px">
+        <svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="Çerçevesiz ikon işareti">
+          <rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/>
+          <g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+        </svg>
+      </div>
+      <div class="body" style="padding:14px 16px 16px;border-top:1px solid var(--line-soft)">
+        <span class="pill">Doğru</span>
+        <h3 style="margin-top:10px">Çerçevesiz ikon işareti</h3>
+        <p class="note">Tek kenarlık kalır ve o kenarlık işletim sisteminin kendi maskesidir. Katmanlar aynı tuvalde %30 daha büyük yaşar; 16 px'te okumayı taşıyan altın katman belirgin şekilde büyür.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Katman düzeni</h3>
+    <p class="note" style="margin-bottom:14px">Katmanlar yatayda <b>ortalanır</b>. Önceki düzen sola yaslıydı ve yukarı doğru daralıyordu; bu, soldan hizalı ve kısalan bir metin bloğu gibi okunuyordu — yani yine doküman. Ortalanmış düzende yığın simetrik bir kütle oluşturur ve altın katman bu kütlenin tepesinde, en son biriken katman olarak durur.</p>
+    <div class="grid g2">
+      <div class="card bg-plate" style="border:none;display:flex;align-items:center;justify-content:center;padding:20px">
+        <svg width="200" height="200" viewBox="-4 -4 108 108" role="img" aria-label="İkon işaretinin ölçüleri">
+          <g stroke="#C9CCC6" stroke-width=".5" fill="none"><rect x="0" y="0" width="100" height="100"/><path d="M50 0V100" stroke-dasharray="3 3"/></g>
+          <g style="color:#101010;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+          <g stroke="#EBB60E" stroke-width=".7" fill="none">
+            <path d="M12 -2H88"/><path d="M12 -4V0M88 -4V0"/>
+            <path d="M102 13V27"/><path d="M100 13H104M100 27H104"/>
+          </g>
+          <text x="50" y="-5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="4.4" fill="#3F4441">76 birim</text>
+          <text x="102" y="35" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="4.4" fill="#3F4441">14</text>
+        </svg>
+      </div>
+      <div class="card" style="border:none;padding:0">
+        <ul class="dims">
+          <li><b>Izgara</b><span>100 × 100 birim</span></li>
+          <li><b>Katman sayısı</b><span>4 (I1) · 2 (I2)</span></li>
+          <li><b>Katman yüksekliği</b><span>14 birim</span></li>
+          <li><b>Katman arası boşluk</b><span>6 birim</span></li>
+          <li><b>Katman genişlikleri</b><span>76 · 62 · 48 · 34</span></li>
+          <li><b>Basamak (her yan)</b><span>7 birim</span></li>
+          <li><b>Köşe yarıçapı</b><span>2 birim</span></li>
+          <li><b>Yatay hiza</b><span>ortalı, x = 50</span></li>
+          <li><b>Dikey hiza</b><span>ortalı, y = 50</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="note"><b>Simetri kuralı:</b> her katman bir alttakinden 14 birim dardır ve daralma iki yana eşit dağılır (7 + 7). Katmanlar sola ya da sağa yaslanmaz, kaydırılmaz. Yığın hem yatayda hem dikeyde tuvalin merkezine oturur.</p>
+  </div>
+
+  <p class="label" style="margin:28px 0 12px">Yeni düzen · 256 · 32 · 16 px</p>
+  <div class="card">
+    <div class="tiles">
+      <div class="tile">
+        <svg width="256" height="256" viewBox="0 0 100 100" role="img" aria-label="İkon işareti 256 piksel">
+          <rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/>
+          <g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+        </svg><span class="px">256 px · I1</span>
+      </div>
+      <div class="tile">
+        <svg width="32" height="32" viewBox="0 0 100 100" role="img" aria-label="İkon işareti 32 piksel">
+          <rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/>
+          <g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+        </svg><span class="px">32 px · I1</span>
+      </div>
+      <div class="tile">
+        <svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="İkon işareti 16 piksel">
+          <rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/>
+          <g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon-sm" width="100" height="100"/></g>
+        </svg><span class="px">16 px · I2</span>
+      </div>
+    </div>
+    <p class="note" style="margin-top:16px">256'da dört katman ve aralarındaki boşluklar ayrı ayrı çözülür. 32'de aynı çizim hâlâ dört katman verir — boşluk 1,27 px'e denk gelir, yani hâlâ bir piksel sırtı var. 16'da dört katman 0,6 px'lik boşluklara sıkışacağı için I2'ye geçilir: iki katman, kalın ve net. Silüet aynı kalır, altın katman her üç boyutta da yığının tepesindedir.</p>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><p class="label">Kural</p><h3>İki çizim karıştırılmaz</h3><p class="note">Çerçeveli işaret ikona, çerçevesiz işaret kilit ada girmez. Kilit adın içindeki işaret her zaman çerçevelidir; ikon her zaman çerçevesiz.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Altın zeminli ikon yoktur</h3><p class="note">İkonun zemini her zaman <span class="mono">#101010</span>. Altın zeminde aksan katmanı siyaha dönmek zorunda kalır ve küçük boyutta okumayı taşıyan tek unsur kaybolur. Bu varyant üretilmez.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Tek altın katman</h3><p class="note">Yığında yalnızca en üst katman altındır. İkinci bir katmanı altına çevirmek “şu an işlenen katman” anlamını siler.</p></div>
+  </div>
+</section>
+
+<section id="ikon">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Uygulama ikonu</h2></div>
+  <p class="sec-lede">İkonda bölüm 05'teki çerçevesiz işaret kullanılır; aşağıdaki yerleşimler onun içindir. İki işletim sistemi ikon tuvalini farklı kurgular, o yüzden iki ayrı master vardır. Ortak olan üç şey: zemin her zaman <span class="mono">#101010</span>, yapı beyaz, yalnızca en üst katman altın.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <p class="label">macOS · 1024 × 1024</p>
+      <h3 style="margin-top:6px">Squircle yerleşimi</h3>
+      <svg class="big-icon" viewBox="0 0 1024 1024" role="img" aria-label="macOS uygulama ikonu yerleşimi" style="margin:16px auto 0">
+        <rect x="1" y="1" width="1022" height="1022" fill="#F3F4F1" stroke="#C9CCC6" stroke-width="2" stroke-dasharray="10 8"/>
+        <rect x="100" y="100" width="824" height="824" rx="185" fill="#101010"/>
+        <g transform="translate(173.85,173.85) scale(6.763)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+        <g stroke="#EBB60E" stroke-width="3" fill="none">
+          <path d="M100 60H924"/><path d="M100 48V72M924 48V72"/>
+          <path d="M0 512H100"/><path d="M100 500V524"/>
+        </g>
+        <text x="512" y="42" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="30" fill="#3F4441">824 px içerik alanı</text>
+        <text x="50" y="486" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="26" fill="#3F4441">100</text>
+      </svg>
+      <ul class="dims" style="margin-top:18px">
+        <li><b>Tuval</b><span>1024 × 1024 px</span></li>
+        <li><b>İçerik alanı</b><span>824 × 824 px, ortalı</span></li>
+        <li><b>Kenar payı</b><span>100 px, dört yönde</span></li>
+        <li><b>Squircle yarıçapı</b><span>185 px</span></li>
+        <li><b>Zemin</b><span>#101010</span></li>
+        <li><b>İşaret</b><span>çerçevesiz (bölüm 05)</span></li>
+        <li><b>Yığının genişliği</b><span>514 px · içerik alanının %62'si</span></li>
+        <li><b>Yığının yüksekliği</b><span>500 px</span></li>
+      </ul>
+      <p class="note">Kenar payı Apple'ın ızgarasının gereği: Dock büyütmesi ve klasör önizlemesi ikonun kenarlarını kırpar. Yığın 824'lük alanın tamamını da doldurmaz; squircle'ın köşe kavisiyle en alt katmanın uçları arasında nefes payı kalır. Çerçeve kalktığı için bu pay artık tek boşluktur — eskiden squircle ile katmanlar arasında iki ayrı boşluk vardı.</p>
+    </div>
+
+    <div class="card">
+      <p class="label">Windows · 256 × 256</p>
+      <h3 style="margin-top:6px">Tam tuval yerleşimi</h3>
+      <svg class="big-icon" viewBox="0 0 256 256" role="img" aria-label="Windows uygulama ikonu yerleşimi" style="margin:16px auto 0">
+        <rect x="0.5" y="0.5" width="255" height="255" fill="#F3F4F1" stroke="#C9CCC6" stroke-width="1" stroke-dasharray="4 3"/>
+        <rect x="0" y="0" width="256" height="256" rx="24" fill="#101010"/>
+        <g transform="translate(13.5,13.5) scale(2.29)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g>
+        <g stroke="#EBB60E" stroke-width="1.4" fill="none">
+          <path d="M41 20H215"/><path d="M41 14V26M215 14V26"/>
+        </g>
+        <text x="128" y="10" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#EBB60E">%68 işaret</text>
+      </svg>
+      <ul class="dims" style="margin-top:18px">
+        <li><b>Tuval</b><span>256 × 256 px</span></li>
+        <li><b>Zemin</b><span>tam tuval, yarıçap 24 px</span></li>
+        <li><b>İşaret</b><span>çerçevesiz (bölüm 05)</span></li>
+        <li><b>Yığının genişliği</b><span>174 px · tuvalin %68'i</span></li>
+        <li><b>.ico katmanları</b><span>16 · 24 · 32 · 48 · 64 · 128 · 256</span></li>
+        <li><b>Renk derinliği</b><span>32 bit, alfa kanallı</span></li>
+      </ul>
+      <p class="note">Windows squircle uygulamaz, ikon tam tuvale oturur. Bu yüzden macOS dosyası Windows'a kopyalanmaz: macOS'un 100 px kenar payı görev çubuğunda ikonu komşularından belirgin şekilde küçük gösterir. İki ayrı master dosya üretilir.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Detay seviyeleri</h3>
+    <p class="note" style="margin-bottom:14px">İki çizimin de kendi seviyeleri var. <b>I</b> seviyeleri uygulama ikonunda (çerçevesiz), <b>L</b> seviyeleri kilit adda, favicon'da ve menü çubuğu şablonunda (çerçeveli) kullanılır. Ara boyutlarda bir üst seviyeye yuvarlanır.</p>
+    <table>
+      <tr><th>Seviye</th><th>Çizim</th><th>Boyut</th><th>Katman</th><th>Katman yük.</th><th>Boşluk</th></tr>
+      <tr><td class="m">I1 · tam</td><td>Çerçevesiz</td><td class="m">≥ 32 px</td><td class="m">4</td><td class="m">14 birim</td><td class="m">6 birim</td></tr>
+      <tr><td class="m">I2 · sade</td><td>Çerçevesiz</td><td class="m">≤ 24 px</td><td class="m">2</td><td class="m">24 birim</td><td class="m">10 birim</td></tr>
+      <tr><td class="m">L1 · tam</td><td>Çerçeveli</td><td class="m">≥ 96 px</td><td class="m">4</td><td class="m">10 birim</td><td class="m">5 birim</td></tr>
+      <tr><td class="m">L2 · orta</td><td>Çerçeveli</td><td class="m">32–64 px</td><td class="m">2</td><td class="m">17 birim</td><td class="m">6 birim</td></tr>
+      <tr><td class="m">L3 · sade</td><td>Çerçeveli</td><td class="m">≤ 24 px</td><td class="m">2</td><td class="m">18 birim</td><td class="m">7 birim</td></tr>
+    </table>
+    <p class="note">Katman sayısı azalırken boşluk büyür. Kural şu: en dar boşluk hedef boyutta <b>en az 1 px</b> tutmalı. 16 px'te I1'in 6 birimlik boşluğu 0,6 px'e düşer — bu yüzden orada I2 devreye girer, iki kalın katmanla.</p>
+    <p class="note"><b>L3'te tabla boşluğu:</b> alt çubuk çerçevenin iç kenarına değmez, arada 7 birimlik sabit bir boşluk kalır ve yan boşluklar eşitlenmiştir (11 · 11). Önceki çizimde çubuk iç alt kenara tam oturuyordu; tek renk varyantlarda ikisi tek kütleye kaynaşıyor ve menü çubuğu şablonunda işaret okunmuyordu.</p>
+  </div>
+
+  <p class="label" style="margin:28px 0 12px">macOS · gerçek boyut önizleme</p>
+  <div class="card"><div class="tiles"><div class="tile"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 16 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon-sm" width="100" height="100"/></g></svg><span class="px">16 px</span></div>
+<div class="tile"><svg width="24" height="24" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 24 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon-sm" width="100" height="100"/></g></svg><span class="px">24 px</span></div>
+<div class="tile"><svg width="32" height="32" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 32 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">32 px</span></div>
+<div class="tile"><svg width="48" height="48" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 48 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">48 px</span></div>
+<div class="tile"><svg width="64" height="64" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 64 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">64 px</span></div>
+<div class="tile"><svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 128 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">128 px</span></div>
+<div class="tile"><svg width="256" height="256" viewBox="0 0 100 100" role="img" aria-label="macOS ikonu 256 piksel"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">256 px</span></div></div></div>
+
+  <p class="label" style="margin:28px 0 12px">Windows · gerçek boyut önizleme</p>
+  <div class="card"><div class="tiles"><div class="tile"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 16 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon-sm" width="100" height="100"/></g></svg><span class="px">16 px</span></div>
+<div class="tile"><svg width="24" height="24" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 24 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon-sm" width="100" height="100"/></g></svg><span class="px">24 px</span></div>
+<div class="tile"><svg width="32" height="32" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 32 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">32 px</span></div>
+<div class="tile"><svg width="48" height="48" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 48 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">48 px</span></div>
+<div class="tile"><svg width="64" height="64" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 64 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">64 px</span></div>
+<div class="tile"><svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 128 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">128 px</span></div>
+<div class="tile"><svg width="256" height="256" viewBox="0 0 100 100" role="img" aria-label="Windows ikonu 256 piksel"><rect x="0" y="0" width="100" height="100" rx="9.4" fill="#101010"/><g transform="translate(5.27,5.27) scale(0.8945)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg><span class="px">256 px</span></div></div></div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <p class="label">512 ve 1024</p>
+      <h3 style="margin-top:6px">Büyük boyutlar</h3>
+      <p class="note" style="margin-bottom:14px">Bu iki boyut ekranda gerçek boyutta gösterilemeyecek kadar büyük. Aşağıda %25 ölçekte; ikisi de L1 kullanır ve 256'nın aynısıdır — büyük boyutta ek detay eklenmez.</p>
+      <div class="tiles">
+        <div class="tile">
+          <svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="512 piksel ikon, yüzde 25 ölçekte"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg>
+          <span class="px">512 · %25</span>
+        </div>
+        <div class="tile">
+          <svg width="128" height="128" viewBox="0 0 100 100" role="img" aria-label="1024 piksel ikon, yüzde 12,5 ölçekte"><rect x="9.77" y="9.77" width="80.47" height="80.47" rx="18.06" fill="#101010"/><g transform="translate(16.98,16.98) scale(0.6605)" style="color:#FFFFFF;--acc:#EBB60E"><use href="#sf-icon" width="100" height="100"/></g></svg>
+          <span class="px">1024 · %12,5</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="label">Menü çubuğu</p>
+      <h3 style="margin-top:6px">Tek renk şablon görüntü</h3>
+      <p class="note" style="margin-bottom:14px">Menü çubuğu ikonu <b>çerçeveli</b> L3 çizimini kullanır — burada squircle yok, yani çerçeve görevini üstlenecek bir tuval de yok. Şablon görüntü olduğu için sistem onu tek renge indirger: zemin yok, altın yok, gri ton yok, yalnızca dolu ve boş. Bu yüzden katmanların çerçeveden ayrık durması burada kritik.</p>
+      <div class="tiles">
+        <div class="tile"><div class="frame" style="background:#F3F4F1"><svg width="18" height="18" viewBox="0 0 100 100" style="color:#101010" role="img" aria-label="Açık modda menü çubuğu ikonu"><use href="#sf-mark-sm"/></svg></div><span class="px">18 · açık</span></div>
+        <div class="tile"><div class="frame" style="background:#101010;border-color:#2A2A2A"><svg width="18" height="18" viewBox="0 0 100 100" style="color:#FFFFFF" role="img" aria-label="Koyu modda menü çubuğu ikonu"><use href="#sf-mark-sm"/></svg></div><span class="px">18 · koyu</span></div>
+        <div class="tile"><div class="frame" style="background:#F3F4F1"><svg width="36" height="36" viewBox="0 0 100 100" style="color:#101010" role="img" aria-label="Şablon görüntü, 36 piksel"><use href="#sf-mark-sm"/></svg></div><span class="px">36 · 2x</span></div>
+      </div>
+      <p class="note"><b>Dosya:</b> <span class="mono">skipframe-menubarTemplate.pdf</span> ve <span class="mono">2x</span>. Apple'ın adlandırma kuralı gereği dosya adı <span class="mono">Template</span> ile bitmelidir, yoksa sistem tek renge indirgemez.</p>
+    </div>
+  </div>
+</section>
+
+<section id="koruma">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Koruma alanı ve minimum boyut</h2></div>
+  <p class="sec-lede">Logonun etrafında hiçbir metin, çizgi, buton, kenarlık ya da görsel bulunmayan bir boşluk kalır. Ölçü birimi <b>x</b>, işaretin yüksekliğinin beşte biri — yani çerçeve kontur kalınlığının iki katı. Her yönde en az 1x boşluk bırakılır ve boşluk logonun görünen sınırlarından ölçülür, dosyanın kenarından değil.</p>
+
+  <div class="clearbox">
+    <svg viewBox="-52 -40 730 226" role="img" aria-label="Kilit ad etrafındaki koruma alanı">
+      <rect x="-22" y="-7" width="667" height="154" fill="none" stroke="#EBB60E" stroke-width="2" stroke-dasharray="9 7"/>
+      <rect x="0" y="15" width="623" height="110" fill="none" stroke="#E0E2DD" stroke-width="1.5"/>
+      <g style="color:#101010;--acc:#EBB60E"><use href="#sf-lock-h" x="0" y="0" width="626" height="140"/></g>
+      <g fill="#EBB60E" opacity=".2"><rect x="-22" y="15" width="22" height="110"/><rect x="0" y="-7" width="623" height="22"/></g>
+      <text x="-11" y="72" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#101010">x</text>
+      <text x="311" y="9" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700" fill="#101010">x</text>
+      <text x="311" y="172" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#3F4441">x = işaret yüksekliğinin 1/5'i = 22 birim</text>
+    </svg>
+  </div>
+
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><p class="label">Kural</p><h3>1x mutlak minimum</h3><p class="note">Sıkışık arayüzlerde, başlık çubuklarında ve dar kolonlarda bile bu değerin altına inilmez.</p></div>
+    <div class="card"><p class="label">Tercih</p><h3>2x rahat</h3><p class="note">Kapak görselleri, sunumlar, basılı işler ve açılış ekranı için 2x kullanın.</p></div>
+    <div class="card"><p class="label">Sayfa kenarı</p><h3>Kenar da boşluktur</h3><p class="note">Logo ekran ya da sayfa kenarına 1x'ten yakın yerleştirilmez. Video filigranında bu kural kadraj kenarı için geçerlidir.</p></div>
+  </div>
+
+  <p class="label" style="margin:28px 0 12px">Minimum boyut denemesi</p>
+  <div class="lab">
+    <p class="label">İşaret genişliği: <span class="mono ok" id="sizeval">96 px</span></p>
+    <input type="range" id="sizerange" min="12" max="320" value="96" step="2" aria-label="İşaret genişliği">
+    <div class="ruler"><svg id="sizelogo" viewBox="0 0 100 100" style="width:96px;height:96px;color:#101010;--acc:#EBB60E" role="img" aria-label="Ölçek örneği"><use id="sizeuse" href="#sf-mark"/></svg></div>
+    <div class="verdict">
+      <div><b>Detay seviyesi</b><span id="sizelevel" class="ok">L1 · tam</span></div>
+      <div><b>Durum</b><span id="sizeverdict">Uygun</span></div>
+      <div><b>İşaret minimum</b><span class="mono">16 px / 5 mm</span></div>
+      <div><b>Yatay kilit minimum</b><span class="mono">120 px / 30 mm</span></div>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><p class="label">Ekran</p><h3>Sınırlar</h3>
+      <ul class="dims" style="margin-top:10px">
+        <li><b>İşaret</b><span>16 px</span></li>
+        <li><b>Yatay kilit, onay satırlı</b><span>200 px</span></li>
+        <li><b>Yatay kilit, onay satırsız</b><span>120 px</span></li>
+        <li><b>Dikey kilit</b><span>90 px genişlik</span></li>
+        <li><b>Kelime işareti tek başına</b><span>96 px</span></li>
+      </ul>
+    </div>
+    <div class="card"><p class="label">Baskı</p><h3>Sınırlar</h3>
+      <ul class="dims" style="margin-top:10px">
+        <li><b>İşaret</b><span>5 mm</span></li>
+        <li><b>Yatay kilit, onay satırlı</b><span>46 mm</span></li>
+        <li><b>Yatay kilit, onay satırsız</b><span>30 mm</span></li>
+        <li><b>Dikey kilit</b><span>22 mm genişlik</span></li>
+        <li><b>Kabartma / tek katman baskı</b><span>10 mm, yalnızca işaret</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">200 px'in altında onay satırı okunmaz hale gelir; kilit adı küçültmek yerine onay satırsız versiyona geçin. 120 px'in altında kelime işareti de bırakılır ve yalnızca işaret kullanılır.</p>
+</section>
+
+<section id="zemin">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Zemin testi</h2></div>
+  <p class="sec-lede">Bir zemin seçin; kit hangi versiyonun kullanılacağını söylesin. Karar zeminin açıklığına göre verilir, rengine göre değil. SkipFrame'in kritik noktası şu: altının parlaklığı skalanın tam ortasında (%51), yani altın katman ancak çok açık ya da çok koyu zeminde ayrışır. Ara tonlarda tek renge geçilir.</p>
+  <div class="lab">
+    <p class="label">Zemin</p>
+    <div class="controls" id="swatches">
+      <button class="sw" data-bg="#FFFFFF" style="background:#FFFFFF" aria-pressed="true" aria-label="Beyaz zemin"></button>
+      <button class="sw" data-bg="#E7E8E4" style="background:#E7E8E4" aria-pressed="false" aria-label="Açık gri zemin"></button>
+      <button class="sw" data-bg="#C9CCC6" style="background:#C9CCC6" aria-pressed="false" aria-label="Gri zemin"></button>
+      <button class="sw" data-bg="#EBB60E" style="background:#EBB60E" aria-pressed="false" aria-label="Altın zemin"></button>
+      <button class="sw" data-bg="#7C817B" style="background:#7C817B" aria-pressed="false" aria-label="Orta gri zemin"></button>
+      <button class="sw" data-bg="#3F4441" style="background:#3F4441" aria-pressed="false" aria-label="Koyu gri zemin"></button>
+      <button class="sw" data-bg="#101010" style="background:#101010" aria-pressed="false" aria-label="Siyah zemin"></button>
+      <input type="color" id="picker" value="#2B3A4A" class="sw" style="padding:0;background:none" aria-label="Kendi zemin renginizi seçin">
+    </div>
+    <div class="lab-stage" id="stage" style="background:#FFFFFF">
+      <svg id="stagelogo" viewBox="0 0 626 140" style="width:min(300px,74%);height:auto;color:#101010;--acc:#EBB60E" role="img" aria-label="Zemin üzerinde logo önizlemesi"><use href="#sf-lock-h"/></svg>
+    </div>
+    <div class="verdict">
+      <div><b>Zemin</b><span class="mono" id="bghex">#FFFFFF</span></div>
+      <div><b>Açıklık</b><span class="mono" id="bglum">100%</span></div>
+      <div><b>Kullanılacak versiyon</b><span id="bgpick" class="ok">Ana logo</span></div>
+      <div><b>Gerekçe</b><span id="bgwhy" style="font-size:13px;font-weight:400">Beyaza yakın zeminde altın katman ayrışır; tam renkli versiyon kullanılır.</span></div>
+    </div>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><p class="label">Kural</p><h3>Ara tonlarda altın yok</h3><p class="note">Açıklığı %20 ile %75 arasındaki her zeminde tek renk versiyona geçilir. Altın katman bu aralıkta zemine karışır ve işaret eksik görünür.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Altın zeminde mono siyah</h3><p class="note">Altın üzerine altın katman konmaz. Altın zeminde her zaman mono siyah kullanılır; hiçbir istisnası yok.</p></div>
+    <div class="card"><p class="label">Kural</p><h3>Fotoğrafta önce zemin</h3><p class="note">Logo doğrudan videoya ya da fotoğrafa konmaz. Altına en az %35 opaklıkta koyu bir katman veya düz bir blok koyun, sonra mono beyaz kullanın.</p></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Uygulamanın kendi arayüzü</h3>
+    <p class="note">SkipFrame'in arayüzü koyu. Başlık çubuğunda ve hakkında penceresinde <b>koyu zemin versiyonu</b> kullanılır: yapı beyaz, üst katman altın. Render önizleme alanının üstüne logo konmaz — önizleme kullanıcının işidir, marka oraya girmez.</p>
+  </div>
+</section>
+
+<section id="renk">
+  <div class="sec-head"><span class="sec-num">09</span><h2>Renk</h2></div>
+  <p class="sec-lede">Palet ana markadan olduğu gibi devralındı; SkipFrame için tek bir yeni renk üretilmedi. Altın tek aksan rengidir ve işaretin yalnızca bir parçasında görünür. Griler yapı ve arayüz renkleridir, logoda yer almaz.</p>
+  <div class="grid g4">
+    <div class="swatch"><div class="chip" style="background:#EBB60E"></div><div class="info"><b>Altın</b><span class="mono">--gold</span><span>#EBB60E</span><span>235 · 182 · 14</span><span>Üst katman, aksan</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#101010"></div><div class="info"><b>Siyah</b><span class="mono">--ink</span><span>#101010</span><span>16 · 16 · 16</span><span>Yapı, ikon zemini</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #E0E2DD"></div><div class="info"><b>Beyaz</b><span class="mono">--paper</span><span>#FFFFFF</span><span>255 · 255 · 255</span><span>Koyu zeminde yapı</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#E7E8E4"></div><div class="info"><b>Tabla grisi</b><span class="mono">--plate</span><span>#E7E8E4</span><span>231 · 232 · 228</span><span>Arayüz zemini</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#3F4441"></div><div class="info"><b>Çelik</b><span class="mono">--steel</span><span>#3F4441</span><span>63 · 68 · 65</span><span>İkincil metin</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#C9CCC6"></div><div class="info"><b>Çizgi</b><span class="mono">--line</span><span>#C9CCC6</span><span>201 · 204 · 198</span><span>Kenarlık</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#E0E2DD"></div><div class="info"><b>Yumuşak çizgi</b><span class="mono">--line-soft</span><span>#E0E2DD</span><span>224 · 226 · 221</span><span>İç ayırıcı</span></div></div>
+    <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#101010 50%,#EBB60E 50%)"></div><div class="info"><b>İkon çifti</b><span class="mono">ink + gold</span><span>Zemin + üst katman</span><span>10.18:1</span><span>Uygulama ikonu</span></div></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Kontrast değerleri</h3>
+    <p class="note" style="margin-bottom:14px">WCAG 2.1 oranları. Metin için 4.5:1 eşiği geçerlidir; logo dolguları bu eşiğe tabi değildir ama işaretin okunurluğu aynı mantıkla değerlendirilir.</p>
+    <table>
+      <tr><th>Çift</th><th>Oran</th><th>Metin</th><th>Nerede</th></tr>
+      <tr><td class="m">#FFFFFF · #101010</td><td class="m">19.03:1</td><td class="pass">Geçer</td><td>Koyu arayüzde gövde metni, ikon içindeki yapı.</td></tr>
+      <tr><td class="m">#101010 · #E7E8E4</td><td class="m">15.46:1</td><td class="pass">Geçer</td><td>Açık zeminde gövde metni ve logo.</td></tr>
+      <tr><td class="m">#EBB60E · #101010</td><td class="m">10.18:1</td><td class="pass">Geçer</td><td>Uygulama ikonunun üst katmanı. Paletin en güçlü ikilisi.</td></tr>
+      <tr><td class="m">#3F4441 · #FFFFFF</td><td class="m">9.93:1</td><td class="pass">Geçer</td><td>Açık zeminde ikincil metin, açıklama satırları.</td></tr>
+      <tr><td class="m">#3F4441 · #E7E8E4</td><td class="m">8.07:1</td><td class="pass">Geçer</td><td>Gri zeminde ikincil metin.</td></tr>
+      <tr><td class="m">#EBB60E · #3F4441</td><td class="m">5.31:1</td><td class="pass">Geçer</td><td>Koyu gri panelde sayısal vurgu. Yalnızca 16 px ve üstü.</td></tr>
+      <tr><td class="m">#EBB60E · #FFFFFF</td><td class="m">1.87:1</td><td class="fail">Kalır</td><td><b>Altın beyaz üzerinde metin rengi değildir.</b> Beyaz zeminde yalnızca kapalı bir dolgu olarak, siyah çerçevenin içinde kullanılır.</td></tr>
+      <tr><td class="m">#EBB60E · #E7E8E4</td><td class="m">1.52:1</td><td class="fail">Kalır</td><td>Gri zeminde altın kaybolur. Bu yüzden ara tonlarda tek renk versiyona geçilir.</td></tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Altının bütçesi</h3>
+    <p class="note">Altın, işaretin yaklaşık %4'ünü kaplar: dört katmandan yalnızca en üsttekini. Bu oran bilinçli. Ürün bir render aracı ve arayüzün içinde renkli olan tek şey kullanıcının ürettiği görüntü olmalı. Aynı kural arayüz için de geçerli: altın yalnızca aktif durum, ilerleme çubuğu ve birincil butonda görünür; başlıklarda, kenarlıklarda ve metinde kullanılmaz.</p>
+  </div>
+</section>
+
+<section id="tipografi">
+  <div class="sec-head"><span class="sec-num">10</span><h2>Tipografi</h2></div>
+  <p class="sec-lede">Üç aile de ana markadan devralındı, ama ürün bağlamında rolleri farklı dağılıyor. StepperSkip'te gövde metni ağırlıktaydı; SkipFrame'de en çok görünen aile monospace, çünkü arayüzün yarısı sayıdan ibaret.</p>
+  <div class="grid g3">
+    <div class="card"><p class="label">Başlık</p><h3 style="font-size:26px">Archivo Black</h3><p class="note">Sürüm başlıkları, açılış ekranı, sunum ve pazarlama başlıkları. Arayüzün içinde kullanılmaz — panel başlıkları için fazla ağır kalır ve dikkat çeker.</p></div>
+    <div class="card"><p class="label">Gövde ve arayüz</p><h3 style="font-family:'Space Grotesk';font-size:22px;font-weight:500">Space Grotesk</h3><p class="note">Kelime işaretinin de kaynağı. Arayüz etiketleri, açıklamalar, menüler, dokümantasyon. 14 px arayüz tabanı, 16 px doküman tabanı, 1.6 satır aralığı.</p></div>
+    <div class="card"><p class="label">Sayısal gösterge</p><h3 class="mono" style="font-size:19px">JetBrains Mono</h3><p class="note">Değişen her sayı. Sabit genişlikli rakamlar sayaç oynarken göstergenin genişliğini sabit tutar; oransal bir fontta değer her karede sağa sola kayar.</p></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>JetBrains Mono'nun arayüzdeki işi</h3>
+    <p class="note" style="margin-bottom:2px">SkipFrame'de sayılar dekorasyon değil, kullanıcının kararının dayanağı: kaç katman var, kaç kare üretilecek, video ne kadar sürecek, dosya ne kadar yer kaplayacak. Bu değerler render sırasında saniyede birkaç kez güncellenir. Sabit genişlik burada estetik değil, işlevsel bir gereklilik.</p>
+    <div class="readout">
+      <div><dt>Katman</dt><dd>1 <em>842</em> / 2 610</dd></div>
+      <div><dt>Kare</dt><dd>921</dd></div>
+      <div><dt>Kare hızı</dt><dd>30 fps</dd></div>
+      <div><dt>Süre</dt><dd>00:30.7</dd></div>
+      <div><dt>Çözünürlük</dt><dd>1080×1920</dd></div>
+      <div><dt>Tahmini boyut</dt><dd>48,2 MB</dd></div>
+    </div>
+    <p class="note"><b>Kurallar:</b> binlik ayırıcı ince boşluktur, nokta değil (<span class="mono">1 842</span>). Ondalık ayırıcı virgüldür (<span class="mono">0,2 mm</span>). Süre her zaman <span class="mono">dd:ss.d</span> biçiminde ve sıfır dolgulu yazılır. Birim ile sayı arasında boşluk bırakılır (<span class="mono">30 fps</span>, <span class="mono">48,2 MB</span>), yüzde işareti hariç. Değişen kısım altınla vurgulanabilir; sabit kısım beyaz kalır.</p>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>Kelime işareti nasıl kuruldu</h3>
+      <p class="note">Space Grotesk Bold, harf arası −%2. Dokunulan tek şey harf aralığı; harf biçimleri değiştirilmedi. Ana markanın kelime işareti özel çizimken SkipFrame'inki dizgidir — bu da bilinçli bir hiyerarşi: ürün, ana markanın önüne geçmez.</p>
+      <p class="note"><b>Ama:</b> master dosyalarda kelime işareti eğrilere çevrilmiş halde teslim edilir. Canlı yazı olarak bırakılırsa font yüklenmeyen ortamda logo bozulur ve harf aralığı sistem fontuna göre kayar.</p>
+    </div>
+    <div class="card">
+      <h3>Yedek fontlar</h3>
+      <p class="note">Bu fontlara erişilemeyen ortamlarda sırasıyla sistem sans-serif ve sistem monospace kullanılır. Kod bloklarında ve terminal çıktılarında yedek zincir: <span class="mono">ui-monospace, SFMono-Regular, Menlo, monospace</span>.</p>
+      <p class="note">El yazısı, gölgeli, dekoratif ve “teknoloji” çağrışımlı köşeli fontlar marka iletişiminde kullanılmaz. Ürün zaten teknik; yazı tipinin bunu ayrıca anlatmasına gerek yok.</p>
+    </div>
+  </div>
+</section>
+
+<section id="yanlis">
+  <div class="sec-head"><span class="sec-num">11</span><h2>Yanlış kullanımlar</h2></div>
+  <p class="sec-lede">Aşağıdakilerin hiçbiri kabul edilmez. Hepsi gerçek işarete uygulanmış canlı örnekler — teorik değil, karşılaşılmış hatalar.</p>
+  <div class="grid g3">
+
+    <div class="dont"><div class="stage"><svg class="d-stretch" style="width:70%;height:auto;color:#101010;--acc:#EBB60E" viewBox="0 0 626 140" aria-hidden="true"><use href="#sf-lock-h"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Oranı bozmayın</b>Genişletme, sıkıştırma, tek eksende ölçekleme yok. Daima kilitli oran.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg class="d-hue" width="88" height="88" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Rengi değiştirmeyin</b>Altın ve siyah sabittir. Filament rengine, temaya veya kampanyaya göre renk versiyonu üretilmez.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg class="d-shadow" width="88" height="88" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Efekt uygulamayın</b>Gölge, kabartma, dış parlama, 3D çevirme, cam efekti yok. İkonun zemini zaten derinliği veriyor.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg class="d-rotate" width="88" height="88" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Döndürmeyin</b>İşaret dik durur. Çerçeve bir video karesidir; eğik bir kare kadraj hissini bozar.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg width="88" height="88" viewBox="0 0 100 100" style="color:#101010" aria-hidden="true"><use href="#sf-mark-wrong"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Katman sayısını değiştirmeyin</b>Katman her zaman dört. “Daha çok katman daha çok baskı” değil; altı ince çizgi 32 px'te tek bir gri lekeye dönüşür.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="10" y="10" width="80" height="80" rx="10" fill="none" stroke="#101010" stroke-width="10"/>
+        <g fill="#101010"><rect x="25" y="72" width="50" height="10"/><rect x="25" y="57" width="40" height="10"/><rect x="25" y="42" width="30" height="10"/></g>
+        <rect x="25" y="27" width="20" height="10" fill="#EBB60E"/>
+      </svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Katmanları sola yaslamayın</b>Soldan hizalı ve yukarı daralan çubuklar bir metin bloğu gibi okunuyor. Katmanlar her zaman ortalanır.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="10" y="10" width="80" height="80" rx="10" fill="none" stroke="#101010" stroke-width="10"/>
+        <g fill="#101010"><rect x="25" y="75" width="50" height="10"/><rect x="30" y="60" width="40" height="10"/><rect x="35" y="45" width="30" height="10"/></g>
+        <rect x="40" y="30" width="20" height="10" fill="#EBB60E"/>
+      </svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Tabla boşluğunu kapatmayın</b>Alt katman çerçeveye değdirilmez. Değdiği anda tek renk varyantlarda ikisi kaynaşır ve işaret dolu bir kutuya döner.</p></div></div>
+
+    <div class="dont"><div class="stage" style="gap:12px"><svg style="width:44%;height:auto" viewBox="0 0 1137 544" aria-hidden="true"><use href="#ss-full"/></svg><svg width="52" height="52" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>İki logoyu yan yana kilitlemeyin</b>Ana marka bağı dizgiyle kurulur: “by StepperSkip”. StepperSkip logosu SkipFrame'in kilit adına girmez.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg style="width:82%;height:auto;color:#101010;--acc:#EBB60E" viewBox="0 0 626 140" aria-hidden="true">
+        <use href="#sf-mark" x="0" y="15" width="110" height="110"/>
+        <use href="#sf-word" x="138" y="8" width="485" height="106.7"/>
+        <use href="#sf-by" x="138" y="95" width="290" height="36.25"/>
+      </svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Onay satırını sola yaslamayın</b>“Skip”teki p'nin kuyruğu satırın üstüne biner. Onay satırı her zaman sağa yaslıdır; kelime işaretiyle aynı sağ kenarda biter.</p></div></div>
+
+    <div class="dont"><div class="stage bg-gold"><svg width="88" height="88" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Altın zeminli ikon üretmeyin</b>Zemin altın olunca üst katman siyaha dönmek zorunda kalır; küçük boyutta okumayı taşıyan tek unsur kaybolur. İkon zemini her zaman siyah.</p></div></div>
+
+    <div class="dont"><div class="stage d-photo"><svg width="88" height="88" viewBox="0 0 100 100" style="color:#FFFFFF;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Kalabalık zemine koymayın</b>Render önizlemesi ve desenli yüzeyler için önce düz koyu bir katman gerekir, sonra mono beyaz.</p></div></div>
+
+    <div class="dont"><div class="stage"><svg class="d-fade" width="88" height="88" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Saydamlaştırmayın</b>Logo filigran diye soluklaştırılmaz. Video filigranında mono beyaz %70 opaklıkta kullanılır, tam renkli versiyon değil.</p></div></div>
+
+    <div class="dont"><div class="stage" style="gap:6px"><span style="font-family:var(--display);font-size:12px">RENDER ET</span><svg width="46" height="46" viewBox="0 0 100 100" style="color:#101010;--acc:#EBB60E" aria-hidden="true"><use href="#sf-mark"/></svg><span style="font-family:var(--display);font-size:12px">İLE</span></div>
+      <div class="cap"><span class="badge">✕</span><p><b>Koruma alanına metin sokmayın</b>Logo cümlenin içine kelime gibi yerleştirilmez, buton etiketinin parçası yapılmaz.</p></div></div>
+
+  </div>
+</section>
+
+<section id="dosyalar">
+  <div class="sec-head"><span class="sec-num">12</span><h2>Dosyalar</h2></div>
+  <p class="sec-lede">İsimlendirme şeması: <span class="mono">skipframe-[bileşen]-[varyant]-[boyut].[uzantı]</span>. Bileşen ve varyant küçük harf, kelime araları tire. Sürüm numarası dosya adına yazılmaz; depoda klasör adıyla tutulur (<span class="mono">brand/v1/</span>).</p>
+
+  <div class="card">
+    <h3>Vektör — birincil</h3>
+    <table class="files" style="margin-top:12px">
+      <tr><th>Dosya</th><th>Kullanım</th></tr>
+      <tr><td>skipframe-lockup-horizontal.svg</td><td>Ana logo, onay satırlı. Web ve baskıda birinci tercih.</td></tr>
+      <tr><td>skipframe-lockup-horizontal-dark.svg</td><td>Koyu zemin versiyonu. Yapı beyaz, üst katman altın.</td></tr>
+      <tr><td>skipframe-lockup-horizontal-short.svg</td><td>Onay satırsız. Uygulama içi ve dar başlıklar.</td></tr>
+      <tr><td>skipframe-lockup-vertical.svg / -dark.svg</td><td>Dikey kilit ad. Kare alanlar, açılış ekranı.</td></tr>
+      <tr><td>skipframe-lockup-horizontal-mono-black.svg</td><td>Tek renk siyah. Açık ve orta tonlu zeminler, tek renk baskı.</td></tr>
+      <tr><td>skipframe-lockup-horizontal-mono-white.svg</td><td>Tek renk beyaz. Koyu zemin, video filigranı.</td></tr>
+      <tr><td>skipframe-lockup-horizontal-mono-gold.svg</td><td>Tek renk altın. Yalnızca siyah zemin.</td></tr>
+      <tr><td>skipframe-mark.svg</td><td>İşaret, L1. Zemini kendiniz kurarsınız.</td></tr>
+      <tr><td>skipframe-mark-mid.svg · skipframe-mark-small.svg</td><td>L2 ve L3 detay seviyeleri. İkon üretiminde kullanılır.</td></tr>
+      <tr><td>skipframe-wordmark.svg</td><td>Kelime işareti tek başına, eğrilere çevrilmiş.</td></tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Raster ve ikon</h3>
+    <table class="files" style="margin-top:12px">
+      <tr><th>Dosya</th><th>Kullanım</th></tr>
+      <tr><td>skipframe-lockup-horizontal-2400.png · -1200.png · -600.png</td><td>Saydam PNG. Ofis belgeleri, sosyal medya, hızlı kullanım.</td></tr>
+      <tr><td>skipframe-icon-mark.svg</td><td>Çerçevesiz ikon işareti (I1), zeminsiz vektör. İki masterın da kaynağı.</td></tr>
+      <tr><td>skipframe-icon-mark-small.svg</td><td>Çerçevesiz ikon işareti (I2). 16 ve 24 px katmanları buradan üretilir.</td></tr>
+      <tr><td>skipframe-icon-macos-1024.png</td><td>macOS master. 824 px içerik alanı, squircle zemin, çerçevesiz işaret.</td></tr>
+      <tr><td>skipframe.icns</td><td>macOS uygulama paketi. 16'dan 1024'e tüm katmanlar, 2x dahil.</td></tr>
+      <tr><td>skipframe-icon-windows-256.png</td><td>Windows master. Tam tuval, yarıçap 24 px, çerçevesiz işaret.</td></tr>
+      <tr><td>skipframe.ico</td><td>Windows uygulama ve kısayol. 16 · 24 · 32 · 48 · 64 · 128 · 256 katmanları.</td></tr>
+      <tr><td>skipframe-menubarTemplate.pdf · 2x.pdf</td><td>macOS menü çubuğu. Tek renk, şablon görüntü.</td></tr>
+      <tr><td>favicon.ico · favicon-32.png · favicon-16.png</td><td>Ürün sayfası ve dokümantasyon sekmesi.</td></tr>
+      <tr><td>apple-touch-icon-180.png</td><td>iOS ana ekran kısayolu.</td></tr>
+      <tr><td>skipframe-og-1200x630.png</td><td>Paylaşım önizlemesi. Siyah zemin, dikey kilit ad ortada.</td></tr>
+      <tr><td>skipframe-avatar-512.png</td><td>GitHub organizasyonu ve sosyal medya profili.</td></tr>
+    </table>
+    <p class="note"><b>Kural:</b> SVG'ler baskıda ve web'de önceliklidir. PNG yalnızca vektörün kabul edilmediği yerlerde kullanılır. JPG hiçbir logo varyantı için üretilmez — kayıplı sıkıştırma altın kenarında halka bırakır.</p>
+  </div>
+
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card">
+      <h3>Tauri ikon yapılandırması</h3>
+      <pre class="code" style="margin-top:12px">"bundle": {
+  "icon": [
+    "icons/32x32.png",
+    "icons/128x128.png",
+    "icons/128x1282x.png",
+    "icons/icon.icns",
+    "icons/icon.ico"
+  ]
+}</pre>
+      <p class="note"><span class="mono">icon.icns</span> macOS masterından, <span class="mono">icon.ico</span> Windows masterından üretilir. Tek bir kaynaktan otomatik üretim yapılmaz; iki platformun kenar payı farklıdır.</p>
+    </div>
+    <div class="card">
+      <h3>Web yerleşimi</h3>
+      <pre class="code" style="margin-top:12px">&lt;link rel="icon" href="/favicon.ico" sizes="any"&gt;
+&lt;link rel="icon" type="image/png" sizes="32x32"
+      href="/favicon-32.png"&gt;
+&lt;link rel="apple-touch-icon"
+      href="/apple-touch-icon-180.png"&gt;
+&lt;img src="/skipframe-lockup-horizontal.svg"
+     alt="SkipFrame by StepperSkip" width="220"&gt;</pre>
+      <p class="note"><span class="mono">alt</span> metni her zaman tam addır. İşaret tek başına kullanıldığında da <span class="mono">alt="SkipFrame"</span> yazılır, “logo” değil.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>İşaretin kaynak kodu</h3>
+    <p class="note" style="margin-bottom:12px">L1 işareti, bağımsız ve düzenlenebilir SVG olarak. Renk <span class="mono">currentColor</span> üzerinden, üst katman <span class="mono">--acc</span> değişkeninden gelir; değişken tanımlı değilse üst katman da <span class="mono">currentColor</span>'a düşer, yani dosya olduğu gibi tek renk çalışır.</p>
+    <pre class="code">&lt;svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"
+     width="100" height="100" role="img" aria-label="SkipFrame"&gt;
+  &lt;!-- çerçeve: video karesi --&gt;
+  &lt;rect x="10" y="10" width="80" height="80" rx="10"
+        fill="none" stroke="currentColor" stroke-width="10"/&gt;
+  &lt;!-- basılmış katmanlar --&gt;
+  &lt;g fill="currentColor"&gt;
+    &lt;rect x="25" y="75" width="50"   height="10"/&gt;
+    &lt;rect x="25" y="60" width="37.5" height="10"/&gt;
+    &lt;rect x="25" y="45" width="25"   height="10"/&gt;
+  &lt;/g&gt;
+  &lt;!-- işlenen katman --&gt;
+  &lt;rect x="25" y="30" width="12.5" height="10"
+        fill="var(--acc, currentColor)"/&gt;
+&lt;/svg&gt;</pre>
+    <p class="note">Kullanım: <span class="mono">style="color:#101010; --acc:#EBB60E"</span> tam renkli, <span class="mono">style="color:#FFFFFF"</span> tek renk beyaz verir. L2 ve L3 aynı yapıdadır; yalnızca kontur kalınlığı, köşe yarıçapı ve katman sayısı değişir.</p>
+  </div>
+  <hr class="rule">
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div><strong>SkipFrame by StepperSkip</strong> — Marka ve Logo Kiti v1.0</div>
+    <div class="mono" style="font-size:12px">stepperskip.com · 08.09.2026</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var lin=function(c){c=c/255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);};
+  var lum=function(hex){
+    var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);
+    return 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+  };
+  var isGold=function(hex){
+    var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);
+    return (r>170&&g>110&&b<140&&(r-b)>70);
+  };
+
+  // --- boyut ve detay seviyesi ---
+  var range=document.getElementById('sizerange'),logo=document.getElementById('sizelogo'),
+      use=document.getElementById('sizeuse'),val=document.getElementById('sizeval'),
+      lvl=document.getElementById('sizelevel'),verdict=document.getElementById('sizeverdict');
+  function sz(){
+    var v=parseInt(range.value,10);
+    logo.style.width=v+'px'; logo.style.height=v+'px'; val.textContent=v+' px';
+    var sym,name;
+    if(v>=96){sym='#sf-mark';name='L1 · tam';}
+    else if(v>=32){sym='#sf-mark-mid';name='L2 · orta';}
+    else {sym='#sf-mark-sm';name='L3 · sade';}
+    use.setAttribute('href',sym);
+    lvl.textContent=name;
+    if(v>=16){verdict.textContent='Uygun';verdict.className='ok';}
+    else{verdict.textContent='Sınırın altında — 16 px minimumdur';verdict.className='';verdict.style.color='#fff';}
+    if(v>=16){verdict.style.color='';}
+  }
+  range.addEventListener('input',sz); sz();
+
+  // --- zemin testi ---
+  var stage=document.getElementById('stage'),slogo=document.getElementById('stagelogo'),
+      hex=document.getElementById('bghex'),lumEl=document.getElementById('bglum'),
+      pick=document.getElementById('bgpick'),why=document.getElementById('bgwhy');
+  function apply(bg){
+    bg=bg.toUpperCase();
+    stage.style.backgroundColor=bg;
+    hex.textContent=bg;
+    var L=lum(bg); lumEl.textContent=Math.round(L*100)+'%';
+    var v,w,color,acc;
+    if(isGold(bg)){
+      v='Mono siyah'; color='#101010'; acc='#101010';
+      w='Altın zeminde üst katman zemine karışır; tek renk siyah kullanılır.';
+    } else if(L>=0.75){
+      v='Ana logo'; color='#101010'; acc='#EBB60E';
+      w='Beyaza yakın zeminde altın katman ayrışır; tam renkli versiyon kullanılır.';
+    } else if(L<=0.06){
+      v='Koyu zemin versiyonu'; color='#FFFFFF'; acc='#EBB60E';
+      w='Siyaha yakın zeminde yapı beyaza döner, altın katman yerinde kalır.';
+    } else if(L<0.20){
+      v='Mono beyaz'; color='#FFFFFF'; acc='#FFFFFF';
+      w='Koyu ama tam siyah olmayan zeminde altın kirli görünür; tek renk beyaz kullanın.';
+    } else {
+      v='Mono siyah'; color='#101010'; acc='#101010';
+      w='Ara tonlu zeminde altın kaybolur; tek renk siyah kullanın.';
+    }
+    slogo.style.color=color;
+    slogo.style.setProperty('--acc',acc);
+    pick.textContent=v; why.textContent=w;
+  }
+  var sws=document.querySelectorAll('#swatches .sw[data-bg]');
+  Array.prototype.forEach.call(sws,function(b){
+    b.addEventListener('click',function(){
+      Array.prototype.forEach.call(sws,function(o){o.setAttribute('aria-pressed','false');});
+      b.setAttribute('aria-pressed','true');
+      apply(b.getAttribute('data-bg'));
+    });
+  });
+  var picker=document.getElementById('picker');
+  picker.addEventListener('input',function(){
+    Array.prototype.forEach.call(sws,function(o){o.setAttribute('aria-pressed','false');});
+    apply(picker.value);
+  });
+  apply('#FFFFFF');
+})();
+</script>
+</body>
+</html>

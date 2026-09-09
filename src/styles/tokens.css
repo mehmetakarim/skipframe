@@ -1,0 +1,52 @@
+/**
+ * SkipFrame theme tokens.
+ *
+ * Every colour, radius, spacing step and type size in the app resolves to a variable declared
+ * here. Components must never hard-code a colour value.
+ *
+ * This file currently carries only the brand primitives taken from the logo kit; the full token
+ * set is derived from /design when the component library is built.
+ */
+
+:root {
+  /* -- brand ------------------------------------------------------------------ */
+  --sf-accent: #ebb60e;
+  --sf-ink: #101010;
+  --sf-paper: #ffffff;
+
+  /* -- surfaces (dark, the app's only theme for now) --------------------------- */
+  --sf-bg: #101010;
+  --sf-surface: #191919;
+  --sf-surface-raised: #202020;
+  --sf-line: #2e2e2e;
+
+  /* -- text -------------------------------------------------------------------- */
+  --sf-text: #e7e8e4;
+  --sf-text-dim: #8a8f88;
+  --sf-text-faint: #6f7369;
+
+  /* -- state ------------------------------------------------------------------- */
+  --sf-danger: #9a2a1e;
+  --sf-ok: #1e6b33;
+
+  /* -- geometry ---------------------------------------------------------------- */
+  --sf-radius-sm: 3px;
+  --sf-radius: 6px;
+  --sf-radius-lg: 10px;
+
+  --sf-space-1: 4px;
+  --sf-space-2: 8px;
+  --sf-space-3: 12px;
+  --sf-space-4: 16px;
+  --sf-space-5: 24px;
+  --sf-space-6: 32px;
+
+  /* -- type -------------------------------------------------------------------- */
+  --sf-font: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sf-font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+  --sf-text-xs: 11px;
+  --sf-text-sm: 12px;
+  --sf-text-md: 14px;
+  --sf-text-lg: 18px;
+  --sf-text-xl: 24px;
+}

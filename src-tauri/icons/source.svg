@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- App icon per the brand kit: the icon canvas plays the role of the frame, so the
+       mark itself is drawn without one (sf-icon, full detail). -->
+  <rect width="1024" height="1024" rx="230" fill="#101010"/>
+  <g transform="translate(102.4 102.4) scale(8.192)">
+    <g fill="#FFFFFF">
+      <rect x="12" y="73" width="76" height="14" rx="2"/>
+      <rect x="19" y="53" width="62" height="14" rx="2"/>
+      <rect x="26" y="33" width="48" height="14" rx="2"/>
+    </g>
+    <rect x="33" y="13" width="34" height="14" rx="2" fill="#EBB60E"/>
+  </g>
+</svg>

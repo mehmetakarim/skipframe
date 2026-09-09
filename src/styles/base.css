@@ -1,0 +1,32 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: var(--sf-text-md);
+  -webkit-font-smoothing: antialiased;
+  /* The window chrome is the app's; text selection inside it is not a document gesture. */
+  user-select: none;
+  cursor: default;
+  overflow: hidden;
+}
+
+code,
+kbd,
+.mono {
+  font-family: var(--sf-font-mono);
+}

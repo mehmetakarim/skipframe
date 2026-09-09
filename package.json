@@ -1,0 +1,47 @@
+{
+  "name": "skipframe",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Layer-by-layer 3D print animation from G-code, exported as Reels/Shorts video. Fully local.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build",
+    "typecheck": "vue-tsc --build --force",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"*.{ts,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"*.{ts,json,md}\""
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "@tauri-apps/plugin-updater": "^2.11.0",
+    "mp4-muxer": "^5.2.2",
+    "three": "^0.185.0",
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tauri-apps/cli": "^2.11.4",
+    "@tsconfig/node22": "^22.0.2",
+    "@types/node": "^22.20.1",
+    "@types/three": "^0.185.4",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.5.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vite": "^7.1.12",
+    "vue-tsc": "^3.1.1"
+  }
+}
