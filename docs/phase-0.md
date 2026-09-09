@@ -112,15 +112,29 @@ cold open of a 750 000-path file, cache miss included.
 the export resolution, which is heavier than the on-screen viewport. Travels hidden. Measured
 inside the app's WebView2.
 
-| Metric                                       | Value                                         |
-| -------------------------------------------- | --------------------------------------------- |
-| Frame interval                               | p50 **4.20 ms**, p95 4.40 ms, max 5.50 ms     |
-| Frames within a 60 Hz budget                 | 100 %                                         |
-| Mean rate                                    | ~240 fps                                      |
-| `renderer.render()` CPU cost                 | p50 0.10 ms, p95 0.20 ms                      |
-| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 0.55 ms, p95 1.11 ms                      |
-| Draw calls per frame                         | 3 (print, bed grid, bed outline)              |
-| Context                                      | WebGL2, ANGLE / D3D11, NVIDIA RTX 5060 Laptop |
+| Metric                                       | Lines                    | Beads (shipping)             |
+| -------------------------------------------- | ------------------------ | ---------------------------- |
+| Frame interval                               | p50 4.20 ms, p95 4.40 ms | p50 **4.20 ms**, p95 4.50 ms |
+| Frames within a 60 Hz budget                 | 100 %                    | 99.8 %                       |
+| `renderer.render()` CPU cost                 | p50 0.10 ms              | p50 0.10 ms, p95 0.40 ms     |
+| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 0.55 ms, p95 1.11 ms | p50 **1.59 ms**, p95 3.62 ms |
+| Draw calls per frame                         | 3                        | 3                            |
+| Export rate, 1080x1920                       | 180 fps                  | 94 fps                       |
+
+Context: WebGL2, ANGLE / D3D11, NVIDIA RTX 5060 Laptop.
+
+The print is drawn as extrusion beads rather than lines — an instanced prism per segment, so
+light has a surface to fall on. That costs about 3x the GPU time and half the export rate, and
+still leaves a 10x margin against the 60 Hz budget. Memory did not move: the prism is uploaded
+once, and each segment contributes only its endpoints, width and feature, all three bound as
+views onto the parser's own buffer.
+
+The spread in the bead column is shader compilation: the first run of a session pays for it,
+later runs do not. The one 33 ms frame in the bead sweep is the same thing, not a steady-state
+cost.
+
+Determinism was re-checked after the change — the mechanism is the same, but the renderer is
+not, and the claim is the project's central promise. Two runs, all 90 decoded frames identical.
 
 The real file also found two defects in the renderer that a centred model on a corner-origin bed
 would never have shown:

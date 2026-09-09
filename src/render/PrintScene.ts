@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 
 import type { Ir } from '../ir/types';
+import { buildBeadGeometry, layerHeightOf } from './beadGeometry';
+import { finishFor, lightDirection, type LightRig } from './surfaces';
 import {
   BY_FEATURE,
   CURRENT_LAYER,
@@ -13,43 +15,80 @@ import {
 /**
  * The print viewport.
  *
- * One merged `LineSegments` geometry holds the entire print. Animation is a single
- * `setDrawRange` call — no per-layer meshes, no geometry rebuilds, one draw call per frame.
+ * The whole print is one instanced geometry: an extrusion bead uploaded once, drawn once per
+ * segment. Animation is a single `instanceCount` assignment — no per-layer meshes, no geometry
+ * rebuilds, one draw call per frame. (`setDrawRange` counts indices inside one instance, so it
+ * cannot express "the first n segments"; `instanceCount` is its equivalent here and everything
+ * that rule protects is unchanged.)
  *
  * The scene is driven by a **layer index**, never by elapsed time. Export walks the same
  * `setLayer` path frame by frame, which is what makes a rendered video reproducible.
  */
 
-// GLSL ES 3.00. Three supplies `position`, `modelViewMatrix` and `projectionMatrix`; everything
-// else, including the fragment output, has to be declared here.
+// GLSL ES 3.00. Three supplies `position`, `normal`, the matrices and `cameraPosition`;
+// everything else, including the fragment output, has to be declared here.
+//
+// `position` is the cross-section coordinate (u, v, t) of the instanced bead prism and `normal`
+// is the direction around that cross-section — see beadGeometry.ts. The prism is built here, in
+// the vertex shader, from the two endpoints of the segment.
 const VERTEX_SHADER = /* glsl */ `
+  in vec3 aStart;
+  in vec3 aEnd;
+  in float aWidth;
   in float aFeature;
 
   uniform sampler2D uPalette;
   uniform float uShowTravel;
-  uniform float uCurrentLayerStart;   // first vertex of the layer being printed
-  uniform float uCurrentLayerEnd;     // one past its last vertex
+  uniform float uLayerHeight;
+  uniform float uTravelWidth;
+  uniform float uCurrentStart;      // first segment of the layer being printed
+  uniform float uCurrentEnd;        // one past its last segment
   uniform vec3 uCurrentLayerColor;
   uniform float uHighlightCurrent;
 
   out vec3 vColor;
+  out vec3 vNormal;
+  out vec3 vWorld;
 
   void main() {
-    float vertexId = float(gl_VertexID);
-    vec3 base = texture(uPalette, vec2((aFeature + 0.5) / ${PALETTE_SIZE}.0, 0.5)).rgb;
-
     bool isTravel = aFeature < 0.5;
-    bool isCurrent = uHighlightCurrent > 0.5
-      && vertexId >= uCurrentLayerStart
-      && vertexId < uCurrentLayerEnd
-      && !isTravel;
 
+    vec3 seg = aEnd - aStart;
+    float len = length(seg);
+    vec3 dir = len > 1e-6 ? seg / len : vec3(1.0, 0.0, 0.0);
+
+    // Segments are almost always in the layer plane; a near-vertical one would make the usual
+    // reference axis degenerate, so it gets a different one.
+    vec3 up = abs(dir.z) > 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+    vec3 side = normalize(cross(up, dir));
+    vec3 vert = cross(dir, side);
+
+    float w = isTravel ? uTravelWidth : max(aWidth, 0.05);
+    float h = isTravel ? uTravelWidth : uLayerHeight;
+
+    // Both ends run half a bead past the endpoint so consecutive prisms overlap; without it
+    // every corner in the toolpath would show a wedge of daylight.
+    vec3 centre = mix(aStart, aEnd, position.z) + dir * ((position.z - 0.5) * w);
+    vec3 local = centre + side * (position.x * w) + vert * (position.y * h);
+
+    // The cross-section is an ellipse, not a circle, so its normal has to be corrected for the
+    // bead's own width-to-height ratio — which is per segment and cannot be baked into the mesh.
+    vec2 n2 = normalize(vec2(normal.x / max(w, 1e-4), normal.y / max(h, 1e-4)));
+    vec3 n = normalize(side * n2.x + vert * n2.y);
+
+    vec4 world = modelMatrix * vec4(local, 1.0);
+    vWorld = world.xyz;
+    vNormal = normalize(mat3(modelMatrix) * n);
+
+    float id = float(gl_InstanceID);
+    bool isCurrent = uHighlightCurrent > 0.5 && id >= uCurrentStart && id < uCurrentEnd && !isTravel;
+    vec3 base = texture(uPalette, vec2((aFeature + 0.5) / ${PALETTE_SIZE}.0, 0.5)).rgb;
     vColor = isCurrent ? uCurrentLayerColor : base;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * viewMatrix * world;
 
-    // Travels are hidden by collapsing them outside the clip volume rather than by splitting
-    // the geometry, which would cost a second draw call and break the single draw range.
+    // Travels are hidden by collapsing them outside the clip volume rather than by splitting the
+    // geometry, which would cost a second draw call and break the single instance count.
     if (isTravel && uShowTravel < 0.5) {
       gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     }
@@ -58,11 +97,39 @@ const VERTEX_SHADER = /* glsl */ `
 
 const FRAGMENT_SHADER = /* glsl */ `
   in vec3 vColor;
+  in vec3 vNormal;
+  in vec3 vWorld;
+
+  uniform vec3 uKeyDir;
+  uniform float uKey;
+  uniform float uFill;
+  uniform float uAmbient;
+  uniform float uSpecular;
+  uniform float uShininess;
+  uniform float uRim;
+  uniform float uTint;
 
   out vec4 fragColor;
 
   void main() {
-    fragColor = vec4(vColor, 1.0);
+    vec3 n = normalize(vNormal);
+    vec3 view = normalize(cameraPosition - vWorld);
+
+    // Two lights and an ambient term: a key, and a dimmer fill from the opposite side so the
+    // shadow half of the print stays readable without a second shadow map.
+    float key = max(dot(n, uKeyDir), 0.0) * uKey;
+    float fill = max(dot(n, -uKeyDir), 0.0) * uFill;
+    vec3 diffuse = vColor * (uAmbient + key + fill);
+
+    vec3 halfVec = normalize(uKeyDir + view);
+    float spec = pow(max(dot(n, halfVec), 0.0), uShininess) * uSpecular;
+    // Plastics keep a white highlight; a metal takes its own colour, which is most of what
+    // separates the two finishes.
+    vec3 specColour = mix(vec3(1.0), vColor, uTint);
+
+    float rim = pow(1.0 - max(dot(n, view), 0.0), 3.0) * uRim;
+
+    fragColor = vec4(diffuse + spec * specColour + rim * vColor, 1.0);
   }
 `;
 
@@ -134,8 +201,8 @@ export class PrintScene {
   private readonly root = new THREE.Group();
   private readonly bed = new THREE.Group();
   private material: THREE.ShaderMaterial | null = null;
-  private geometry: THREE.BufferGeometry | null = null;
-  private lines: THREE.LineSegments | null = null;
+  private geometry: THREE.InstancedBufferGeometry | null = null;
+  private beads: THREE.Mesh | null = null;
   private paletteTexture: THREE.DataTexture;
 
   private ir: Ir | null = null;
@@ -246,15 +313,13 @@ export class PrintScene {
     this.disposeGeometry();
     this.ir = ir;
 
-    const geometry = new THREE.BufferGeometry();
-    // No copy: the attribute points straight at the buffer the parser produced.
-    geometry.setAttribute('position', new THREE.BufferAttribute(ir.positions, 3));
-    geometry.setAttribute('aFeature', new THREE.Uint8BufferAttribute(expandFeature(ir), 1));
-    geometry.setDrawRange(0, 0);
+    // Endpoints, width and feature are bound as views onto the parser's own buffer; nothing
+    // about the print is copied to build this.
+    const geometry = buildBeadGeometry(ir);
 
     const material = new THREE.ShaderMaterial({
-      // GLSL 3 is what makes `gl_VertexID` available, which is how the current layer is
-      // highlighted without a six-megabyte per-vertex index attribute. WebGL2 is present in
+      // GLSL 3 is what makes `gl_InstanceID` available, which is how the layer being printed is
+      // told apart from the rest without a per-segment index attribute. WebGL2 is present in
       // both WebView2 and WKWebView on the platforms we ship.
       glslVersion: THREE.GLSL3,
       vertexShader: VERTEX_SHADER,
@@ -262,24 +327,55 @@ export class PrintScene {
       uniforms: {
         uPalette: { value: this.paletteTexture },
         uShowTravel: { value: 0 },
-        uCurrentLayerStart: { value: 0 },
-        uCurrentLayerEnd: { value: 0 },
+        uLayerHeight: { value: layerHeightOf(ir) },
+        uTravelWidth: { value: Math.max(0.08, layerHeightOf(ir) * 0.4) },
+        uCurrentStart: { value: 0 },
+        uCurrentEnd: { value: 0 },
         uCurrentLayerColor: { value: new THREE.Color().setRGB(...normalised(CURRENT_LAYER)) },
         uHighlightCurrent: { value: 1 },
+        uKeyDir: { value: new THREE.Vector3(...lightDirection(135, 45)) },
+        uKey: { value: 0.75 },
+        uFill: { value: 0.18 },
+        uAmbient: { value: 0.28 },
+        uSpecular: { value: 0.06 },
+        uShininess: { value: 8 },
+        uRim: { value: 0.06 },
+        uTint: { value: 0 },
       },
     });
 
     this.geometry = geometry;
     this.material = material;
-    this.lines = new THREE.LineSegments(geometry, material);
-    // The bounding sphere would otherwise be computed from a 750k-segment buffer on every
-    // frustum test; the camera always looks at the print, so culling buys nothing here.
-    this.lines.frustumCulled = false;
-    this.root.add(this.lines);
+    this.beads = new THREE.Mesh(geometry, material);
+    // The bounding sphere would otherwise be computed from the instance buffer on every frustum
+    // test; the camera always looks at the print, so culling buys nothing here.
+    this.beads.frustumCulled = false;
+    this.root.add(this.beads);
 
     this.buildBed(ir.meta.bedSize ?? [220, 220], ir.meta.bedOrigin ?? [0, 0]);
     this.frameToPrint(ir);
     this.setLayer(ir.layerCount - 1);
+  }
+
+  // -- 05 light and 02 surface --------------------------------------------------------------
+
+  setLight(rig: LightRig): void {
+    if (!this.material) return;
+    const u = this.material.uniforms;
+    (u.uKeyDir!.value as THREE.Vector3).set(...lightDirection(rig.azimuthDeg, rig.elevationDeg));
+    u.uKey!.value = rig.intensity;
+    u.uFill!.value = rig.fill;
+    u.uAmbient!.value = rig.ambient;
+  }
+
+  setSurface(surface: string): void {
+    if (!this.material) return;
+    const finish = finishFor(surface);
+    const u = this.material.uniforms;
+    u.uSpecular!.value = finish.specular;
+    u.uShininess!.value = finish.shininess;
+    u.uRim!.value = finish.rim;
+    u.uTint!.value = finish.tint;
   }
 
   setPalette(palette: Palette): void {
@@ -317,16 +413,17 @@ export class PrintScene {
     this.layer = clamped;
 
     if (clamped < 0) {
-      this.geometry.setDrawRange(0, 0);
+      this.geometry.instanceCount = 0;
       return;
     }
 
-    const start = (ir.layerStart[clamped] ?? 0) * 2;
-    const end = (ir.layerStart[clamped + 1] ?? ir.segmentCount) * 2;
+    const start = ir.layerStart[clamped] ?? 0;
+    const end = ir.layerStart[clamped + 1] ?? ir.segmentCount;
 
-    this.geometry.setDrawRange(0, end);
-    this.material.uniforms.uCurrentLayerStart!.value = start;
-    this.material.uniforms.uCurrentLayerEnd!.value = end;
+    // The instanced equivalent of setDrawRange: one scalar, no rebuild, no per-layer meshes.
+    this.geometry.instanceCount = end;
+    this.material.uniforms.uCurrentStart!.value = start;
+    this.material.uniforms.uCurrentEnd!.value = end;
   }
 
   get currentLayer(): number {
@@ -508,12 +605,12 @@ export class PrintScene {
   // -- teardown -------------------------------------------------------------------------
 
   private disposeGeometry(): void {
-    if (this.lines) this.root.remove(this.lines);
+    if (this.beads) this.root.remove(this.beads);
     this.geometry?.dispose();
     this.material?.dispose();
     this.geometry = null;
     this.material = null;
-    this.lines = null;
+    this.beads = null;
   }
 
   dispose(): void {
@@ -522,20 +619,6 @@ export class PrintScene {
     this.backgroundMaterial.dispose();
     this.renderer.dispose();
   }
-}
-
-/**
- * Feature type is stored once per segment; the GPU wants one value per vertex. This is the only
- * per-vertex expansion in the pipeline, and it runs once per file.
- */
-function expandFeature(ir: Ir): Uint8Array {
-  const out = new Uint8Array(ir.segmentCount * 2);
-  for (let i = 0; i < ir.segmentCount; i++) {
-    const f = ir.featureType[i]!;
-    out[i * 2] = f;
-    out[i * 2 + 1] = f;
-  }
-  return out;
 }
 
 function normalised(rgb: [number, number, number]): [number, number, number] {

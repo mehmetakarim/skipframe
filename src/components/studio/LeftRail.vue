@@ -2,9 +2,8 @@
 /**
  * The eight numbered scene sections.
  *
- * Seven of them drive the render. 05 Işık does not, and says so: light needs geometry with
- * normals, and the print is currently drawn as lines. The same limit is why 02's surface finish
- * is still inert — both unlock together or not at all.
+ * All eight drive the render. Light and surface finish became possible once the print stopped
+ * being lines and started being extrusion beads with real normals.
  */
 import { computed } from 'vue';
 
@@ -113,10 +112,12 @@ function fitCamera() {
 
       <SfColorField v-model="customColour" label="Renk" />
 
-      <SfSelect v-model="scene.surface" label="Yüzey" :options="SURFACES" disabled />
-      <p class="note">
-        Yüzey dokusu gölgelendirilmiş geometri gerektiriyor — 05 Işık ile birlikte.
-      </p>
+      <SfSelect
+        v-model="scene.surface"
+        label="Yüzey"
+        :options="SURFACES"
+        @update:model-value="touched"
+      />
     </SfSection>
 
     <!-- 03 --------------------------------------------------------------------------- -->
@@ -196,10 +197,54 @@ function fitCamera() {
 
     <!-- 05 --------------------------------------------------------------------------- -->
     <SfSection v-model:open="scene.sections.light" index="05" title="Işık">
+      <SfSlider
+        v-model="scene.light.azimuthDeg"
+        label="Yön"
+        :min="0"
+        :max="360"
+        :step="5"
+        :format="(v) => `${integer(v)}°`"
+        @update:model-value="touched"
+      />
+      <SfSlider
+        v-model="scene.light.elevationDeg"
+        label="Yükseklik"
+        :min="0"
+        :max="90"
+        :step="1"
+        :format="(v) => `${integer(v)}°`"
+        @update:model-value="touched"
+      />
+      <SfSlider
+        v-model="scene.light.intensity"
+        label="Şiddet"
+        :min="0"
+        :max="1.5"
+        :step="0.05"
+        :format="(v) => `${decimal(v, 2)}`"
+        @update:model-value="touched"
+      />
+      <SfSlider
+        v-model="scene.light.fill"
+        label="Dolgu"
+        :min="0"
+        :max="0.6"
+        :step="0.02"
+        :format="(v) => `${decimal(v, 2)}`"
+        @update:model-value="touched"
+      />
+      <SfSlider
+        v-model="scene.light.ambient"
+        label="Ortam"
+        :min="0"
+        :max="0.8"
+        :step="0.02"
+        :format="(v) => `${decimal(v, 2)}`"
+        @update:model-value="touched"
+      />
+
       <p class="note">
-        Baskı şu an tek piksellik çizgilerle çiziliyor; çizginin normali yok, dolayısıyla
-        aydınlatılacak bir yüzey de yok. Işık ve yüzey dokusu, baskı hacimli şeritlere
-        dönüştürüldüğünde birlikte açılacak.
+        Anahtar ışık, karşıdan bir dolgu ve ortam. Gölge yok — kare bütçesi ona yetmez.
       </p>
     </SfSection>
 

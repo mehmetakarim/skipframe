@@ -56,6 +56,16 @@ const motionLabel = computed(() => {
   return parts.length ? parts.join(' · ') : 'Sabit';
 });
 
+const lightLabel = computed(() => {
+  const surfaces: Record<string, string> = {
+    'matte-pla': 'Mat',
+    'glossy-pla': 'Parlak',
+    silk: 'İpek',
+    metallic: 'Metalik',
+  };
+  return `${surfaces[scene.surface] ?? '—'} · ${Math.round(scene.light.azimuthDeg)}°/${Math.round(scene.light.elevationDeg)}°`;
+});
+
 const backgroundLabel = computed(() =>
   scene.background.style === 'gradient'
     ? `Geçişli ${scene.background.top.toUpperCase()}`
@@ -147,6 +157,10 @@ const featureSummary = computed(() => {
       <div class="row">
         <span class="key">Hareket</span>
         <span class="val word">{{ motionLabel }}</span>
+      </div>
+      <div class="row">
+        <span class="key">Işık</span>
+        <span class="val word">{{ lightLabel }}</span>
       </div>
       <div class="row">
         <span class="key">Arka plan</span>

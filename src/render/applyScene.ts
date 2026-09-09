@@ -13,6 +13,8 @@ export function applySceneTo(printScene: PrintScene): void {
   printScene.setPlate(scene.plate);
   printScene.setBackground(scene.background);
   printScene.setFilamentColour(scene.filaments[scene.filamentIndex] ?? '#c9ccc6');
+  printScene.setLight(scene.light);
+  printScene.setSurface(scene.surface);
   printScene.setShowTravel(!scene.hideTravel);
   printScene.setHighlightCurrentLayer(scene.highlightCurrentLayer);
   printScene.setFov(scene.camera.fovDeg);

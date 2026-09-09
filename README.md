@@ -5,21 +5,24 @@ for Reels and Shorts.
 
 Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
 
-> **Status: scaffold.** The parser, the IR and the desktop shell are in place. The studio UI and
-> the export pipeline are not built yet.
+> **Status: in progress.** The parser, the renderer, the studio and the export pipeline work
+> end to end. The batch queue, the external-FFmpeg outputs and the settings screen are not built
+> yet, and the WebCodecs path has not been run on macOS.
+
+![A print rendered as extrusion beads](docs/bead-render.png)
 
 ---
 
 ## Why it is built this way
 
-| Decision                                                         | Reason                                                                                                                                                                                                   |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| G-code is parsed in Rust, streaming                              | A 750 000-path file has to be read in under two seconds and must not block the UI thread. There is no file-size limit.                                                                                   |
-| The parser answers with raw bytes, not JSON                      | `tauri::ipc::Response::new(Vec<u8>)` arrives in the WebView as an `ArrayBuffer` that becomes TypedArray views with no copy. JSON would be an order of magnitude larger and slower than the parse itself. |
-| One merged geometry, animated with `setDrawRange`                | One draw call for the whole print. Per-layer meshes would cost hundreds of draw calls and lose the 60 fps scrub.                                                                                         |
-| The animation is driven by frame index, never by wall-clock time | Export has to be deterministic: the same file must produce the same video, frame for frame.                                                                                                              |
-| Export uses `WebCodecs` plus an MIT MP4 muxer                    | The operating system's own H.264 encoder does the work. No codec binary is bundled and no licence obligation is taken on.                                                                                |
-| No FFmpeg is shipped                                             | Advanced output (ProRes, CRF, alpha) is unlocked only if the user already has FFmpeg on `PATH` or points at one.                                                                                         |
+| Decision                                                         | Reason                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G-code is parsed in Rust, streaming                              | A 750 000-path file has to be read in under two seconds and must not block the UI thread. There is no file-size limit.                                                                                                                         |
+| The parser answers with raw bytes, not JSON                      | `tauri::ipc::Response::new(Vec<u8>)` arrives in the WebView as an `ArrayBuffer` that becomes TypedArray views with no copy. JSON would be an order of magnitude larger and slower than the parse itself.                                       |
+| One instanced geometry, animated with `instanceCount`            | One draw call for the whole print. Per-layer meshes would cost hundreds of draw calls and lose the 60 fps scrub. The print is drawn as extrusion beads — one prism, uploaded once, drawn once per segment — so light has a surface to fall on. |
+| The animation is driven by frame index, never by wall-clock time | Export has to be deterministic: the same file must produce the same video, frame for frame.                                                                                                                                                    |
+| Export uses `WebCodecs` plus an MIT MP4 muxer                    | The operating system's own H.264 encoder does the work. No codec binary is bundled and no licence obligation is taken on.                                                                                                                      |
+| No FFmpeg is shipped                                             | Advanced output (ProRes, CRF, alpha) is unlocked only if the user already has FFmpeg on `PATH` or points at one.                                                                                                                               |
 
 Linux is out of scope, which is what makes the WebCodecs route sufficient: WebView2 (Chromium) on
 Windows and WKWebView (Safari 16.4+) on macOS both provide `VideoEncoder`.
@@ -60,10 +63,13 @@ unchanged. The authoritative description is in
 | `width`       | `Float32Array` | per segment               | extrusion width, millimetres                                                        |
 | `meta`        | JSON           | whole file                | slicer, printer, bed, layer count, layer Z list, estimated time, filament, warnings |
 
-`toolIndex` and `width` are filled in this release but not yet visualised.
+`width` drives the thickness of every bead the renderer draws. `toolIndex` is filled in but not
+yet visualised — multi-material prints render in one colour.
 
-Positions are stored per vertex so the array uploads straight into a `THREE.BufferAttribute` and
-`setDrawRange(0, n * 2)` can stop anywhere without an index buffer.
+Positions are stored per vertex so the pair of endpoints for each segment is contiguous: the
+renderer binds them as two interleaved instance attributes over the same buffer, with no copy.
+`width` and `featureType` are bound the same way, which is why the bead geometry adds nothing to
+what the GPU already holds.
 
 ---
 

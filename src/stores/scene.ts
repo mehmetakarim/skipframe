@@ -101,6 +101,15 @@ export const scene = reactive({
     vignette: 0,
   },
 
+  // 05 Light
+  light: {
+    azimuthDeg: 135,
+    elevationDeg: 45,
+    intensity: 0.75,
+    fill: 0.18,
+    ambient: 0.28,
+  },
+
   // 06 Camera
   camera: {
     azimuthDeg: 45,
@@ -245,6 +254,8 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.camera = { azimuthDeg: 45, elevationDeg: 13, fovDeg: 38, zoom: 1 };
     scene.motion = { orbitDeg: 0, riseDeg: 0, zoomTo: 1, easing: 'ease-in-out' };
     scene.timing = { holdStart: 0, holdEnd: 0, easing: 'linear' };
+    scene.light = { azimuthDeg: 135, elevationDeg: 45, intensity: 0.75, fill: 0.18, ambient: 0.28 };
+    scene.surface = 'matte-pla';
     scene.hideTravel = true;
   },
   desktop: () => {
@@ -253,6 +264,8 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.camera = { azimuthDeg: 35, elevationDeg: 22, fovDeg: 34, zoom: 1 };
     scene.motion = { orbitDeg: 25, riseDeg: 0, zoomTo: 1, easing: 'ease-in-out' };
     scene.timing = { holdStart: 0, holdEnd: 12, easing: 'linear' };
+    scene.light = { azimuthDeg: 120, elevationDeg: 38, intensity: 0.8, fill: 0.22, ambient: 0.24 };
+    scene.surface = 'matte-pla';
     scene.hideTravel = true;
   },
   showcase: () => {
@@ -261,6 +274,8 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.camera = { azimuthDeg: 40, elevationDeg: 16, fovDeg: 30, zoom: 1.05 };
     scene.motion = { orbitDeg: 360, riseDeg: 8, zoomTo: 1.15, easing: 'ease-in-out' };
     scene.timing = { holdStart: 6, holdEnd: 18, easing: 'ease-in-out' };
+    scene.light = { azimuthDeg: 150, elevationDeg: 28, intensity: 0.95, fill: 0.1, ambient: 0.12 };
+    scene.surface = 'glossy-pla';
     scene.hideTravel = true;
   },
   raw: () => {
@@ -269,6 +284,9 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.camera = { azimuthDeg: 0, elevationDeg: 35, fovDeg: 45, zoom: 1 };
     scene.motion = { orbitDeg: 0, riseDeg: 0, zoomTo: 1, easing: 'linear' };
     scene.timing = { holdStart: 0, holdEnd: 0, easing: 'linear' };
+    // Flat and even, so nothing about the geometry is hidden by a shadow.
+    scene.light = { azimuthDeg: 135, elevationDeg: 70, intensity: 0.5, fill: 0.4, ambient: 0.45 };
+    scene.surface = 'matte-pla';
     // The one preset that shows what the machine actually does, travels included.
     scene.hideTravel = false;
   },
@@ -278,6 +296,8 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.camera = { azimuthDeg: 55, elevationDeg: 10, fovDeg: 32, zoom: 1 };
     scene.motion = { orbitDeg: 45, riseDeg: 12, zoomTo: 1.1, easing: 'ease-in-out' };
     scene.timing = { holdStart: 8, holdEnd: 20, easing: 'ease-in-out' };
+    scene.light = { azimuthDeg: 200, elevationDeg: 18, intensity: 1.0, fill: 0.06, ambient: 0.08 };
+    scene.surface = 'silk';
     scene.hideTravel = true;
   },
 };
