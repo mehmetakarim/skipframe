@@ -87,3 +87,73 @@ pub fn clear_cache(app: AppHandle) -> Result<(), String> {
 pub fn bench_log(line: String) {
     println!("[bench] {line}");
 }
+
+/// Write an exported file.
+///
+/// The bytes arrive as the request's raw body — an encoded video is tens of megabytes, and
+/// letting it become a JSON array of numbers would cost more than the encode did. The
+/// destination travels in a header because a command can carry exactly one raw body.
+///
+/// Writing here rather than through the filesystem plugin means the destination the user chose
+/// in the save dialog is the destination used, with no scope list to keep in sync.
+#[tauri::command]
+pub fn write_export(request: tauri::ipc::Request<'_>) -> Result<(), String> {
+    let encoded = request
+        .headers()
+        .get("x-sf-path")
+        .and_then(|v| v.to_str().ok())
+        .ok_or("no output path was given")?;
+    let path = PathBuf::from(percent_decode(encoded)?);
+
+    let bytes = match request.body() {
+        tauri::ipc::InvokeBody::Raw(bytes) => bytes,
+        _ => return Err("expected the file contents as a raw body".into()),
+    };
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&path, bytes).map_err(|e| e.to_string())
+}
+
+/// Percent-decode a UTF-8 path. Headers are ASCII, so the front end encodes the path before
+/// sending it; anything else would mangle the first non-Latin file name someone exports.
+fn percent_decode(input: &str) -> Result<String, String> {
+    let bytes = input.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' {
+            let hex = bytes
+                .get(i + 1..i + 3)
+                .ok_or("output path ends in a truncated escape")?;
+            let hex = std::str::from_utf8(hex).map_err(|_| "output path is not valid UTF-8")?;
+            out.push(u8::from_str_radix(hex, 16).map_err(|_| "output path has a bad escape")?);
+            i += 3;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8(out).map_err(|_| "output path is not valid UTF-8".into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::percent_decode;
+
+    #[test]
+    fn decodes_paths_with_spaces_and_non_ascii() {
+        assert_eq!(
+            percent_decode("C%3A%2FVideos%2Fbir%20baski.mp4").unwrap(),
+            "C:/Videos/bir baski.mp4"
+        );
+        // "çıktı.mp4" — the case a byte-blind decoder would corrupt.
+        assert_eq!(
+            percent_decode("%C3%A7%C4%B1kt%C4%B1.mp4").unwrap(),
+            "çıktı.mp4"
+        );
+        assert_eq!(percent_decode("plain.mp4").unwrap(), "plain.mp4");
+        assert!(percent_decode("bad%2").is_err());
+    }
+}

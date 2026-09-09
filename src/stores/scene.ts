@@ -76,13 +76,23 @@ export const scene = reactive({
 
 export const frameCount = computed(() => Math.max(1, Math.round(scene.durationS * scene.fps)));
 
-/** The layer the current frame shows. Frame index drives the layer, never the other way round. */
-export const currentLayer = computed(() => {
-  const layers = layerCount.value;
+/**
+ * Which layer a given frame shows.
+ *
+ * The preview and the exporter both call this and nothing else. If they computed the mapping
+ * separately the rendered video could differ from what the user scrubbed through, and the whole
+ * frame-index design would buy nothing.
+ */
+export function layerForFrame(frame: number, frames: number, layers: number): number {
   if (layers <= 0) return 0;
-  const t = frameCount.value <= 1 ? 0 : scene.frame / (frameCount.value - 1);
-  return Math.min(layers - 1, Math.floor(t * layers));
-});
+  const t = frames <= 1 ? 0 : frame / (frames - 1);
+  return Math.min(layers - 1, Math.max(0, Math.floor(t * layers)));
+}
+
+/** The layer the current frame shows. Frame index drives the layer, never the other way round. */
+export const currentLayer = computed(() =>
+  layerForFrame(scene.frame, frameCount.value, layerCount.value),
+);
 
 export const resolution = computed(
   () => ASPECTS.find((a) => a.value === scene.aspect)?.size ?? [1080, 1920],

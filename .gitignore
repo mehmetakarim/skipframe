@@ -29,4 +29,6 @@ Thumbs.db
 fixtures/*.gcode
 fixtures/*.gcode.3mf
 fixtures/*.bgcode
+fixtures/*.mp4
+fixtures/*.png
 bench-out/

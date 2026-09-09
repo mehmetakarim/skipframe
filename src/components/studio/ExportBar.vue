@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
  * The export bar states what will be produced before anything is produced: resolution, length,
- * frame rate, codec. Both actions are inert in this build — the export pipeline lands next.
+ * frame rate, codec. "Videoyu çıkart" opens the export dialog; the queue is not built yet.
  */
 import { computed } from 'vue';
 
 import SfButton from '../ui/SfButton.vue';
 import { project } from '../../stores/project';
 import { duration, resolution, scene } from '../../stores/scene';
+import { openExportDialog } from '../../stores/exportJob';
 
 const ready = computed(() => project.status === 'ready');
 const size = computed(() => `${resolution.value[0]} × ${resolution.value[1]}`);
@@ -15,7 +16,9 @@ const size = computed(() => `${resolution.value[0]} × ${resolution.value[1]}`);
 
 <template>
   <footer class="exportbar">
-    <SfButton variant="primary" :disabled="!ready">Videoyu çıkart</SfButton>
+    <SfButton variant="primary" :disabled="!ready" @click="openExportDialog">
+      Videoyu çıkart
+    </SfButton>
 
     <div class="spec">
       <span>{{ size }}</span>

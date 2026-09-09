@@ -10,6 +10,8 @@ import { onMounted, ref, useTemplateRef } from 'vue';
 import { PrintScene } from '../render/PrintScene';
 import { runRenderBench, type RenderBenchResult } from './renderBench';
 import { runEncodeBench, type EncodeBenchResult } from './encodeBench';
+import { runExport } from '../export/runExport';
+import { Mp4Sink } from '../export/sinks';
 import { makeSyntheticIr } from './syntheticIr';
 import type { Ir } from '../ir/types';
 
@@ -111,6 +113,32 @@ async function run() {
       const { writeFile, BaseDirectory } = await import('@tauri-apps/plugin-fs');
       await writeFile('skipframe-bench.mp4', e.data, { baseDir: BaseDirectory.Download });
       say('encode: wrote skipframe-bench.mp4 to the Downloads folder for playback checking');
+    }
+
+    // --- the export pipeline end to end ------------------------------------------------
+    // Not a measurement: a check that the shipping path — runExport, the sink, the raw-body
+    // IPC write — produces a file on disk, since the harness is the only way to drive it
+    // without a save dialog.
+    const out = import.meta.env.VITE_BENCH_OUT as string | undefined;
+    if (inTauri && out) {
+      const frames = 90;
+      const t0 = performance.now();
+      const sink = new Mp4Sink(out, 1080, 1920, 30);
+      const bytes = await runExport({
+        scene,
+        canvas,
+        sink,
+        target: { width: 1080, height: 1920 },
+        frameCount: frames,
+        layerCount: ir.layerCount,
+        signal: new AbortController().signal,
+        onProgress: () => {},
+      });
+      const ms = performance.now() - t0;
+      say(
+        `export: ${frames} frames via "${sink.label}" in ${(ms / 1000).toFixed(2)} s — ` +
+          `${(bytes / 1e6).toFixed(2)} MB written to ${out}`,
+      );
     }
 
     say('done');

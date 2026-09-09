@@ -47,12 +47,15 @@ export interface EncodeBenchResult {
 
 type HardwareAcceleration = 'prefer-hardware' | 'prefer-software' | 'no-preference';
 
-/** Reels and Shorts are 1080x1920. Level 4.2 covers 1080p60; 4.0 is the safe fallback. */
+/**
+ * Reels and Shorts are 1080x1920, and 1080p60 needs level 4.2 — the third byte of the codec
+ * string, 0x2a. (0x28 would be level 4.0, which caps out below 1080p60.)
+ */
 const CANDIDATES: { label: string; codec: string; acceleration: HardwareAcceleration }[] = [
-  { label: 'H.264 High 4.2, hardware', codec: 'avc1.640028', acceleration: 'prefer-hardware' },
-  { label: 'H.264 High 4.2, any', codec: 'avc1.640028', acceleration: 'no-preference' },
-  { label: 'H.264 Main 4.0, hardware', codec: 'avc1.4d0028', acceleration: 'prefer-hardware' },
-  { label: 'H.264 Baseline 4.0, any', codec: 'avc1.42002a', acceleration: 'no-preference' },
+  { label: 'H.264 High 4.2, hardware', codec: 'avc1.64002a', acceleration: 'prefer-hardware' },
+  { label: 'H.264 High 4.2, any', codec: 'avc1.64002a', acceleration: 'no-preference' },
+  { label: 'H.264 Main 4.2, hardware', codec: 'avc1.4d002a', acceleration: 'prefer-hardware' },
+  { label: 'H.264 Baseline 4.2, any', codec: 'avc1.42002a', acceleration: 'no-preference' },
 ];
 
 export interface EncodeBenchOptions {

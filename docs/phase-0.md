@@ -157,10 +157,10 @@ and muxed with `mp4-muxer`.
 | Probe                                         | Result    |
 | --------------------------------------------- | --------- |
 | `VideoEncoder` present                        | yes       |
-| `avc1.640028` (High 4.2), `prefer-hardware`   | supported |
-| `avc1.640028` (High 4.2), `no-preference`     | supported |
-| `avc1.4d0028` (Main 4.0), `prefer-hardware`   | supported |
-| `avc1.42002a` (Baseline 4.0), `no-preference` | supported |
+| `avc1.64002a` (High 4.2), `prefer-hardware`   | supported |
+| `avc1.64002a` (High 4.2), `no-preference`     | supported |
+| `avc1.4d002a` (Main 4.2), `prefer-hardware`   | supported |
+| `avc1.42002a` (Baseline 4.2), `no-preference` | supported |
 
 | Metric      | Value                                   |
 | ----------- | --------------------------------------- |
@@ -215,6 +215,26 @@ Safari has shipped WebCodecs `VideoEncoder` since 16.4, and macOS 13 is our floo
 expectation is that it works. If it does not, plan B is a thin `objc2` binding to VideoToolbox on
 the Rust side — still Apple's own encoder, still zero licence surface — and the frame-sequence
 export (PNG / WebP) already covers the case where no codec is available at all.
+
+---
+
+---
+
+## Determinism, measured
+
+The frame-index rule exists so that a rendered video is reproducible. That is now checked rather
+than asserted: the same file was exported twice, in two separate runs of the app, and every
+decoded frame compared.
+
+```bash
+ffmpeg -i run1.mp4 -f framemd5 run1.framemd5
+ffmpeg -i run2.mp4 -f framemd5 run2.framemd5
+diff <(grep -v '^#' run1.framemd5) <(grep -v '^#' run2.framemd5)
+```
+
+All 90 frames match bit for bit. The container's SHA-256 differs between the runs, because
+`mp4-muxer` stamps a creation time into the movie header — metadata, not picture. If byte-identical
+files are ever needed, that is the one field to pin.
 
 ---
 

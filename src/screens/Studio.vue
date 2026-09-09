@@ -12,7 +12,9 @@ import Viewport from '../components/studio/Viewport.vue';
 import Timeline from '../components/studio/Timeline.vue';
 import InfoRail from '../components/studio/InfoRail.vue';
 import ExportBar from '../components/studio/ExportBar.vue';
+import ExportDialog from '../components/studio/ExportDialog.vue';
 import { ir } from '../stores/project';
+import { exportState } from '../stores/exportJob';
 </script>
 
 <template>
@@ -32,6 +34,8 @@ import { ir } from '../stores/project';
     </div>
 
     <ExportBar />
+
+    <ExportDialog v-if="exportState.open" />
   </div>
 </template>
 

@@ -21,6 +21,7 @@ pub fn run() {
             commands::cache_stats,
             commands::clear_cache,
             commands::bench_log,
+            commands::write_export,
         ])
         .run(tauri::generate_context!())
         .expect("error while running SkipFrame");

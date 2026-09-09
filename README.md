@@ -94,6 +94,32 @@ so it can be added in one file.
 
 ---
 
+## Export
+
+Two outputs, and the difference between them is deliberate.
+
+**MP4 · H.264.** `VideoEncoder` hands frames to the operating system's own encoder and
+[`mp4-muxer`](https://github.com/Vanilagy/mp4-muxer) (MIT) wraps them. Frames are taken straight
+off the render canvas with `new VideoFrame(canvas, { timestamp })` — no `readPixels`, no IPC per
+frame. The codec level follows the resolution, so a 2x render scale still finds a configuration
+the encoder accepts. Nothing is bundled and no licence is taken on.
+
+**PNG frame sequence.** Needs no codec at all, so it works on any machine and is the fallback
+whenever the H.264 path is unavailable — and it is what an editor wants anyway.
+
+The finished file crosses to Rust as the request's raw body, so a hundred-megabyte video is bytes
+rather than a JSON array of numbers, and it is written to exactly the path the save dialog
+returned.
+
+Export walks the frame index one step at a time with no clock involved, using the same
+`layerForFrame` the preview scrubber uses. Two separate runs of the same export produce
+bit-identical decoded frames; see [docs/phase-0.md](docs/phase-0.md).
+
+External FFmpeg for ProRes, CRF and alpha is not wired up yet. Nothing will ever be bundled: if
+it is on `PATH` or the user points at one, those options appear.
+
+---
+
 ## Development
 
 ```bash

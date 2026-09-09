@@ -10,7 +10,9 @@ import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue
 
 import SfTabs from '../ui/SfTabs.vue';
 import { PrintScene } from '../../render/PrintScene';
+import { setActiveScene } from '../../render/activeScene';
 import { ir } from '../../stores/project';
+import { exportState, running as exporting } from '../../stores/exportJob';
 import { ASPECTS, currentLayer, scene } from '../../stores/scene';
 import { integer } from '../../lib/format';
 
@@ -39,6 +41,8 @@ onMounted(() => {
   const canvas = canvasRef.value;
   if (!canvas) return;
   printScene = new PrintScene(canvas);
+  // Export drives this same renderer rather than building a second copy of the geometry.
+  setActiveScene({ scene: printScene, canvas });
 
   observer = new ResizeObserver(resize);
   if (frameRef.value) observer.observe(frameRef.value);
@@ -53,6 +57,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  setActiveScene(null);
   observer?.disconnect();
   printScene?.dispose();
   printScene = null;
@@ -132,6 +137,17 @@ function onWheel(e: WheelEvent) {
           @pointercancel="onPointerUp"
           @wheel="onWheel"
         ></canvas>
+
+        <!-- The export drives this same canvas at the output resolution, so while it runs the
+             viewport is showing frames that are not the user's. Cover it rather than let it
+             flicker through a render they did not ask to watch. -->
+        <div v-if="exporting" class="exporting">
+          <span class="t-overline">Render sürüyor</span>
+          <span class="exporting-count">
+            {{ integer(exportState.progress.frame) }} /
+            {{ integer(exportState.progress.frameCount) }}
+          </span>
+        </div>
       </div>
     </div>
   </div>
@@ -181,6 +197,28 @@ function onWheel(e: WheelEvent) {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
+}
+
+.frame {
+  position: relative;
+}
+
+.exporting {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--bg-base);
+}
+
+.exporting-count {
+  font-family: var(--font-mono);
+  font-size: var(--type-counter-size);
+  font-weight: 700;
+  color: var(--gold);
 }
 
 canvas {
