@@ -11,7 +11,7 @@ import { PrintScene } from '../render/PrintScene';
 import { runRenderBench, type RenderBenchResult } from './renderBench';
 import { runEncodeBench, type EncodeBenchResult } from './encodeBench';
 import { runExport } from '../export/runExport';
-import { Mp4Sink } from '../export/sinks';
+import { FrameSequenceSink, Mp4Sink } from '../export/sinks';
 import { makeSyntheticIr } from './syntheticIr';
 import type { Ir } from '../ir/types';
 
@@ -138,6 +138,30 @@ async function run() {
       say(
         `export: ${frames} frames via "${sink.label}" in ${(ms / 1000).toFixed(2)} s — ` +
           `${(bytes / 1e6).toFixed(2)} MB written to ${out}`,
+      );
+
+      // The codec-free path, on the same journey. It is slower by construction — one file and
+      // one IPC write per frame — so it is checked over a short run.
+      const cut = Math.max(out.lastIndexOf('/'), out.lastIndexOf('\\'));
+      const dir = `${out.slice(0, cut)}/frames-check`;
+      const seqFrames = 12;
+      const t1 = performance.now();
+      const seqSink = new FrameSequenceSink(dir, 'check', seqFrames);
+      const seqBytes = await runExport({
+        scene,
+        canvas,
+        sink: seqSink,
+        target: { width: 1080, height: 1920 },
+        frameCount: seqFrames,
+        layerCount: ir.layerCount,
+        signal: new AbortController().signal,
+        onProgress: () => {},
+      });
+      const seqMs = performance.now() - t1;
+      say(
+        `export: ${seqFrames} PNG frames in ${(seqMs / 1000).toFixed(2)} s ` +
+          `(${(seqMs / seqFrames).toFixed(0)} ms/frame) — ` +
+          `${(seqBytes / 1e6).toFixed(2)} MB written to ${dir}`,
       );
     }
 

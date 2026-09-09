@@ -220,6 +220,29 @@ export (PNG / WebP) already covers the case where no codec is available at all.
 
 ---
 
+## The export path, checked end to end
+
+Both sinks were driven through the shipping code — `runExport`, the sink, the raw-body IPC
+write — on the real file, at the export resolution:
+
+| Output                  | Frames |   Time | Per frame |    Size |
+| ----------------------- | -----: | -----: | --------: | ------: |
+| MP4, 1080x1920 @ 30     |     90 | 0.45 s |    5.0 ms | 1.68 MB |
+| PNG sequence, 1080x1920 |     12 | 0.22 s |     18 ms | 2.53 MB |
+
+`ffprobe` on the MP4: `h264 / High / yuv420p / 1080x1920 / 30 fps / 90 frames`. The PNGs are
+1080x1920 RGBA, numbered from one.
+
+PNG costs about 3.5x more per frame than H.264 and roughly 15x more on disk, which is the trade
+the format exists to make. A 12-second clip at 30 fps is 360 frames: about 2 seconds as MP4,
+about 7 as a sequence.
+
+The MP4 is muxed in memory before it is written, so a 90-second 1080p60 export holds roughly
+160 MB while it finishes. That is fine for the vertical formats this is for; a multi-minute
+timelapse would want a streaming target instead.
+
+---
+
 ## Determinism, measured
 
 The frame-index rule exists so that a rendered video is reproducible. That is now checked rather
