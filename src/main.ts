@@ -14,5 +14,14 @@ if (isBench) {
     createApp(BenchApp).mount('#app');
   });
 } else {
+  // `#preview` opens the studio against a synthetic model, so the screens can be worked on in a
+  // browser tab without the desktop shell. Development only; it is compiled out of a build.
+  if (import.meta.env.DEV && location.hash.startsWith('#preview')) {
+    void Promise.all([import('./bench/syntheticIr'), import('./stores/project')]).then(
+      ([{ makeSyntheticIr }, { adoptIr }]) => {
+        adoptIr(makeSyntheticIr(570, 400));
+      },
+    );
+  }
   createApp(App).mount('#app');
 }

@@ -1,3 +1,10 @@
+/* Fonts are vendored, not fetched: the app is offline-first and its CSP allows no remote
+   stylesheets. Both faces are OFL-1.1. */
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
 @import './tokens.css';
 
 *,
@@ -14,19 +21,106 @@ body,
 }
 
 body {
-  background: var(--sf-bg);
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: var(--sf-text-md);
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
   -webkit-font-smoothing: antialiased;
-  /* The window chrome is the app's; text selection inside it is not a document gesture. */
+  /* This is application chrome, not a document: text is not selectable by default and the
+     cursor never becomes a caret. Anything genuinely readable opts back in with .selectable. */
   user-select: none;
   cursor: default;
   overflow: hidden;
 }
 
-code,
-kbd,
-.mono {
-  font-family: var(--sf-font-mono);
+.selectable {
+  user-select: text;
+  cursor: text;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Every focusable control uses the same ring; only keyboard focus shows it. */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Scrollbars are part of the chrome, so they follow the tokens rather than the OS default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: content-box;
+}
+
+/* -- type roles --------------------------------------------------------------------------- */
+
+.t-heading {
+  font-size: var(--type-heading-size);
+  font-weight: var(--type-heading-weight);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.t-body {
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
+}
+
+.t-label {
+  font-size: var(--type-label-size);
+  color: var(--text-muted);
+}
+
+.t-overline {
+  font-size: var(--type-overline-size);
+  letter-spacing: var(--type-overline-tracking);
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.t-counter {
+  font-family: var(--font-mono);
+  font-size: var(--type-counter-size);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.t-data {
+  font-family: var(--font-mono);
+  font-size: var(--type-data-size);
+  color: var(--text-primary);
+}
+
+.t-path {
+  font-family: var(--font-mono);
+  font-size: var(--type-path-size);
+  color: var(--text-faint);
 }

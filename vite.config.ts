@@ -24,5 +24,9 @@ export default defineConfig({
     target: ['chrome105', 'safari16'],
     minify: process.env.TAURI_ENV_DEBUG ? false : 'esbuild',
     sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    // The bundle is loaded from disk inside the app, not downloaded, so the default warning
+    // about a 500 kB chunk is measuring something that does not apply here. Three.js is most
+    // of it and splitting it would only add a round trip to the first frame.
+    chunkSizeWarningLimit: 1500,
   },
 });

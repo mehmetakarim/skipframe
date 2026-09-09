@@ -1,52 +1,84 @@
 /**
- * SkipFrame theme tokens.
+ * SkipFrame theme tokens — the single place any colour, size or type role is defined.
  *
- * Every colour, radius, spacing step and type size in the app resolves to a variable declared
- * here. Components must never hard-code a colour value.
- *
- * This file currently carries only the brand primitives taken from the logo kit; the full token
- * set is derived from /design when the component library is built.
+ * The names match /design exactly, so a value here can be checked against the design file
+ * without translation. Components must never hard-code a colour: the design's own rule is
+ * "there is no fixed colour in the interface; every value is bound to one of these fourteen
+ * tokens, and no intermediate tones are invented — a surface that needs to come forward moves
+ * up one step."
  */
 
 :root {
-  /* -- brand ------------------------------------------------------------------ */
-  --sf-accent: #ebb60e;
-  --sf-ink: #101010;
-  --sf-paper: #ffffff;
+  /* -- surfaces and edges ----------------------------------------------------------------- */
+  --bg-base: #0b0b0b; /* window ground, the backmost layer */
+  --bg-surface: #101010; /* main panels, left rail, viewport frame */
+  --bg-raised: #171717; /* cards, input fields, list rows */
+  --bg-overlay: #1f1f1f; /* dropdowns, modals, tooltips */
+  --border: #2a2a2a; /* dividers, passive borders */
+  --border-strong: #3f4441; /* active borders, focus rings */
 
-  /* -- surfaces (dark, the app's only theme for now) --------------------------- */
-  --sf-bg: #101010;
-  --sf-surface: #191919;
-  --sf-surface-raised: #202020;
-  --sf-line: #2e2e2e;
+  /* -- gold: active selection, primary action, progress. Nothing else. --------------------- */
+  --gold: #ebb60e;
+  --gold-hover: #f2c22b;
+  --gold-pressed: #d6a50c;
+  --gold-tint: #1a1608; /* low-emphasis area on a gold ground */
 
-  /* -- text -------------------------------------------------------------------- */
-  --sf-text: #e7e8e4;
-  --sf-text-dim: #8a8f88;
-  --sf-text-faint: #6f7369;
+  /* -- text ------------------------------------------------------------------------------- */
+  --text-primary: #ffffff; /* headings and selected values */
+  --text-secondary: #c9ccc6; /* body and secondary buttons */
+  --text-muted: #8a8f88; /* descriptions and field labels */
+  --text-faint: #7c817b; /* overlines and passive text */
 
-  /* -- state ------------------------------------------------------------------- */
-  --sf-danger: #9a2a1e;
-  --sf-ok: #1e6b33;
+  --os-light: #e7e8e4;
 
-  /* -- geometry ---------------------------------------------------------------- */
-  --sf-radius-sm: 3px;
-  --sf-radius: 6px;
-  --sf-radius-lg: 10px;
+  /* Outside the design's fourteen surface and text tokens: the destructive accent, used only
+     for the window close affordance and the error states in the error/warning frame. */
+  --danger: #9a2a1e;
 
-  --sf-space-1: 4px;
-  --sf-space-2: 8px;
-  --sf-space-3: 12px;
-  --sf-space-4: 16px;
-  --sf-space-5: 24px;
-  --sf-space-6: 32px;
+  /* -- type ------------------------------------------------------------------------------- */
+  /* Space Grotesk carries words: section names, field labels, button text, dropdown items,
+     help text, warnings, tab labels, menu items.
+     JetBrains Mono carries numbers and paths: layer counter, timecode, frame counter,
+     resolution, frame rate, file size, print time, weight, output path.
+     Archivo Black is the splash screen only and never enters the panel interface. */
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
 
-  /* -- type -------------------------------------------------------------------- */
-  --sf-font: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --sf-font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
-  --sf-text-xs: 11px;
-  --sf-text-sm: 12px;
-  --sf-text-md: 14px;
-  --sf-text-lg: 18px;
-  --sf-text-xl: 24px;
+  --type-heading-size: 15px; /* headings */
+  --type-heading-weight: 700;
+  --type-body-size: 13px;
+  --type-label-size: 12.5px;
+  --type-overline-size: 10px;
+  --type-overline-tracking: 0.12em;
+  --type-counter-size: 15px; /* mono */
+  --type-data-size: 11.5px; /* mono */
+  --type-path-size: 10.5px; /* mono */
+
+  /* -- geometry --------------------------------------------------------------------------- */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 26px;
+  --space-7: 34px;
+
+  /* -- chrome ----------------------------------------------------------------------------- */
+  --titlebar-height: 44px;
+  --presetbar-height: 58px;
+  --viewport-header-height: 46px;
+  --timeline-height: 96px;
+  --exportbar-height: 72px;
+  --rail-left-width: 268px;
+  --rail-right-width: 236px;
+
+  /* The focus ring is one recipe everywhere: a gap in the panel colour, then gold. */
+  --focus-ring: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--gold);
 }

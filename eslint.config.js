@@ -20,6 +20,10 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'vue/multi-word-component-names': 'off',
+      // Props are declared with TypeScript here, so `label?: string` already says "absent is
+      // allowed" and `undefined` is the meaningful absent value. Inventing a default would
+      // change behaviour to satisfy a lint rule.
+      'vue/require-default-prop': 'off',
     },
   },
   prettier,
