@@ -66,6 +66,9 @@ const FRAGMENT_SHADER = /* glsl */ `
   }
 `;
 
+/** A little air around the print so it never touches the frame edge. */
+const FRAME_MARGIN = 1.12;
+
 export interface PrintSceneOptions {
   /** Device pixel ratio cap. Export overrides this to 1 and drives the size itself. */
   maxPixelRatio?: number;
@@ -90,6 +93,10 @@ export class PrintScene {
   /** Orbit state, kept here so export can set an exact camera without a controls dependency. */
   private orbit = { azimuth: Math.PI * 0.25, elevation: Math.PI * 0.22, distance: 400 };
   private target = new THREE.Vector3();
+  /** Radius of the sphere the framing has to keep on screen. Zero until a file is loaded. */
+  private frameRadius = 0;
+  /** True while the camera is auto-framed; a manual zoom hands control to the user. */
+  private autoFrame = true;
 
   constructor(canvas: HTMLCanvasElement, options: PrintSceneOptions = {}) {
     this.maxPixelRatio = options.maxPixelRatio ?? 2;
@@ -214,12 +221,20 @@ export class PrintScene {
   }
 
   zoomBy(factor: number): void {
+    this.autoFrame = false;
     this.orbit.distance = clamp(this.orbit.distance * factor, 20, 4000);
     this.applyCamera();
   }
 
+  /** Re-frame the print, undoing any manual zoom. */
+  frameAll(): void {
+    this.autoFrame = true;
+    this.fitCamera();
+  }
+
   /** Exact camera placement, for deterministic export and for saved viewpoints. */
   setCamera(azimuth: number, elevation: number, distance: number): void {
+    this.autoFrame = false;
     this.orbit = { azimuth, elevation, distance };
     this.applyCamera();
   }
@@ -237,15 +252,39 @@ export class PrintScene {
 
   private frameToPrint(ir: Ir): void {
     const b = ir.meta.bounds;
-    const bed = ir.meta.bedSize ?? [220, 220];
-    // Bounds are in G-code space (Z up); the root group rotates them into Y up.
+    const [ox, oy] = ir.meta.bedOrigin ?? [0, 0];
+    const [bw, bd] = ir.meta.bedSize ?? [220, 220];
+
+    // Bounds are in G-code space (Z up); the root group rotates them into Y up and shifts the
+    // bed's centre to the world origin, so the target has to make the same journey.
     const centreX = (b[0] + b[3]) / 2;
     const centreY = (b[1] + b[4]) / 2;
     const height = Math.max(b[5] - b[2], 1);
-    const footprint = Math.max(b[3] - b[0], b[4] - b[1], bed[0] * 0.5, 1);
 
-    this.target.set(centreX - bed[0] / 2, height / 2, -(centreY - bed[1] / 2));
-    this.orbit.distance = Math.max(footprint, height) * 2.4;
+    this.target.set(centreX - (ox + bw / 2), height / 2, -centreY + (oy + bd / 2));
+
+    // The radius that has to fit on screen: half the diagonal of the print's box, so no
+    // orbit angle can push a corner out of frame.
+    const dx = Math.max(b[3] - b[0], 1);
+    const dy = Math.max(b[4] - b[1], 1);
+    this.frameRadius = 0.5 * Math.sqrt(dx * dx + dy * dy + height * height);
+
+    this.autoFrame = true;
+    this.fitCamera();
+  }
+
+  /**
+   * Distance at which the print's bounding sphere fits, for the canvas as it is right now.
+   *
+   * A 9:16 canvas is the binding case: its horizontal field of view is far narrower than the
+   * vertical one Three.js is configured with, so framing on the vertical alone crops the print.
+   */
+  private fitCamera(): void {
+    if (this.frameRadius <= 0) return;
+    const vFov = (this.camera.fov * Math.PI) / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
+    const tightest = Math.min(vFov, hFov);
+    this.orbit.distance = (this.frameRadius / Math.sin(tightest / 2)) * FRAME_MARGIN;
     this.applyCamera();
   }
 
@@ -269,8 +308,12 @@ export class PrintScene {
     outline.rotation.x = -Math.PI / 2;
     this.bed.add(outline);
 
-    // The print is modelled with 0,0 at the bed's front-left corner; the bed is centred.
-    this.root.position.set(-w / 2, 0, d / 2);
+    // The bed is drawn centred on the world origin, so the print is shifted by wherever the
+    // bed's own origin sits. Most printers put 0,0 at the front-left corner, but a
+    // centre-origin machine reports bed_origin = -w/2,-d/2 and would otherwise print into a
+    // corner of its own plate.
+    const [ox, oy] = ir.meta.bedOrigin ?? [0, 0];
+    this.root.position.set(-(ox + w / 2), 0, oy + d / 2);
   }
 
   // -- frame ----------------------------------------------------------------------------
@@ -280,6 +323,9 @@ export class PrintScene {
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / Math.max(height, 1);
     this.camera.updateProjectionMatrix();
+    // Switching from 16:9 to 9:16 changes which field of view is the binding one, so the
+    // framing distance has to be recomputed rather than carried over.
+    if (this.autoFrame) this.fitCamera();
   }
 
   render(): void {

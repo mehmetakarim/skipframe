@@ -14,9 +14,34 @@ and (c) and prints every line to the terminal through the `bench_log` command. T
 runs in a plain browser tab at `http://localhost:1420/#bench`, where it falls back to a
 synthetic IR so it needs no fixture.
 
-## The test file
+## The test files
 
-There was no real 750 000-path file to hand, so the fixture is generated:
+### A real one
+
+`erglagalvabamboo_ABS_3h45m.gcode` — OrcaSlicer 2.4.2, Flashforge Adventurer 5M Pro, ABS,
+**24.2 MB, 568 layers, 785 067 segments** of which 753 874 extrude. It is not committed: it is
+someone's model, and the repository has no business carrying it.
+
+Finding the numbers was only half of what this file was worth. Running it turned up three real
+defects that the generated fixture could not have:
+
+1. **The layer count was 570, and the file's own header said 568.** Everything a slicer emits
+   before its first `;LAYER_CHANGE` — the prime, the purge line, the wipe — was being counted as
+   one or two layers of its own. That start-block geometry is real and stays in the IR, but it is
+   now folded into the first marked layer, so our count matches the slicer's.
+2. **Print time came out as 14 seconds instead of 3h 44m 46s.** Orca writes
+   `estimated first layer printing time` immediately after the total, and the second line was
+   overwriting the first.
+3. **The bounding box was the bed, not the model.** The purge line runs the full width of the
+   plate along the front edge, so the reported size was `110 x 160` instead of `94 x 100`, and
+   the camera would have framed the bed edge. The start block no longer contributes to the box.
+
+Each of those has a regression test now.
+
+### A generated one
+
+The real file arrived after the first round of measurements, which used a fixture built to the
+same shape:
 
 ```bash
 cargo run --release -p skipframe-gcode --bin sf-gcode -- \
@@ -46,11 +71,18 @@ Measured on the release binary, best of 5 runs, Windows 11, Ryzen-class laptop, 
 | Stress: feature marker every 20 paths, retract every 40 |   750 120 |        27.8 MB |     66.0 ms |       4.9 ms |   421 MB/s |
 | Scale: 2000 layers                                      | 3 000 000 |       107.2 MB |    245.5 ms |      17.3 ms |   437 MB/s |
 | `.gcode.3mf`, plate 1 of 2 (includes inflate)           |   750 120 | 17.9 MB zipped |     96.1 ms |            — |          — |
+| **Real: OrcaSlicer 2.4.2, ABS, Flashforge 5M Pro**      |   785 067 |        24.2 MB | **68.4 ms** |       4.2 ms |   353 MB/s |
 
 SHA-256 for the cache key costs 13.5 ms on the 25.6 MB file and 54 ms on the 107 MB one.
 
 **Verdict: pass, by roughly 30x.** Throughput is flat from 25 MB to 107 MB, so the streaming
-design holds and there is no file-size limit to defend.
+design holds and there is no file-size limit to defend. The real file lands 4 % slower per byte
+than the generated one, which is the cost of its denser comments and its arcs.
+
+On the real file the parser recovers: OrcaSlicer 2.4.2, 568 layers matching the header exactly,
+3h 44m 46s, 89.78 g of filament, and a 220 x 220 bed with its origin at -110,-110 read from
+`bed_shape` — the Flashforge Adventurer 5M Pro is not in our profile table, and the bed_shape
+fallback produced the right plate anyway, which is the behaviour that fallback exists for.
 
 Correctness checks that came free with the measurement: 570 layers found, 750 120 extruding
 segments plus exactly one travel per layer, Z range 0.2–114.0 mm, printer resolved from
@@ -62,10 +94,11 @@ the retract / travel / prime triplets produced exactly one travel segment each.
 Parsing is only part of what the user waits for. Full round trip from the front end —
 hash, parse, encode, write cache, hand 22.5 MB across IPC, wrap in TypedArrays:
 
-| Build                                       |  Round trip |
-| ------------------------------------------- | ----------: |
-| `tauri dev --release`                       |  **247 ms** |
-| `tauri dev` (debug shell, optimised parser) | 843–1070 ms |
+| Build                                       |     Round trip |
+| ------------------------------------------- | -------------: |
+| `tauri dev --release`, real file            | **292–294 ms** |
+| `tauri dev --release`, generated file       |         247 ms |
+| `tauri dev` (debug shell, optimised parser) |    843–1070 ms |
 
 The parser is compiled at `opt-level = 3` even in dev builds, so the gap between the two rows is
 the unoptimised shell and IPC layer, not parsing. 247 ms is what a user actually waits for on a
@@ -75,19 +108,29 @@ cold open of a 750 000-path file, cache miss included.
 
 ## (b) Render — must hold 60 fps while scrubbing
 
-570 frames, one per layer, sweeping the whole print. Canvas 1080x1920 at pixel ratio 1 — the
-export resolution, which is heavier than the on-screen viewport. Travels hidden. Measured inside
-the app's WebView2.
+568 frames, one per layer, sweeping the whole real print. Canvas 1080x1920 at pixel ratio 1 —
+the export resolution, which is heavier than the on-screen viewport. Travels hidden. Measured
+inside the app's WebView2.
 
 | Metric                                       | Value                                         |
 | -------------------------------------------- | --------------------------------------------- |
-| Frame interval                               | p50 **4.20 ms**, p95 4.30 ms, max 17.0 ms     |
+| Frame interval                               | p50 **4.20 ms**, p95 4.40 ms, max 5.50 ms     |
 | Frames within a 60 Hz budget                 | 100 %                                         |
-| Mean rate                                    | ~238 fps                                      |
+| Mean rate                                    | ~240 fps                                      |
 | `renderer.render()` CPU cost                 | p50 0.10 ms, p95 0.20 ms                      |
-| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 1.04 ms, p95 2.03 ms                      |
+| GPU time (`EXT_disjoint_timer_query_webgl2`) | p50 0.55 ms, p95 1.11 ms                      |
 | Draw calls per frame                         | 3 (print, bed grid, bed outline)              |
 | Context                                      | WebGL2, ANGLE / D3D11, NVIDIA RTX 5060 Laptop |
+
+The real file also found two defects in the renderer that a centred model on a corner-origin bed
+would never have shown:
+
+- **The print stood in a corner of its own plate.** The Flashforge puts 0,0 at the middle of the
+  bed and reports `bed_origin = -110,-110`. The renderer was assuming a front-left origin.
+- **The print did not fit the 9:16 frame.** Framing was computed from the vertical field of
+  view, but on a portrait canvas the horizontal one is far narrower and is what actually binds.
+  The camera now fits the print's bounding sphere against whichever field of view is tighter,
+  and re-fits when the aspect ratio changes.
 
 **Verdict: pass, by roughly 4x on the GPU and far more on the CPU.**
 
@@ -143,7 +186,7 @@ capture are all doing what they claim.
 | --------------------------------- | ---------------------------------- |
 | ![frame 60](phase0-frame-060.png) | ![frame 170](phase0-frame-170.png) |
 
-A 30-second Reel is 1800 frames, so this is roughly **7 seconds of export for 30 seconds of
+A 30-second Reel is 1800 frames, so this is roughly **6.5 seconds of export for 30 seconds of
 video**, with the renderer in the loop.
 
 **Verdict on Windows: pass.**
