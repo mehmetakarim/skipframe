@@ -78,6 +78,7 @@ export function makeSyntheticIr(layers: number, segmentsPerLayer: number): Ir {
       hasDeclaredWidth: true,
       warnings: [],
       sourceName: 'synthetic',
+      sourceBytes: null,
       plate: null,
     },
   };

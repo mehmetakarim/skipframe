@@ -87,9 +87,13 @@ export async function runExport(options: RunExportOptions): Promise<number> {
     onProgress({ stage: 'writing', bytes });
     return bytes;
   } finally {
-    scene.resize(restoreWidth, restoreHeight);
-    scene.setLayer(restoreLayer);
-    scene.render();
+    // The queue renders into a canvas that is not in the document, where clientWidth is zero;
+    // resizing to that would leave the next job drawing into nothing.
+    if (restoreWidth > 0 && restoreHeight > 0) {
+      scene.resize(restoreWidth, restoreHeight);
+      scene.setLayer(restoreLayer);
+      scene.render();
+    }
   }
 }
 

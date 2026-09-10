@@ -27,7 +27,7 @@ const state = reactive({
   error: null as string | null,
   /** Round trip for the last open, milliseconds. */
   elapsedMs: 0,
-  /** Size on disk in bytes, when we know it. */
+  /** Size on disk in bytes, from the parser's meta. */
   bytes: null as number | null,
 });
 
@@ -43,6 +43,7 @@ export async function openPath(path: string, options: { plate?: number } = {}): 
   try {
     const result = await parseFile(path, options);
     ir.value = result.ir;
+    state.bytes = result.ir.meta.sourceBytes;
     state.elapsedMs = result.elapsedMs;
     state.status = 'ready';
   } catch (e) {
@@ -71,6 +72,7 @@ export async function pickAndOpen(): Promise<boolean> {
 export function adoptIr(model: Ir, path: string | null = null): void {
   ir.value = model;
   state.path = path;
+  state.bytes = model.meta.sourceBytes;
   state.error = null;
   state.elapsedMs = 0;
   state.status = 'ready';

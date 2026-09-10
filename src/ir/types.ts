@@ -55,6 +55,8 @@ export interface IrMeta {
   hasDeclaredWidth: boolean;
   warnings: string[];
   sourceName: string;
+  /** Size of the source file on disk. Absent from cache entries written before it existed. */
+  sourceBytes: number | null;
   plate: number | null;
 }
 

@@ -173,6 +173,40 @@ async function run() {
       );
     }
 
+    // --- the batch queue, end to end ---------------------------------------------------
+    // Driven through the store rather than the dialogs, which is the only way to exercise it
+    // without a person clicking.
+    const queueDir = import.meta.env.VITE_BENCH_QUEUE as string | undefined;
+    if (inTauri && queueDir) {
+      const { addPaths, queue: q, startQueue } = await import('../stores/queue');
+      const paths = queueDir.split('|').slice(1);
+      q.outputDir = queueDir.split('|')[0]!;
+      q.settings.format = 'mp4';
+      q.settings.fps = 30;
+      q.settings.durationS = 2;
+      q.settings.preset = 'showcase';
+
+      const t2 = performance.now();
+      await addPaths(paths);
+      say(
+        `queue: added ${q.jobs.length} job(s) in ${((performance.now() - t2) / 1000).toFixed(2)} s`,
+      );
+      for (const job of q.jobs) {
+        say(
+          `  ${job.name} — ${job.status}, ${job.layers ?? '?'} layers, ${job.warnings.length} warning(s)`,
+        );
+      }
+
+      const t3 = performance.now();
+      await startQueue();
+      say(`queue: ran in ${((performance.now() - t3) / 1000).toFixed(2)} s`);
+      for (const job of q.jobs) {
+        say(
+          `  ${job.name} — ${job.status}${job.error ? ` — ${job.error}` : ''} -> ${job.outputPath}`,
+        );
+      }
+    }
+
     say('done');
   } catch (err) {
     say(`FAILED — ${String(err)}`);

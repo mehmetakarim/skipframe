@@ -1,18 +1,22 @@
 <script setup lang="ts">
 /**
- * Two screens so far. Which one shows is decided by whether a file is open — there is no router
- * because there is nothing to route: the studio *is* the app once a file exists.
+ * Three screens. Whether a file is open decides between the drop target and the studio; the
+ * queue is the one the user navigates to. No router — there is nothing to route, and a URL the
+ * user never sees would be a strange thing to maintain.
  */
 import { computed } from 'vue';
 
 import EmptyState from './screens/EmptyState.vue';
 import Studio from './screens/Studio.vue';
+import Queue from './screens/Queue.vue';
 import { project } from './stores/project';
+import { ui } from './stores/ui';
 
 const hasFile = computed(() => project.status === 'ready');
 </script>
 
 <template>
-  <Studio v-if="hasFile" />
+  <Queue v-if="ui.screen === 'queue'" />
+  <Studio v-else-if="hasFile" />
   <EmptyState v-else />
 </template>

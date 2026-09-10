@@ -654,6 +654,7 @@ impl Parser {
             has_declared_width: self.saw_declared_width,
             warnings: self.warnings.iter().map(|w| w.to_string()).collect(),
             source_name: std::mem::take(&mut self.source_name),
+            source_bytes: None,
             plate: None,
         };
 

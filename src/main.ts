@@ -17,11 +17,16 @@ if (isBench) {
   // `#preview` opens the studio against a synthetic model, so the screens can be worked on in a
   // browser tab without the desktop shell. Development only; it is compiled out of a build.
   if (import.meta.env.DEV && location.hash.startsWith('#preview')) {
-    void Promise.all([import('./bench/syntheticIr'), import('./stores/project')]).then(
-      ([{ makeSyntheticIr }, { adoptIr }]) => {
-        adoptIr(makeSyntheticIr(570, 400));
-      },
-    );
+    void Promise.all([
+      import('./bench/syntheticIr'),
+      import('./stores/project'),
+      import('./stores/queue'),
+      import('./bench/previewJobs'),
+    ]).then(([{ makeSyntheticIr }, { adoptIr }, { queue }, { seedPreviewJobs }]) => {
+      adoptIr(makeSyntheticIr(570, 400));
+      queue.outputDir = '/Users/mk/Movies/SkipFrame';
+      seedPreviewJobs();
+    });
   }
   createApp(App).mount('#app');
 }

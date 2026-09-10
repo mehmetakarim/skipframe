@@ -51,3 +51,17 @@ export function boundsSize(bounds: readonly number[]): string {
   const z = Math.round((bounds[5] ?? 0) - (bounds[2] ?? 0));
   return `${x}×${y}×${z}`;
 }
+
+/**
+ * The tail of a path: the folder it lands in and the file itself.
+ *
+ * A column cannot hold `/Users/someone/Movies/SkipFrame/benchy.mp4`, and the two halves are not
+ * equally useful — the file name is what identifies the row. Truncating with CSS would either
+ * cut the file name off the end or, with the usual right-to-left trick, move the leading
+ * separator to the wrong side of the string. The full path goes in the element's title.
+ */
+export function shortPath(path: string, segments = 2): string {
+  const parts = path.split(/[\\/]+/).filter(Boolean);
+  if (parts.length <= segments) return path;
+  return `…/${parts.slice(-segments).join('/')}`;
+}

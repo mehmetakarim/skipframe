@@ -39,6 +39,9 @@ pub fn parse_file(path: &Path, plate: Option<u32>) -> Result<Ir> {
     let (mut ir, used_plate) =
         container::with_reader(path, plate, |reader| parse::parse_stream(reader, &opts))?;
     ir.meta.plate = used_plate;
+    // The UI shows the file's size next to its layer count, and only the caller that opened the
+    // path knows it -- the parser sees a reader.
+    ir.meta.source_bytes = std::fs::metadata(path).ok().map(|m| m.len());
     Ok(ir)
 }
 

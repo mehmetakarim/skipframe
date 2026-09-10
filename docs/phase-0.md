@@ -255,6 +255,23 @@ The MP4 is muxed in memory before it is written, so a 90-second 1080p60 export h
 160 MB while it finishes. That is fine for the vertical formats this is for; a multi-minute
 timelapse would want a streaming target instead.
 
+### The batch queue
+
+Three files — the real one and two generated — added and rendered through the shipping store,
+at 1080x1920, 30 fps, two seconds each:
+
+```
+queue: added 3 job(s) in 0.80 s
+  real-orca-abs.gcode — pending, 568 layers, 0 warning(s)
+  queue-b.gcode       — pending, 120 layers, 1 warning(s)
+  queue-c.gcode       — pending, 200 layers, 0 warning(s)
+queue: ran in 2.01 s
+```
+
+Three playable MP4s on disk, 60 frames each. The 0.80 s to add them is one parse per file to
+fill in its row; the run itself re-reads each from the parse cache. The Cura-family file
+correctly carries one warning — that slicer does not declare extrusion width, so it was derived.
+
 ---
 
 ## Determinism, measured

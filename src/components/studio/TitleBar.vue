@@ -7,6 +7,8 @@
 import { computed } from 'vue';
 
 import SfMark from '../SfMark.vue';
+import { goTo, ui } from '../../stores/ui';
+import { queue } from '../../stores/queue';
 
 defineProps<{ fileName?: string | null }>();
 
@@ -37,11 +39,21 @@ async function windowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
       <span class="file">{{ fileName }}</span>
     </template>
 
+    <slot name="trailing" />
+
     <div class="spacer" data-tauri-drag-region />
 
     <nav class="links">
-      <button type="button">Kuyruk</button>
-      <button type="button">Ayarlar</button>
+      <button type="button" :class="{ active: ui.screen === 'studio' }" @click="goTo('studio')">
+        Stüdyo
+      </button>
+      <button type="button" :class="{ active: ui.screen === 'queue' }" @click="goTo('queue')">
+        Kuyruk
+        <span v-if="queue.jobs.length" class="badge" :class="{ running: queue.running }">
+          {{ queue.jobs.length }}
+        </span>
+      </button>
+      <button type="button" disabled title="Henüz yok">Ayarlar</button>
     </nav>
 
     <div v-if="!isMac" class="controls">
@@ -145,8 +157,37 @@ async function windowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
   cursor: pointer;
 }
 
-.links button:hover {
+.links button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.links button:hover:not(:disabled) {
   color: var(--text-primary);
+}
+
+.links button.active {
+  color: var(--text-primary);
+}
+
+.links button:disabled {
+  color: var(--border-strong);
+  cursor: not-allowed;
+}
+
+.badge {
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.badge.running {
+  background: var(--gold);
+  color: var(--bg-surface);
 }
 
 .controls {

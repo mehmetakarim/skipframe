@@ -113,6 +113,10 @@ pub struct Meta {
     pub warnings: Vec<String>,
     /// Source file name (not a full path -- the IR is cached and must not leak the user's tree).
     pub source_name: String,
+    /// Size of the source file on disk, bytes. Absent in cache entries written before this
+    /// field existed, which is why it is optional rather than a plain number.
+    #[serde(default)]
+    pub source_bytes: Option<u64>,
     /// For `.gcode.3mf`, the plate that was extracted.
     pub plate: Option<u32>,
 }

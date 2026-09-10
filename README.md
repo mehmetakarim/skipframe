@@ -5,8 +5,8 @@ for Reels and Shorts.
 
 Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
 
-> **Status: in progress.** The parser, the renderer, the studio and the export pipeline work
-> end to end. The batch queue, the external-FFmpeg outputs and the settings screen are not built
+> **Status: in progress.** The parser, the renderer, the studio, the export pipeline and the
+> batch queue work end to end. The external-FFmpeg outputs and the settings screen are not built
 > yet, and the WebCodecs path has not been run on macOS.
 
 ![A print rendered as extrusion beads](docs/bead-render.png)
@@ -43,7 +43,13 @@ crates/skipframe-gcode/   parser, IR, dialects, printer profiles, container hand
 src-tauri/                desktop shell: IPC commands, parse cache, updater config
 src/                      Vue 3 front end
   ir/                       TypedArray views over the parser's buffer
+  render/                   the print scene: bead geometry, lighting, camera
+  export/                   the render loop, the two sinks, the raw-byte file write
+  stores/                   scene, project, export job, queue — plain reactive modules
+  screens/                  empty state, studio, queue
+  components/ui/            the design's component sheet, one file each
   styles/tokens.css         every colour and spacing value in the app
+  bench/                    phase-0 harness and development-only fixtures
 ```
 
 ---
@@ -121,6 +127,13 @@ Export walks the frame index one step at a time with no clock involved, using th
 `layerForFrame` and `viewForFrame` the preview does — so the camera move, the easing and the
 holds at either end are baked into the file exactly as they looked in the studio. Two separate runs of the same export produce
 bit-identical decoded frames; see [docs/phase-0.md](docs/phase-0.md).
+
+**In batches.** The queue renders a list of files one after another with one scene applied to
+all of them, into a renderer of its own — so walking back to the studio mid-run does not stop
+it, and the studio's own viewport is never disturbed. A file is read once when it is queued, to
+fill in its row, and again when it is rendered, which is a parse-cache hit; holding every job's
+intermediate representation in memory from the moment it was queued would cost tens of megabytes
+a row.
 
 External FFmpeg for ProRes, CRF and alpha is not wired up yet. Nothing will ever be bundled: if
 it is on `PATH` or the user points at one, those options appear.

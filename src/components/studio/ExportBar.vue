@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * The export bar states what will be produced before anything is produced: resolution, length,
- * frame rate, codec. "Videoyu çıkart" opens the export dialog; the queue is not built yet.
+ * frame rate, codec. "Videoyu çıkart" renders this file now; "Kuyruğa ekle" hands it and the
+ * current settings to the batch queue instead.
  */
 import { computed } from 'vue';
 
@@ -9,9 +10,29 @@ import SfButton from '../ui/SfButton.vue';
 import { project } from '../../stores/project';
 import { duration, resolution, scene } from '../../stores/scene';
 import { openExportDialog } from '../../stores/exportJob';
+import { addPaths, queue } from '../../stores/queue';
+import { goTo } from '../../stores/ui';
 
 const ready = computed(() => project.status === 'ready');
 const size = computed(() => `${resolution.value[0]} × ${resolution.value[1]}`);
+
+const alreadyQueued = computed(
+  () => project.path !== null && queue.jobs.some((j) => j.path === project.path),
+);
+
+/**
+ * Send the open file to the queue, carrying the studio's current output settings with it.
+ * The scene preset goes too, because the queue applies one preset to everything it renders.
+ */
+async function addToQueue() {
+  if (!project.path) return;
+  queue.settings.preset = scene.preset;
+  queue.settings.aspect = scene.aspect;
+  queue.settings.fps = scene.fps;
+  queue.settings.durationS = scene.durationS;
+  await addPaths([project.path]);
+  goTo('queue');
+}
 </script>
 
 <template>
@@ -32,7 +53,9 @@ const size = computed(() => `${resolution.value[0]} × ${resolution.value[1]}`);
 
     <div class="spacer" />
 
-    <SfButton variant="outline" :disabled="!ready">Kuyruğa ekle</SfButton>
+    <SfButton variant="outline" :disabled="!ready || alreadyQueued" @click="addToQueue">
+      {{ alreadyQueued ? 'Kuyrukta' : 'Kuyruğa ekle' }}
+    </SfButton>
   </footer>
 </template>
 
