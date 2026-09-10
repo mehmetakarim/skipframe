@@ -6,6 +6,7 @@ import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } fro
 import { defaultBitrate } from '../export/h264';
 import { revealFile, stemOf } from '../export/writeFile';
 import type { ExportProgress, ExportSettings } from '../export/types';
+import { errorText } from '../lib/messages';
 import { ir } from './project';
 import { ASPECTS, layerTiming, scene } from './scene';
 import { decorateStem, settings } from './settings';
@@ -107,7 +108,7 @@ export async function startExport(): Promise<void> {
         ? new Mp4Sink(outputPath, width, height, exportState.settings.fps)
         : new FrameSequenceSink(outputPath, stem, frameCount);
   } catch (e) {
-    exportState.progress = { ...idleProgress(), stage: 'failed', error: messageOf(e) };
+    exportState.progress = { ...idleProgress(), stage: 'failed', error: errorText(e) };
     return;
   }
 
@@ -135,7 +136,7 @@ export async function startExport(): Promise<void> {
   } catch (e) {
     sink.abort();
     exportState.progress.stage = 'failed';
-    exportState.progress.error = e instanceof UnsupportedCodecError ? e.message : messageOf(e);
+    exportState.progress.error = e instanceof UnsupportedCodecError ? e.message : errorText(e);
   } finally {
     controller = null;
   }
@@ -165,10 +166,4 @@ async function chooseDestination(stem: string): Promise<string | null> {
     filters: [{ name: 'MP4', extensions: ['mp4'] }],
   });
   return typeof file === 'string' ? file : null;
-}
-
-function messageOf(e: unknown): string {
-  if (typeof e === 'string') return e;
-  if (e instanceof Error) return e.message;
-  return String(e);
 }

@@ -652,7 +652,10 @@ impl Parser {
             nozzle_diameter: self.nozzle_diameter,
             has_feature_types: self.saw_feature_marker,
             has_declared_width: self.saw_declared_width,
-            warnings: self.warnings.iter().map(|w| w.to_string()).collect(),
+            // Codes, not sentences: the interface that shows these is not in English, and
+            // `Warning::code` is the stable thing to translate from. `Display` stays the
+            // crate's own English for the CLI and for a Rust caller.
+            warnings: self.warnings.iter().map(|w| w.code().to_string()).collect(),
             source_name: std::mem::take(&mut self.source_name),
             source_bytes: None,
             plate: None,
@@ -995,7 +998,7 @@ mod tests {
         let src = "G90\nM83\nG1 X0 Y0 Z0.2\nG1 X10 E1\nG1 X0 Y0 Z0.4\nG1 X10 E1\n";
         let ir = parse(src);
         assert_eq!(ir.meta.layer_count, 2);
-        assert!(ir.meta.warnings.iter().any(|w| w.contains("inferred")));
+        assert!(ir.meta.warnings.iter().any(|w| w == "no_layer_markers"));
     }
 
     #[test]

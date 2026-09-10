@@ -20,6 +20,27 @@ pub enum Error {
     NoMoves,
 }
 
+impl Error {
+    /// A stable identifier for this failure.
+    ///
+    /// `Display` is this crate's own English, which is what the CLI prints and what a Rust
+    /// caller sees. The desktop app is not in English, and it cannot translate prose without
+    /// matching on it -- a match that breaks silently the day a sentence here is reworded. So
+    /// the code travels alongside the message and the interface translates the code.
+    ///
+    /// These strings are part of the IPC contract: rename one and the app falls back to the
+    /// English message.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Error::Io(_) => "io",
+            Error::Zip(_) => "archive",
+            Error::UnsupportedContainer(_) => "unsupported_container",
+            Error::NoGcodeInArchive => "no_gcode_in_archive",
+            Error::NoMoves => "no_moves",
+        }
+    }
+}
+
 /// Non-fatal degradations. Layer 2 collects these and the UI surfaces them; a job never stops
 /// because of one.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,6 +51,21 @@ pub enum Warning {
     DerivedWidth,
     NoPrinterProfile,
     UnsupportedArcWithoutOffsets,
+}
+
+impl Warning {
+    /// A stable identifier, for the same reason [`Error::code`] has one. This is what reaches
+    /// the front end inside `meta.warnings`.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Warning::UnknownDialect => "unknown_dialect",
+            Warning::NoLayerMarkers => "no_layer_markers",
+            Warning::NoFeatureMarkers => "no_feature_markers",
+            Warning::DerivedWidth => "derived_width",
+            Warning::NoPrinterProfile => "no_printer_profile",
+            Warning::UnsupportedArcWithoutOffsets => "arc_without_offsets",
+        }
+    }
 }
 
 impl fmt::Display for Warning {

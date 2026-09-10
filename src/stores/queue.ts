@@ -6,6 +6,9 @@ import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } fro
 import { stemOf } from '../export/writeFile';
 import { applySceneTo } from '../render/applyScene';
 import { acquireQueueRenderer, releaseQueueRenderer } from '../queue/queueRenderer';
+import { errorText } from '../lib/messages';
+import { notify, notifyError } from './notices';
+import { goTo } from './ui';
 import { ASPECTS, applyPreset, layerTiming, scene, type Aspect, type PresetId } from './scene';
 import { decorateStem, settings } from './settings';
 import type { ExportFormat } from '../export/types';
@@ -148,7 +151,13 @@ export async function addPaths(paths: string[]): Promise<void> {
       // The IR itself is deliberately not kept: the run re-reads it from the parse cache.
     } catch (e) {
       tracked.status = 'failed';
-      tracked.error = messageOf(e);
+      tracked.error = errorText(e);
+      // The row says so too, but a file dropped on the studio is added from a screen that is
+      // not showing the row.
+      notifyError(`${tracked.name} kuyruğa eklenemedi`, e, {
+        label: 'Kuyruğa git',
+        run: () => goTo('queue'),
+      });
     }
   }
 }
@@ -275,7 +284,7 @@ export async function startQueue(): Promise<void> {
       } catch (e) {
         sink?.abort();
         job.status = 'failed';
-        job.error = e instanceof UnsupportedCodecError ? e.message : messageOf(e);
+        job.error = e instanceof UnsupportedCodecError ? e.message : errorText(e);
       }
     }
   } finally {
@@ -284,10 +293,27 @@ export async function startQueue(): Promise<void> {
     // Hand the print's buffers back rather than holding them until the next run.
     releaseQueueRenderer();
   }
-}
 
-function messageOf(e: unknown): string {
-  if (typeof e === 'string') return e;
-  if (e instanceof Error) return e.message;
-  return String(e);
+  // One notice for the whole run, not one per job: twenty files failing for the same reason is
+  // one thing that went wrong, and the rows carry the detail.
+  const failed = todo.filter((j) => j.status === 'failed');
+  const done = todo.filter((j) => j.status === 'done').length;
+  const toQueue = { label: 'Kuyruğa git', run: () => goTo('queue') };
+  if (failed.length === 1) {
+    notify({
+      kind: 'error',
+      title: `${failed[0]!.name} render edilemedi`,
+      detail: failed[0]!.error,
+      action: toQueue,
+    });
+  } else if (failed.length > 1) {
+    notify({
+      kind: 'error',
+      title: `${failed.length} iş render edilemedi`,
+      detail: failed.map((j) => `${j.name}: ${j.error ?? 'bilinmeyen hata'}`).join('\n'),
+      action: toQueue,
+    });
+  } else if (done > 0) {
+    notify({ title: `${done} render tamamlandı`, detail: queue.outputDir, action: toQueue });
+  }
 }

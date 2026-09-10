@@ -1,6 +1,7 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
 
 import { parseFile } from '../ir/parseFile';
+import { notifyError } from './notices';
 import type { Ir } from '../ir/types';
 
 /**
@@ -24,7 +25,6 @@ const state = reactive({
   status: 'empty' as ProjectStatus,
   /** Absolute path on disk. The UI shows the file name from `ir.meta` instead. */
   path: null as string | null,
-  error: null as string | null,
   /** Round trip for the last open, milliseconds. */
   elapsedMs: 0,
   /** Size on disk in bytes, from the parser's meta. */
@@ -37,8 +37,13 @@ export const layerCount = computed(() => ir.value?.layerCount ?? 0);
 export const warnings = computed(() => ir.value?.meta.warnings ?? []);
 
 export async function openPath(path: string, options: { plate?: number } = {}): Promise<void> {
+  // What to fall back to if this file turns out not to be readable. A bad second file used to
+  // empty the studio and drop the user back on the drop screen with the print they were working
+  // on gone — a file that cannot be opened must cost them nothing but the attempt.
+  const previous = { status: state.status, path: state.path, bytes: state.bytes };
+  const hadFile = ir.value !== null;
+
   state.status = 'loading';
-  state.error = null;
   state.path = path;
   try {
     const result = await parseFile(path, options);
@@ -47,9 +52,18 @@ export async function openPath(path: string, options: { plate?: number } = {}): 
     state.elapsedMs = result.elapsedMs;
     state.status = 'ready';
   } catch (e) {
-    ir.value = null;
-    state.error = messageOf(e);
-    state.status = 'error';
+    if (hadFile) {
+      state.status = previous.status;
+      state.path = previous.path;
+      state.bytes = previous.bytes;
+    } else {
+      ir.value = null;
+      state.status = 'error';
+    }
+    // One mechanism, wherever the user is standing. The drop screen used to print this in the
+    // middle of itself while the studio said nothing at all: the same event reported two
+    // different ways, and one of them only on one screen.
+    notifyError(`${nameOf(path)} açılamadı`, e);
   }
 }
 
@@ -73,7 +87,6 @@ export function adoptIr(model: Ir, path: string | null = null): void {
   ir.value = model;
   state.path = path;
   state.bytes = model.meta.sourceBytes;
-  state.error = null;
   state.elapsedMs = 0;
   state.status = 'ready';
 }
@@ -82,12 +95,9 @@ export function closeProject(): void {
   ir.value = null;
   state.status = 'empty';
   state.path = null;
-  state.error = null;
   state.bytes = null;
 }
 
-function messageOf(e: unknown): string {
-  if (typeof e === 'string') return e;
-  if (e instanceof Error) return e.message;
-  return String(e);
+function nameOf(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path;
 }

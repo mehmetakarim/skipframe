@@ -63,7 +63,7 @@ export function seedPreviewJobs(): void {
       layers: 318,
       bytes: 6_200_000,
       dialect: 'Unknown',
-      warnings: ['Slicer could not be identified.'],
+      warnings: ['unknown_dialect'],
       status: 'pending',
       frame: 0,
       frameCount: 380,

@@ -1,5 +1,7 @@
 import { reactive, watch } from 'vue';
 
+import { notifyError } from './notices';
+
 /**
  * Preferences, loaded once at boot and written back whenever they change.
  *
@@ -70,7 +72,13 @@ function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     const { invoke } = await import('@tauri-apps/api/core');
-    await invoke('save_settings', { settings: { ...settings } }).catch(() => {});
+    try {
+      await invoke('save_settings', { settings: { ...settings } });
+    } catch (e) {
+      // Swallowing this meant a read-only config directory looked exactly like a working one
+      // until the app was restarted and every preference had gone back to its default.
+      notifyError('Tercihler kaydedilemedi', e);
+    }
   }, 400);
 }
 

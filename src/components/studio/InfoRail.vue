@@ -9,6 +9,7 @@ import { computed } from 'vue';
 import { ir } from '../../stores/project';
 import { currentLayer, scene } from '../../stores/scene';
 import { FEATURE_LABELS, FeatureType } from '../../ir/types';
+import { warningText } from '../../lib/messages';
 import { boundsSize, integer, metres, millimetres, printDuration } from '../../lib/format';
 
 const meta = computed(() => ir.value?.meta ?? null);
@@ -187,7 +188,7 @@ const featureSummary = computed(() => {
     </section>
 
     <ul v-if="meta?.warnings.length" class="warnings">
-      <li v-for="warning in meta.warnings" :key="warning">{{ warning }}</li>
+      <li v-for="warning in meta.warnings" :key="warning">{{ warningText(warning) }}</li>
     </ul>
 
     <div v-else-if="scene.presetDirty" class="note">Sahne değişiklikleri presete kaydedilmedi.</div>

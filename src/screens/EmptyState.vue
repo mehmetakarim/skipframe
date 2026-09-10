@@ -63,10 +63,6 @@ const GUIDES = [
           </div>
         </div>
 
-        <p v-if="project.status === 'error'" class="error">
-          {{ project.error }}
-        </p>
-
         <div class="privacy">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <rect
@@ -188,14 +184,6 @@ h1 {
   font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--text-faint);
-}
-
-.error {
-  margin: 0;
-  max-width: 620px;
-  font-size: var(--type-label-size);
-  color: var(--danger);
-  text-align: center;
 }
 
 .privacy {

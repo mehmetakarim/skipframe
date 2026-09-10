@@ -110,6 +110,11 @@ pub struct Meta {
     /// Whether extrusion width came from the file rather than being derived from E deltas.
     pub has_declared_width: bool,
     /// Non-fatal degradations, shown to the user without stopping the job.
+    ///
+    /// These are [`crate::error::Warning::code`] values -- `"no_layer_markers"`, not a
+    /// sentence. The interface that displays them is not in English and translating prose
+    /// would mean matching on it. A reader that does not recognise a code should show it as it
+    /// is: cache entries written before this change hold the old English sentences.
     pub warnings: Vec<String>,
     /// Source file name (not a full path -- the IR is cached and must not leak the user's tree).
     pub source_name: String,

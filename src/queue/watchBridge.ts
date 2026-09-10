@@ -1,3 +1,4 @@
+import { notifyError } from '../stores/notices';
 import { addPaths, queue, startQueue } from '../stores/queue';
 
 /**
@@ -21,8 +22,14 @@ export async function installWatchBridge(): Promise<void> {
 
   const { listen } = await import('@tauri-apps/api/event');
   await listen<string>(EVENT, async (event) => {
-    await addPaths([event.payload]);
-    // The setting promises the file is rendered, not merely listed.
-    if (!queue.running) void startQueue();
+    try {
+      await addPaths([event.payload]);
+      // The setting promises the file is rendered, not merely listed.
+      if (!queue.running) await startQueue();
+    } catch (e) {
+      // Nobody asked for this run, so nobody is watching a screen that could report it. If the
+      // watched folder stops working it has to say so wherever the user happens to be.
+      notifyError('İzlenen klasördeki dosya işlenemedi', e);
+    }
   });
 }

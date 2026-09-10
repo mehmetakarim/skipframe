@@ -11,6 +11,51 @@ use tauri::AppHandle;
 
 use crate::cache;
 
+/// What a failed command tells the front end.
+///
+/// A bare string would have to be translated by matching on English prose, and the interface
+/// is Turkish. `code` is [`skipframe_gcode::Error::code`] where the failure came from the
+/// parser, and a coarse label otherwise; `message` is always the original English, which is
+/// what gets shown when a code is not recognised.
+#[derive(Debug, serde::Serialize)]
+pub struct IpcError {
+    pub code: String,
+    pub message: String,
+}
+
+impl From<skipframe_gcode::Error> for IpcError {
+    fn from(e: skipframe_gcode::Error) -> Self {
+        IpcError {
+            code: e.code().to_string(),
+            message: e.to_string(),
+        }
+    }
+}
+
+impl IpcError {
+    fn other(code: &str, e: impl std::fmt::Display) -> Self {
+        IpcError {
+            code: code.to_string(),
+            message: e.to_string(),
+        }
+    }
+}
+
+impl From<String> for IpcError {
+    fn from(message: String) -> Self {
+        IpcError {
+            code: "other".to_string(),
+            message,
+        }
+    }
+}
+
+impl From<&str> for IpcError {
+    fn from(message: &str) -> Self {
+        IpcError::from(message.to_string())
+    }
+}
+
 /// Parse a file (or serve it from the cache) and return the encoded IR as raw bytes.
 ///
 /// Everything descriptive -- dialect, printer, warnings, timings -- travels inside the buffer's
@@ -21,11 +66,11 @@ pub async fn parse_gcode(
     path: String,
     plate: Option<u32>,
     use_cache: Option<bool>,
-) -> Result<Response, String> {
+) -> Result<Response, IpcError> {
     let use_cache = use_cache.unwrap_or(true);
-    let bytes = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<u8>, String> {
+    let bytes = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<u8>, IpcError> {
         let path = PathBuf::from(path);
-        let key = skipframe_gcode::cache_key(&path).map_err(|e| e.to_string())?;
+        let key = skipframe_gcode::cache_key(&path)?;
         let key = match plate {
             Some(p) => format!("{key}-p{p}"),
             None => key,
@@ -46,35 +91,35 @@ pub async fn parse_gcode(
             }
         }
 
-        let ir = skipframe_gcode::parse_file(&path, plate).map_err(|e| e.to_string())?;
+        let ir = skipframe_gcode::parse_file(&path, plate)?;
         let buf = ir.encode();
         let _ = cache::put(&app, &key, &buf);
         Ok(buf)
     })
     .await
-    .map_err(|e| e.to_string())??;
+    .map_err(|e| IpcError::other("worker", e))??;
 
     Ok(Response::new(bytes))
 }
 
 /// Plate numbers inside a `.gcode.3mf`. Plain `.gcode` always answers `[1]`.
 #[tauri::command]
-pub async fn list_plates(path: String) -> Result<Vec<u32>, String> {
+pub async fn list_plates(path: String) -> Result<Vec<u32>, IpcError> {
     tauri::async_runtime::spawn_blocking(move || {
-        skipframe_gcode::container::list_plates(&PathBuf::from(path)).map_err(|e| e.to_string())
+        skipframe_gcode::container::list_plates(&PathBuf::from(path)).map_err(IpcError::from)
     })
     .await
-    .map_err(|e| e.to_string())?
+    .map_err(|e| IpcError::other("worker", e))?
 }
 
 /// Content hash of a file, used by the front end to key its own in-memory state.
 #[tauri::command]
-pub async fn file_cache_key(path: String) -> Result<String, String> {
+pub async fn file_cache_key(path: String) -> Result<String, IpcError> {
     tauri::async_runtime::spawn_blocking(move || {
-        skipframe_gcode::cache_key(&PathBuf::from(path)).map_err(|e| e.to_string())
+        skipframe_gcode::cache_key(&PathBuf::from(path)).map_err(IpcError::from)
     })
     .await
-    .map_err(|e| e.to_string())?
+    .map_err(|e| IpcError::other("worker", e))?
 }
 
 #[tauri::command]

@@ -14,6 +14,7 @@ import EmptyState from './screens/EmptyState.vue';
 import Studio from './screens/Studio.vue';
 import Queue from './screens/Queue.vue';
 import Settings from './screens/Settings.vue';
+import SfNotices from './components/ui/SfNotices.vue';
 import { openPath, project } from './stores/project';
 import { goTo, ui } from './stores/ui';
 
@@ -52,4 +53,8 @@ onBeforeUnmount(() => unlisten?.());
   <Settings v-else-if="ui.screen === 'settings'" />
   <Studio v-else-if="hasFile" />
   <EmptyState v-else />
+
+  <!-- Outside the screens on purpose: what a notice reports is usually something that happened
+       on a screen the user is not looking at. -->
+  <SfNotices />
 </template>
