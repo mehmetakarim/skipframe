@@ -78,8 +78,8 @@ export const scene = reactive({
   hideTravel: true,
 
   // 02 Filament
+  /** Fixed swatches offered as shortcuts under the colour field; not state the render reads. */
   filaments: ['#c9ccc6', '#101010', '#ebb60e', '#3f4441', '#ffffff'],
-  filamentIndex: 0,
   /**
    * One colour per extruder. Index 0 is the only one a single-material print uses, and the
    * swatch row above edits it, so nothing about that case changes.

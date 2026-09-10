@@ -24,6 +24,8 @@ import {
   markPresetDirty,
   scene,
 } from '../../stores/scene';
+import { BY_FEATURE, paletteHex } from '../../render/palette';
+import { FEATURE_LABELS, FeatureType } from '../../ir/types';
 import { decimal, integer, megabytes } from '../../lib/format';
 
 const FPS_OPTIONS = [
@@ -59,6 +61,46 @@ function setToolColour(index: number, value: string) {
   scene.toolColours[index] = value;
   markPresetDirty();
 }
+
+const COLOUR_MODES = [
+  { value: 'filament', label: 'Filament' },
+  { value: 'feature', label: 'Bölümler' },
+];
+
+/**
+ * Filament colouring and feature colouring are two ways of painting the same geometry, and only
+ * one can be in effect. A switch said so badly: it left the extruder rows fully editable while
+ * they had no effect on the render, which read as the colours being broken rather than overruled.
+ */
+const colourMode = computed({
+  get: () => (scene.colourByFeature ? 'feature' : 'filament'),
+  set: (v: string) => {
+    scene.colourByFeature = v === 'feature';
+    markPresetDirty();
+  },
+});
+
+/**
+ * One legend row per feature the open file actually contains, so the list is as long as the
+ * print is complicated. Travel is left out: it has its own switch in section 01 and its colour
+ * does not change with the mode.
+ */
+const featureLegend = computed(() => {
+  const model = ir.value;
+  if (!model || !model.meta.hasFeatureTypes) return [];
+  const seen = new Set<number>();
+  for (let s = 0; s < model.segmentCount; s++) {
+    const f = model.featureType[s];
+    if (f !== undefined && f !== FeatureType.Travel) seen.add(f);
+  }
+  return [...seen]
+    .sort((a, b) => a - b)
+    .map((f) => ({
+      feature: f,
+      label: FEATURE_LABELS[f] ?? '-',
+      colour: paletteHex(BY_FEATURE, f),
+    }));
+});
 
 const bedLabel = computed(() => {
   const size = ir.value?.meta.bedSize;
@@ -114,7 +156,30 @@ function fitCamera() {
 
     <!-- 02 --------------------------------------------------------------------------- -->
     <SfSection v-model:open="scene.sections.filament" index="02" title="Filament">
-      <template v-if="toolCount === 1">
+      <div class="field">
+        <span class="t-overline">Renklendirme</span>
+        <SfTabs
+          v-model="colourMode"
+          class="wide"
+          :mono="false"
+          :options="COLOUR_MODES"
+          aria-label="Renklendirme"
+        />
+      </div>
+
+      <template v-if="colourMode === 'feature'">
+        <p v-if="!featureLegend.length" class="note">
+          Bu dosyada bölüm bilgisi yok; renklendirme filamente göre yapılır.
+        </p>
+        <div v-else class="legend">
+          <div v-for="row in featureLegend" :key="row.feature" class="legend-row">
+            <SfColorDot :color="row.colour" selected />
+            <span class="legend-name">{{ row.label }}</span>
+          </div>
+        </div>
+      </template>
+
+      <template v-else-if="toolCount === 1">
         <div class="swatches">
           <SfColorDot
             v-for="(colour, i) in scene.filaments"
@@ -141,12 +206,6 @@ function fitCamera() {
           />
         </div>
       </template>
-
-      <SfSwitch
-        v-model="scene.colourByFeature"
-        label="Bölümlere göre renklendir"
-        @update:model-value="touched"
-      />
 
       <SfSelect
         v-model="scene.surface"
@@ -496,6 +555,28 @@ function fitCamera() {
 .tool-colour {
   flex: 1;
   min-width: 0;
+}
+
+/* Two columns so the labels line up however long the feature names are. */
+.legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.legend-name {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .note {

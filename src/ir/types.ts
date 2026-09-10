@@ -22,16 +22,16 @@ export const FeatureType = {
 export type FeatureTypeValue = (typeof FeatureType)[keyof typeof FeatureType];
 
 export const FEATURE_LABELS: Record<number, string> = {
-  [FeatureType.Travel]: 'Travel',
-  [FeatureType.OuterWall]: 'Outer wall',
-  [FeatureType.InnerWall]: 'Inner wall',
-  [FeatureType.SolidInfill]: 'Solid infill',
-  [FeatureType.SparseInfill]: 'Sparse infill',
-  [FeatureType.Support]: 'Support',
-  [FeatureType.SkirtBrim]: 'Skirt / brim',
-  [FeatureType.Bridge]: 'Bridge',
-  [FeatureType.TopSurface]: 'Top surface',
-  [FeatureType.Unknown]: 'Other',
+  [FeatureType.Travel]: 'Hareket',
+  [FeatureType.OuterWall]: 'Dış duvar',
+  [FeatureType.InnerWall]: 'İç duvar',
+  [FeatureType.SolidInfill]: 'Dolu dolgu',
+  [FeatureType.SparseInfill]: 'Seyrek dolgu',
+  [FeatureType.Support]: 'Destek',
+  [FeatureType.SkirtBrim]: 'Etek / kenar',
+  [FeatureType.Bridge]: 'Köprü',
+  [FeatureType.TopSurface]: 'Üst yüzey',
+  [FeatureType.Unknown]: 'Diğer',
 };
 
 /** Mirrors `skipframe_gcode::ir::Meta`. */

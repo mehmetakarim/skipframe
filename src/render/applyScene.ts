@@ -10,6 +10,21 @@ import { currentLayer, currentView, scene } from '../stores/scene';
  * the store said otherwise — the sort of drift this file exists to prevent.
  */
 export function applySceneTo(printScene: PrintScene): void {
+  applyAppearanceTo(printScene);
+  applyViewTo(printScene);
+  printScene.setLayer(currentLayer.value);
+}
+
+/**
+ * Everything except the camera and the layer — the settings that change when the user edits a
+ * rail control, not once per frame.
+ *
+ * The viewport re-runs this inside a `watchEffect`, so every store field read here becomes a
+ * dependency automatically. That is the whole point of it being a function: a hand-written watch
+ * list drifted from this one the moment tool colours were added, and editing an extruder's
+ * colour stopped reaching the renderer.
+ */
+export function applyAppearanceTo(printScene: PrintScene): void {
   printScene.setPlate(scene.plate);
   printScene.setBackground(scene.background);
   printScene.setToolColours(scene.toolColours);
@@ -19,8 +34,6 @@ export function applySceneTo(printScene: PrintScene): void {
   printScene.setShowTravel(!scene.hideTravel);
   printScene.setHighlightCurrentLayer(scene.highlightCurrentLayer);
   printScene.setFov(scene.camera.fovDeg);
-  applyViewTo(printScene);
-  printScene.setLayer(currentLayer.value);
 }
 
 /** Just the camera, which moves far more often than the rest. */

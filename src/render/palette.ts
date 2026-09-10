@@ -89,6 +89,12 @@ export function coloursToTextureData(colours: string[]): Uint8Array {
   return data;
 }
 
+/** A palette entry as CSS, for the legend the rail shows in feature mode. */
+export function paletteHex(palette: Palette, feature: number): string {
+  const rgb = palette[feature] ?? [255, 0, 255];
+  return `#${rgb.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export function paletteToTextureData(palette: Palette): Uint8Array {
   const data = new Uint8Array(PALETTE_SIZE * 4);
   for (let i = 0; i < PALETTE_SIZE; i++) {

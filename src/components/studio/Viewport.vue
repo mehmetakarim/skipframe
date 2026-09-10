@@ -6,12 +6,12 @@
  * This is where the studio meets the renderer built in phase 0. The scene is fed by layer
  * index, which the transport derives from the frame index — never from a clock.
  */
-import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch, watchEffect } from 'vue';
 
 import SfTabs from '../ui/SfTabs.vue';
 import { PrintScene } from '../../render/PrintScene';
 import { setActiveScene } from '../../render/activeScene';
-import { applySceneTo, applyViewTo } from '../../render/applyScene';
+import { applyAppearanceTo, applySceneTo, applyViewTo } from '../../render/applyScene';
 import { ir } from '../../stores/project';
 import { exportState, running as exporting } from '../../stores/exportJob';
 import { ASPECTS, currentLayer, currentView, scene } from '../../stores/scene';
@@ -64,6 +64,16 @@ onMounted(() => {
   if (ir.value) printScene.setIr(ir.value);
   applyScene();
   resize();
+
+  // Every scene setting except the camera and the layer arrives through here, and the
+  // dependency list is whatever `applyAppearanceTo` happens to read — not a list kept by hand.
+  // The hand-written one drifted the moment per-extruder colours were added: the store changed,
+  // nothing re-applied, and a multi-material print ignored the colours the user had picked.
+  watchEffect(() => {
+    if (!printScene) return;
+    applyAppearanceTo(printScene);
+    draw();
+  });
 });
 
 onBeforeUnmount(() => {
@@ -90,23 +100,6 @@ watch(currentView, () => {
   applyView();
   draw();
 });
-
-watch(
-  () => [
-    scene.plate,
-    scene.background,
-    scene.filamentIndex,
-    scene.filaments,
-    scene.hideTravel,
-    scene.highlightCurrentLayer,
-    scene.camera.fovDeg,
-  ],
-  () => {
-    applyScene();
-    draw();
-  },
-  { deep: true },
-);
 
 watch(() => scene.aspect, resize);
 
