@@ -9,6 +9,9 @@ import type { Ir } from '../ir/types';
  * bead of plastic actually makes when it is squashed onto the layer below. That is what gives
  * the print a surface, and a surface is what light needs.
  *
+ * Four per-segment attributes are bound — endpoints, width, feature and extruder — and all four
+ * are views onto the parser's buffer.
+ *
  * # Why instancing
  *
  * A prism per segment as merged geometry would be twelve vertices and thirty-six indices each:
@@ -89,6 +92,7 @@ export function buildBeadGeometry(ir: Ir): THREE.InstancedBufferGeometry {
   geometry.setAttribute('aEnd', new THREE.InterleavedBufferAttribute(endpoints, 3, 3));
   geometry.setAttribute('aWidth', new THREE.InstancedBufferAttribute(ir.width, 1));
   geometry.setAttribute('aFeature', new THREE.InstancedBufferAttribute(ir.featureType, 1));
+  geometry.setAttribute('aTool', new THREE.InstancedBufferAttribute(ir.toolIndex, 1));
 
   geometry.instanceCount = 0;
   return geometry;

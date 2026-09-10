@@ -46,8 +46,48 @@ export const BY_FEATURE: Palette = {
   [FeatureType.Unknown]: hex('#8a8f88'),
 };
 
+/**
+ * Default colour per extruder, for multi-material prints.
+ *
+ * They have to be told apart at a glance in a nine-second clip, so they are spread around the
+ * wheel rather than being shades of one hue. The first is the same quiet grey a single-tool
+ * print gets, so nothing changes for the common case.
+ *
+ * These are filament colours, not interface colours. The design's accents are chosen to sit on
+ * a dark panel; dropped onto lit geometry against a dark background they fall to nearly black —
+ * a four-colour print came out looking two-colour. These are the same hues carried up to the
+ * lightness a spool actually has.
+ */
+export const TOOL_COLOURS = [
+  '#c9ccc6',
+  '#ebb60e',
+  '#e05a45',
+  '#4fbb72',
+  '#4f95d6',
+  '#b070d0',
+  '#f2f2ee',
+  '#8a8f88',
+];
+
+export function toolColour(index: number): string {
+  return TOOL_COLOURS[index % TOOL_COLOURS.length]!;
+}
+
 /** Colour of the layer currently being laid down. */
 export const CURRENT_LAYER = hex('#ebb60e');
+
+/** Pack a list of CSS hex colours into the same 16-entry texture the feature palette uses. */
+export function coloursToTextureData(colours: string[]): Uint8Array {
+  const data = new Uint8Array(PALETTE_SIZE * 4);
+  for (let i = 0; i < PALETTE_SIZE; i++) {
+    const rgb = hex(colours[i] ?? colours[colours.length - 1] ?? '#c9ccc6');
+    data[i * 4 + 0] = rgb[0];
+    data[i * 4 + 1] = rgb[1];
+    data[i * 4 + 2] = rgb[2];
+    data[i * 4 + 3] = 255;
+  }
+  return data;
+}
 
 export function paletteToTextureData(palette: Palette): Uint8Array {
   const data = new Uint8Array(PALETTE_SIZE * 4);

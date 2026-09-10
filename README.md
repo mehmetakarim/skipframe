@@ -6,8 +6,8 @@ for Reels and Shorts.
 Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
 
 > **Status: in progress.** The parser, the renderer, the studio, the export pipeline, the batch
-> queue and the settings screen work end to end. The external-FFmpeg outputs and multi-material
-> colouring are not built yet, and the WebCodecs path has not been run on macOS.
+> queue and the settings screen work end to end. The external-FFmpeg outputs are not built yet,
+> and the WebCodecs path has not been run on macOS.
 
 ![A print rendered as extrusion beads](docs/bead-render.png)
 
@@ -70,8 +70,10 @@ unchanged. The authoritative description is in
 | `width`       | `Float32Array` | per segment               | extrusion width, millimetres                                                        |
 | `meta`        | JSON           | whole file                | slicer, printer, bed, layer count, layer Z list, estimated time, filament, warnings |
 
-`width` drives the thickness of every bead the renderer draws. `toolIndex` is filled in but not
-yet visualised — multi-material prints render in one colour.
+`width` drives the thickness of every bead the renderer draws, and `toolIndex` picks its colour
+on a multi-material print — the studio shows one colour row per extruder when a file uses more
+than one, and a single swatch when it does not. Every one of these arrays reaches the GPU as a
+view onto the parser's buffer, with no copy.
 
 Positions are stored per vertex so the pair of endpoints for each segment is contiguous: the
 renderer binds them as two interleaved instance attributes over the same buffer, with no copy.

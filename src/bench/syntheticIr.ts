@@ -10,7 +10,7 @@ import type { Ir } from '../ir/types';
  * This is not an SFIR decoder and must never become one — the binary layout has exactly one
  * reader, `decodeIr`.
  */
-export function makeSyntheticIr(layers: number, segmentsPerLayer: number): Ir {
+export function makeSyntheticIr(layers: number, segmentsPerLayer: number, tools = 1): Ir {
   const segmentCount = layers * segmentsPerLayer;
   const positions = new Float32Array(segmentCount * 6);
   const featureType = new Uint8Array(segmentCount);
@@ -42,7 +42,8 @@ export function makeSyntheticIr(layers: number, segmentsPerLayer: number): Ir {
       py = y;
       // A travel at the start of the layer, then feature bands that change every 20 paths.
       featureType[s] = i === 0 ? 0 : 1 + ((((i / 20) | 0) % 4) as number);
-      toolIndex[s] = 0;
+      // Bands of tool, the way a multi-material print alternates.
+      toolIndex[s] = tools > 1 ? (((i / 20) | 0) + l) % tools : 0;
       width[s] = featureType[s] === 0 ? 0 : 0.45;
       s += 1;
     }
@@ -72,7 +73,7 @@ export function makeSyntheticIr(layers: number, segmentsPerLayer: number): Ir {
       segmentCount,
       layerZ,
       bounds: [65, 45, 0.2, 185, 165, 0.2 + layers * 0.2],
-      toolCount: 1,
+      toolCount: tools,
       nozzleDiameter: 0.4,
       hasFeatureTypes: true,
       hasDeclaredWidth: true,

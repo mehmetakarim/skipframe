@@ -165,6 +165,11 @@ fn cmd_synth(args: &[String]) -> Res {
         .map(|v| v.parse())
         .transpose()?
         .unwrap_or(0);
+    // Multi-material: how many extruders the print alternates between.
+    let tools: u32 = flag(args, "--tools")
+        .map(|v| v.parse())
+        .transpose()?
+        .unwrap_or(1);
 
     let file = std::fs::File::create(&out)?;
     let mut w = std::io::BufWriter::with_capacity(1 << 20, file);
@@ -175,16 +180,18 @@ fn cmd_synth(args: &[String]) -> Res {
         per_layer,
         feature_every.max(1),
         retract_every,
+        tools.max(1),
     )?;
     w.flush()?;
 
     let size = std::fs::metadata(&out)?.len();
     println!(
-        "wrote {} -- {} layers x {} paths = {} paths, {:.1} MB",
+        "wrote {} -- {} layers x {} paths = {} paths, {} tool(s), {:.1} MB",
         out.display(),
         layers,
         per_layer,
         layers as u64 * per_layer as u64,
+        tools.max(1),
         size as f64 / 1e6
     );
     Ok(())
@@ -197,6 +204,7 @@ fn write_synth(
     per_layer: u32,
     feature_every: u32,
     retract_every: u32,
+    tools: u32,
 ) -> std::io::Result<()> {
     let (banner, layer_marker, type_marker, emits_width) = match dialect {
         "cura" => (
@@ -258,7 +266,17 @@ fn write_synth(
         }
         // A travel to the start of the layer, then a spiral of extrusions.
         writeln!(w, "G1 X100.000 Y100.000 Z{z:.3} F9000")?;
+        // One tool per band of features, so a multi-material file alternates the way a real
+        // one does rather than switching on every segment.
+        let mut current_tool = u32::MAX;
         for i in 0..per_layer {
+            if tools > 1 {
+                let tool = ((layer + i / feature_every.max(1)) % tools).min(tools - 1);
+                if tool != current_tool {
+                    current_tool = tool;
+                    writeln!(w, "T{tool}")?;
+                }
+            }
             if i % feature_every == 0 {
                 let f = ((i / feature_every) % 4) as usize;
                 writeln!(w, ";{type_marker}:{}", features[f])?;

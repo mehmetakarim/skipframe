@@ -8,6 +8,8 @@ import {
   CURRENT_LAYER,
   MONOCHROME,
   PALETTE_SIZE,
+  TOOL_COLOURS,
+  coloursToTextureData,
   paletteToTextureData,
   type Palette,
 } from './palette';
@@ -36,8 +38,12 @@ const VERTEX_SHADER = /* glsl */ `
   in vec3 aEnd;
   in float aWidth;
   in float aFeature;
+  in float aTool;
 
   uniform sampler2D uPalette;
+  uniform sampler2D uToolPalette;
+  /** 0 colours by extruder, 1 by feature type. Travels ignore it either way. */
+  uniform float uColourByFeature;
   uniform float uShowTravel;
   uniform float uLayerHeight;
   uniform float uTravelWidth;
@@ -82,7 +88,12 @@ const VERTEX_SHADER = /* glsl */ `
 
     float id = float(gl_InstanceID);
     bool isCurrent = uHighlightCurrent > 0.5 && id >= uCurrentStart && id < uCurrentEnd && !isTravel;
-    vec3 base = texture(uPalette, vec2((aFeature + 0.5) / ${PALETTE_SIZE}.0, 0.5)).rgb;
+    // Travels always take their own colour from the feature palette; extrusions take either
+    // their extruder's colour or their feature's.
+    vec3 byFeature = texture(uPalette, vec2((aFeature + 0.5) / ${PALETTE_SIZE}.0, 0.5)).rgb;
+    vec3 byTool = texture(uToolPalette, vec2((aTool + 0.5) / ${PALETTE_SIZE}.0, 0.5)).rgb;
+    vec3 base = (isTravel || uColourByFeature > 0.5) ? byFeature : byTool;
+
     vColor = isCurrent ? uCurrentLayerColor : base;
 
     gl_Position = projectionMatrix * viewMatrix * world;
@@ -204,6 +215,8 @@ export class PrintScene {
   private geometry: THREE.InstancedBufferGeometry | null = null;
   private beads: THREE.Mesh | null = null;
   private paletteTexture: THREE.DataTexture;
+  /** One entry per extruder, for multi-material prints. */
+  private toolTexture: THREE.DataTexture;
 
   private ir: Ir | null = null;
   private layer = 0;
@@ -259,6 +272,16 @@ export class PrintScene {
     this.paletteTexture.minFilter = THREE.NearestFilter;
     this.paletteTexture.needsUpdate = true;
 
+    this.toolTexture = new THREE.DataTexture(
+      coloursToTextureData(TOOL_COLOURS),
+      PALETTE_SIZE,
+      1,
+      THREE.RGBAFormat,
+    );
+    this.toolTexture.magFilter = THREE.NearestFilter;
+    this.toolTexture.minFilter = THREE.NearestFilter;
+    this.toolTexture.needsUpdate = true;
+
     this.backgroundMaterial = new THREE.ShaderMaterial({
       glslVersion: THREE.GLSL3,
       vertexShader: BACKGROUND_VERTEX,
@@ -290,21 +313,26 @@ export class PrintScene {
   // -- 02 filament ------------------------------------------------------------------------
 
   /**
-   * Paint every extrusion in the filament's colour, leaving travels in their own grey.
+   * One colour per extruder, in tool-index order.
    *
-   * Feature colouring and filament colour are the same mechanism — a 16-entry palette texture —
-   * so switching between them costs a 64-byte upload rather than touching the vertex buffer.
+   * A single-material print passes one colour and every extrusion takes it. A multi-material
+   * one passes as many as it has tools, and the shader picks by the segment's own tool index —
+   * which the parser has been recording since v1 and nothing was reading.
+   *
+   * Both this and feature colouring are the same mechanism, a 16-entry palette texture, so
+   * changing either costs a 64-byte upload rather than touching a vertex buffer.
    */
-  setFilamentColour(hex: string): void {
-    const colour = new THREE.Color(hex);
-    const rgb: [number, number, number] = [
-      Math.round(colour.r * 255),
-      Math.round(colour.g * 255),
-      Math.round(colour.b * 255),
-    ];
-    const palette: Palette = { ...MONOCHROME };
-    for (let feature = 1; feature < PALETTE_SIZE; feature++) palette[feature] = rgb;
-    this.setPalette(palette);
+  setToolColours(colours: string[]): void {
+    const data = this.toolTexture.image.data as Uint8Array | null;
+    if (!data) return;
+    data.set(coloursToTextureData(colours));
+    this.toolTexture.needsUpdate = true;
+  }
+
+  /** False colours extrusions by extruder, true by feature type. Travels are unaffected. */
+  setColourByFeature(on: boolean): void {
+    if (this.material) this.material.uniforms.uColourByFeature!.value = on ? 1 : 0;
+    this.setPalette(on ? BY_FEATURE : MONOCHROME);
   }
 
   // -- data -----------------------------------------------------------------------------
@@ -326,6 +354,8 @@ export class PrintScene {
       fragmentShader: FRAGMENT_SHADER,
       uniforms: {
         uPalette: { value: this.paletteTexture },
+        uToolPalette: { value: this.toolTexture },
+        uColourByFeature: { value: 0 },
         uShowTravel: { value: 0 },
         uLayerHeight: { value: layerHeightOf(ir) },
         uTravelWidth: { value: Math.max(0.08, layerHeightOf(ir) * 0.4) },
@@ -383,10 +413,6 @@ export class PrintScene {
     if (!data) return;
     data.set(paletteToTextureData(palette));
     this.paletteTexture.needsUpdate = true;
-  }
-
-  setFeatureColouring(on: boolean): void {
-    this.setPalette(on ? BY_FEATURE : MONOCHROME);
   }
 
   setShowTravel(on: boolean): void {
@@ -616,6 +642,7 @@ export class PrintScene {
   dispose(): void {
     this.disposeGeometry();
     this.paletteTexture.dispose();
+    this.toolTexture.dispose();
     this.backgroundMaterial.dispose();
     this.renderer.dispose();
   }

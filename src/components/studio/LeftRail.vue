@@ -40,14 +40,25 @@ const fpsModel = computed({
   },
 });
 
-/** Custom filament colours are appended, so the guide swatches stay where the eye left them. */
-const customColour = computed({
-  get: () => scene.filaments[scene.filamentIndex] ?? '#c9ccc6',
+/** How many extruders the open file actually uses. One is the common case. */
+const toolCount = computed(() => Math.max(1, ir.value?.meta.toolCount ?? 1));
+
+/**
+ * The swatch row and the colour field both edit the *first* extruder, which is the only one a
+ * single-material print has. A multi-material file gets a row per tool below instead.
+ */
+const filamentColour = computed({
+  get: () => scene.toolColours[0] ?? '#c9ccc6',
   set: (v: string) => {
-    scene.filaments[scene.filamentIndex] = v;
+    scene.toolColours[0] = v;
     markPresetDirty();
   },
 });
+
+function setToolColour(index: number, value: string) {
+  scene.toolColours[index] = value;
+  markPresetDirty();
+}
 
 const bedLabel = computed(() => {
   const size = ir.value?.meta.bedSize;
@@ -103,18 +114,39 @@ function fitCamera() {
 
     <!-- 02 --------------------------------------------------------------------------- -->
     <SfSection v-model:open="scene.sections.filament" index="02" title="Filament">
-      <div class="swatches">
-        <SfColorDot
-          v-for="(colour, i) in scene.filaments"
-          :key="i"
-          :color="colour"
-          :selected="scene.filamentIndex === i"
-          @click="((scene.filamentIndex = i), touched())"
-        />
-        <SfColorDot add @click="scene.filaments.push('#e7e8e4')" />
-      </div>
+      <template v-if="toolCount === 1">
+        <div class="swatches">
+          <SfColorDot
+            v-for="(colour, i) in scene.filaments"
+            :key="i"
+            :color="colour"
+            :selected="filamentColour === colour"
+            @click="((scene.toolColours[0] = colour), touched())"
+          />
+        </div>
 
-      <SfColorField v-model="customColour" label="Renk" />
+        <SfColorField v-model="filamentColour" label="Renk" />
+      </template>
+
+      <!-- Multi-material: the file says how many extruders it used, so there is one row each. -->
+      <template v-else>
+        <span class="t-overline">{{ toolCount }} ekstruder</span>
+        <div v-for="tool in toolCount" :key="tool" class="tool-row">
+          <SfColorDot :color="scene.toolColours[tool - 1] ?? '#c9ccc6'" selected />
+          <span class="tool-name">T{{ tool - 1 }}</span>
+          <SfColorField
+            class="tool-colour"
+            :model-value="scene.toolColours[tool - 1] ?? '#c9ccc6'"
+            @update:model-value="(v: string) => setToolColour(tool - 1, v)"
+          />
+        </div>
+      </template>
+
+      <SfSwitch
+        v-model="scene.colourByFeature"
+        label="Bölümlere göre renklendir"
+        @update:model-value="touched"
+      />
 
       <SfSelect
         v-model="scene.surface"
@@ -445,6 +477,25 @@ function fitCamera() {
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tool-name {
+  flex: none;
+  width: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.tool-colour {
+  flex: 1;
+  min-width: 0;
 }
 
 .note {

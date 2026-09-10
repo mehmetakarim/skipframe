@@ -56,6 +56,12 @@ const motionLabel = computed(() => {
   return parts.length ? parts.join(' · ') : 'Sabit';
 });
 
+const colourLabel = computed(() => {
+  if (scene.colourByFeature) return 'Bölümlere göre';
+  const tools = ir.value?.meta.toolCount ?? 1;
+  return tools > 1 ? `${tools} ekstruder` : 'Tek filament';
+});
+
 const lightLabel = computed(() => {
   const surfaces: Record<string, string> = {
     'matte-pla': 'Mat',
@@ -169,6 +175,10 @@ const featureSummary = computed(() => {
       <div class="row">
         <span class="key">Tabla</span>
         <span class="val word">{{ plateLabel }}</span>
+      </div>
+      <div class="row">
+        <span class="key">Renk</span>
+        <span class="val word">{{ colourLabel }}</span>
       </div>
       <div class="row">
         <span class="key">Hareketler</span>

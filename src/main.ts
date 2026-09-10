@@ -23,7 +23,9 @@ if (isBench) {
       import('./stores/queue'),
       import('./bench/previewJobs'),
     ]).then(([{ makeSyntheticIr }, { adoptIr }, { queue }, { seedPreviewJobs }]) => {
-      adoptIr(makeSyntheticIr(570, 400));
+      // Four extruders: the multi-material rail is the layout that can go wrong, and the
+      // single-tool one is seen every time a real file is opened in the app.
+      adoptIr(makeSyntheticIr(570, 400, 4));
       queue.outputDir = '/Users/mk/Movies/SkipFrame';
       seedPreviewJobs();
     });

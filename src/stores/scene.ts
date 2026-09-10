@@ -1,6 +1,7 @@
 import { computed, reactive, watch } from 'vue';
 
 import { ir, layerCount } from './project';
+import { TOOL_COLOURS } from '../render/palette';
 
 /**
  * Everything the studio's controls change.
@@ -79,6 +80,13 @@ export const scene = reactive({
   // 02 Filament
   filaments: ['#c9ccc6', '#101010', '#ebb60e', '#3f4441', '#ffffff'],
   filamentIndex: 0,
+  /**
+   * One colour per extruder. Index 0 is the only one a single-material print uses, and the
+   * swatch row above edits it, so nothing about that case changes.
+   */
+  toolColours: [...TOOL_COLOURS],
+  /** Colour by feature type instead of by extruder. */
+  colourByFeature: false,
   surface: 'matte-pla',
   /** Colour the layer being laid down differently from the material behind it. */
   highlightCurrentLayer: true,
@@ -262,6 +270,7 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.timing = { holdStart: 0, holdEnd: 0, easing: 'linear' };
     scene.light = { azimuthDeg: 135, elevationDeg: 45, intensity: 0.75, fill: 0.18, ambient: 0.28 };
     scene.surface = 'matte-pla';
+    scene.colourByFeature = false;
     scene.hideTravel = true;
   },
   desktop: () => {
@@ -272,6 +281,7 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.timing = { holdStart: 0, holdEnd: 12, easing: 'linear' };
     scene.light = { azimuthDeg: 120, elevationDeg: 38, intensity: 0.8, fill: 0.22, ambient: 0.24 };
     scene.surface = 'matte-pla';
+    scene.colourByFeature = false;
     scene.hideTravel = true;
   },
   showcase: () => {
@@ -282,6 +292,7 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.timing = { holdStart: 6, holdEnd: 18, easing: 'ease-in-out' };
     scene.light = { azimuthDeg: 150, elevationDeg: 28, intensity: 0.95, fill: 0.1, ambient: 0.12 };
     scene.surface = 'glossy-pla';
+    scene.colourByFeature = false;
     scene.hideTravel = true;
   },
   raw: () => {
@@ -293,7 +304,9 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     // Flat and even, so nothing about the geometry is hidden by a shadow.
     scene.light = { azimuthDeg: 135, elevationDeg: 70, intensity: 0.5, fill: 0.4, ambient: 0.45 };
     scene.surface = 'matte-pla';
-    // The one preset that shows what the machine actually does, travels included.
+    // The one preset that shows what the machine actually did — travels visible, and walls,
+    // infill and support told apart rather than all wearing the filament's colour.
+    scene.colourByFeature = true;
     scene.hideTravel = false;
   },
   night: () => {
@@ -304,6 +317,7 @@ const PRESET_VALUES: Record<PresetId, () => void> = {
     scene.timing = { holdStart: 8, holdEnd: 20, easing: 'ease-in-out' };
     scene.light = { azimuthDeg: 200, elevationDeg: 18, intensity: 1.0, fill: 0.06, ambient: 0.08 };
     scene.surface = 'silk';
+    scene.colourByFeature = false;
     scene.hideTravel = true;
   },
 };
