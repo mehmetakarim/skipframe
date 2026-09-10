@@ -28,5 +28,9 @@ if (isBench) {
       seedPreviewJobs();
     });
   }
+  // Preferences decide where renders land and whether a folder is being watched, so they are
+  // read before anything can act on their defaults.
+  void import('./stores/settings').then(({ loadSettings }) => loadSettings());
+  void import('./queue/watchBridge').then(({ installWatchBridge }) => installWatchBridge());
   createApp(App).mount('#app');
 }

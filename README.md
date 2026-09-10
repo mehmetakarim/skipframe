@@ -5,9 +5,9 @@ for Reels and Shorts.
 
 Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
 
-> **Status: in progress.** The parser, the renderer, the studio, the export pipeline and the
-> batch queue work end to end. The external-FFmpeg outputs and the settings screen are not built
-> yet, and the WebCodecs path has not been run on macOS.
+> **Status: in progress.** The parser, the renderer, the studio, the export pipeline, the batch
+> queue and the settings screen work end to end. The external-FFmpeg outputs and multi-material
+> colouring are not built yet, and the WebCodecs path has not been run on macOS.
 
 ![A print rendered as extrusion beads](docs/bead-render.png)
 
@@ -46,7 +46,8 @@ src/                      Vue 3 front end
   render/                   the print scene: bead geometry, lighting, camera
   export/                   the render loop, the two sinks, the raw-byte file write
   stores/                   scene, project, export job, queue — plain reactive modules
-  screens/                  empty state, studio, queue
+  screens/                  empty state, studio, queue, settings
+  queue/                    the queue's own renderer and its bridge to the folder watcher
   components/ui/            the design's component sheet, one file each
   styles/tokens.css         every colour and spacing value in the app
   bench/                    phase-0 harness and development-only fixtures
@@ -137,6 +138,24 @@ a row.
 
 External FFmpeg for ProRes, CRF and alpha is not wired up yet. Nothing will ever be bundled: if
 it is on `PATH` or the user points at one, those options appear.
+
+---
+
+## Settings
+
+Preferences live in one JSON file in the app's config directory. Every field is optional or has
+a default, so a file written by an older build still loads.
+
+**The watched folder** is the one with moving parts. Point it at a slicer's output directory and
+new G-code is queued and rendered as it appears. It polls every two seconds rather than using an
+OS file-notification API, on purpose: a slicer writes a file over hundreds of milliseconds, so a
+"file created" notification arrives long before the file is worth reading, and every
+notification-based implementation ends up adding exactly the settling logic polling gives away
+for free. A file is offered only once its size has stopped changing.
+
+**External FFmpeg** is detected, never installed and never bundled — the settings screen reports
+whether one is on `PATH` (or at a path the user chose) and what version it is. The outputs that
+unlocks are not written yet.
 
 ---
 

@@ -7,6 +7,7 @@ import { stemOf } from '../export/writeFile';
 import { applySceneTo } from '../render/applyScene';
 import { acquireQueueRenderer, releaseQueueRenderer } from '../queue/queueRenderer';
 import { ASPECTS, applyPreset, layerTiming, scene, type Aspect, type PresetId } from './scene';
+import { decorateStem, settings } from './settings';
 import type { ExportFormat } from '../export/types';
 
 /**
@@ -169,8 +170,9 @@ export function clearFinished(): void {
 
 // -- output folder ------------------------------------------------------------------------
 
-/** `~/Videos/SkipFrame` unless the user has said otherwise. */
+/** Whatever settings says, else `~/Videos/SkipFrame`. */
 export async function defaultOutputDir(): Promise<string> {
+  if (settings.outputDir) return settings.outputDir;
   const { videoDir, join } = await import('@tauri-apps/api/path');
   try {
     return await join(await videoDir(), 'SkipFrame');
@@ -232,7 +234,7 @@ export async function startQueue(): Promise<void> {
         job.bytes = ir.meta.sourceBytes;
         job.warnings = [...ir.meta.warnings];
 
-        const stem = stemOf(ir.meta.sourceName || job.name);
+        const stem = decorateStem(stemOf(ir.meta.sourceName || job.name));
         job.outputPath = queue.settings.format === 'mp4' ? `${dir}/${stem}.mp4` : `${dir}/${stem}`;
 
         printScene.setIr(ir);

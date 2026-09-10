@@ -207,6 +207,54 @@ async function run() {
       }
     }
 
+    // --- settings, FFmpeg detection and the watched folder -----------------------------
+    const watchDir = import.meta.env.VITE_BENCH_WATCH as string | undefined;
+    if (inTauri && watchDir) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const s = await import('../stores/settings');
+      const { queue: q } = await import('../stores/queue');
+      const { installWatchBridge } = await import('../queue/watchBridge');
+      await installWatchBridge();
+
+      // Persistence: write a value, read it back through the Rust side.
+      await s.loadSettings();
+      s.settings.dateInFilename = true;
+      s.settings.watchDir = watchDir;
+      await new Promise((r) => setTimeout(r, 700));
+      const reread = await invoke<Record<string, unknown>>('load_settings');
+      say(
+        `settings: persisted dateInFilename=${reread.dateInFilename}, ` +
+          `watchDir=${reread.watchDir === watchDir ? 'ok' : 'MISMATCH'}`,
+      );
+      say(`settings: name with date -> ${s.decorateStem('benchy')}.mp4`);
+
+      await s.probeFfmpeg();
+      say(
+        s.settingsState.ffmpeg
+          ? `ffmpeg: found ${s.settingsState.ffmpeg.version} at ${s.settingsState.ffmpeg.path}`
+          : 'ffmpeg: not found on PATH',
+      );
+
+      // The watched folder: turn it on, then wait for a file to be dropped in from outside.
+      q.jobs = [];
+      q.settings.durationS = 2;
+      q.settings.fps = 24;
+      q.outputDir = `${watchDir}/out`;
+      await s.setWatchEnabled(true);
+      say('watch: on — waiting for a file to appear');
+
+      const deadline = performance.now() + 40_000;
+      while (performance.now() < deadline) {
+        if (q.jobs.length > 0 && !q.running && q.jobs.every((j) => j.status !== 'pending')) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      for (const job of q.jobs) {
+        say(`watch: ${job.name} — ${job.status} -> ${job.outputPath}`);
+      }
+      if (q.jobs.length === 0) say('watch: nothing appeared within 40 s');
+      await s.setWatchEnabled(false);
+    }
+
     say('done');
   } catch (err) {
     say(`FAILED — ${String(err)}`);

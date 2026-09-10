@@ -32,7 +32,16 @@ pub async fn parse_gcode(
         };
 
         if use_cache {
-            if let Some(hit) = cache::get(&app, &key) {
+            if let Some(mut hit) = cache::get(&app, &key) {
+                // The cache is keyed by content, so the same bytes under two names share an
+                // entry. The name and size belong to the path that was opened, not to the
+                // content, and must be put back before the front end sees them.
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("unnamed.gcode");
+                let bytes = std::fs::metadata(&path).ok().map(|m| m.len());
+                skipframe_gcode::ir::retag(&mut hit, name, bytes);
                 return Ok(hit);
             }
         }

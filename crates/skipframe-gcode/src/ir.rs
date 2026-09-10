@@ -218,6 +218,46 @@ impl Ir {
     }
 }
 
+/// Replace the file-identity fields inside an already-encoded buffer.
+///
+/// The parse cache is keyed by the content's hash, so the same bytes under two names share one
+/// entry — which is what makes reopening a renamed file free. But the name and the size on disk
+/// are properties of the path, not of the content, and a cache hit must not hand back the name
+/// of whichever copy happened to be parsed first: the exported video would be named after the
+/// wrong file.
+///
+/// The meta JSON is the last section of the buffer, so it can be replaced by truncating and
+/// appending; only its length and the total length need fixing up.
+pub fn retag(buf: &mut Vec<u8>, source_name: &str, source_bytes: Option<u64>) -> bool {
+    if buf.len() < HEADER_LEN || buf[0..4] != MAGIC {
+        return false;
+    }
+    let meta_off = u32::from_le_bytes(buf[36..40].try_into().unwrap()) as usize;
+    let meta_len = u32::from_le_bytes(buf[40..44].try_into().unwrap()) as usize;
+    if meta_off + meta_len > buf.len() {
+        return false;
+    }
+
+    let Ok(mut meta) = serde_json::from_slice::<Meta>(&buf[meta_off..meta_off + meta_len]) else {
+        return false;
+    };
+    if meta.source_name == source_name && meta.source_bytes == source_bytes {
+        return true;
+    }
+    meta.source_name = source_name.to_string();
+    meta.source_bytes = source_bytes;
+
+    let Ok(json) = serde_json::to_vec(&meta) else {
+        return false;
+    };
+    buf.truncate(meta_off);
+    buf.extend_from_slice(&json);
+    put_u32(buf, 40, json.len() as u32);
+    let total = buf.len() as u32;
+    put_u32(buf, 44, total);
+    true
+}
+
 /// Reserve `len` bytes at the next 8-byte boundary; returns the offset and advances the cursor.
 fn align8(cursor: &mut usize, len: usize) -> usize {
     let start = (*cursor + 7) & !7;
@@ -262,6 +302,44 @@ mod tests {
             buf.len(),
             u32::from_le_bytes(buf[44..48].try_into().unwrap()) as usize
         );
+    }
+
+    #[test]
+    fn retag_replaces_the_name_and_size_without_disturbing_the_arrays() {
+        let mut ir = Ir::default();
+        ir.layer_start.push(0);
+        for i in 0..7 {
+            ir.push_segment(
+                [i as f32; 3],
+                [i as f32 + 1.0; 3],
+                FeatureType::OuterWall,
+                0,
+                0.45,
+            );
+        }
+        ir.meta.source_name = "first-name.gcode".into();
+        ir.meta.source_bytes = Some(111);
+        ir.finish();
+        let mut buf = ir.encode();
+        let positions_before = buf[64..64 + 7 * 6 * 4].to_vec();
+
+        assert!(retag(&mut buf, "renamed-much-longer.gcode", Some(222)));
+
+        // The header still describes the buffer.
+        assert_eq!(
+            buf.len(),
+            u32::from_le_bytes(buf[44..48].try_into().unwrap()) as usize
+        );
+        assert_eq!(u32::from_le_bytes(buf[8..12].try_into().unwrap()), 7);
+        // The arrays are untouched.
+        assert_eq!(&buf[64..64 + 7 * 6 * 4], &positions_before[..]);
+
+        let meta_off = u32::from_le_bytes(buf[36..40].try_into().unwrap()) as usize;
+        let meta_len = u32::from_le_bytes(buf[40..44].try_into().unwrap()) as usize;
+        let meta: Meta = serde_json::from_slice(&buf[meta_off..meta_off + meta_len]).unwrap();
+        assert_eq!(meta.source_name, "renamed-much-longer.gcode");
+        assert_eq!(meta.source_bytes, Some(222));
+        assert_eq!(meta.segment_count, 7);
     }
 
     #[test]

@@ -53,7 +53,9 @@ async function windowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
           {{ queue.jobs.length }}
         </span>
       </button>
-      <button type="button" disabled title="Henüz yok">Ayarlar</button>
+      <button type="button" :class="{ active: ui.screen === 'settings' }" @click="goTo('settings')">
+        Ayarlar
+      </button>
     </nav>
 
     <div v-if="!isMac" class="controls">

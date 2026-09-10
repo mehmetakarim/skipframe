@@ -8,6 +8,7 @@ import { revealFile, stemOf } from '../export/writeFile';
 import type { ExportProgress, ExportSettings } from '../export/types';
 import { ir } from './project';
 import { ASPECTS, layerTiming, scene } from './scene';
+import { decorateStem, settings } from './settings';
 
 /** The export dialog's own state: the settings being chosen and the job running, if any. */
 
@@ -93,7 +94,7 @@ export async function startExport(): Promise<void> {
 
   const [width, height] = exportResolution.value;
   const frameCount = exportFrameCount.value;
-  const stem = stemOf(model.meta.sourceName || 'skipframe');
+  const stem = decorateStem(stemOf(model.meta.sourceName || 'skipframe'));
 
   let sink: FrameSink;
   let outputPath: string;
@@ -149,10 +150,12 @@ async function chooseDestination(stem: string): Promise<string | null> {
     return typeof dir === 'string' ? dir : null;
   }
 
-  const { videoDir, join } = await import('@tauri-apps/api/path');
+  const { join, videoDir } = await import('@tauri-apps/api/path');
   let defaultPath = `${stem}.mp4`;
   try {
-    defaultPath = await join(await videoDir(), 'SkipFrame', `${stem}.mp4`);
+    // The folder the user chose in settings, else the system's videos folder.
+    const dir = settings.outputDir ?? (await join(await videoDir(), 'SkipFrame'));
+    defaultPath = await join(dir, `${stem}.mp4`);
   } catch {
     // No videos folder on this machine; the dialog's own default is fine.
   }
