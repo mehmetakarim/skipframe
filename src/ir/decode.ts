@@ -58,17 +58,3 @@ export function decodeIr(buffer: ArrayBuffer): Ir {
     layerCount,
   };
 }
-
-/** Vertex draw count for showing layers `0 .. layer` inclusive. Drives `setDrawRange`. */
-export function vertexCountThroughLayer(ir: Ir, layer: number): number {
-  const clamped = Math.max(0, Math.min(layer, ir.layerCount - 1));
-  return (ir.layerStart[clamped + 1] ?? ir.segmentCount) * 2;
-}
-
-/** First and last vertex of one layer, for highlighting the layer currently being printed. */
-export function layerVertexRange(ir: Ir, layer: number): [number, number] {
-  const clamped = Math.max(0, Math.min(layer, ir.layerCount - 1));
-  const start = (ir.layerStart[clamped] ?? 0) * 2;
-  const end = (ir.layerStart[clamped + 1] ?? ir.segmentCount) * 2;
-  return [start, end];
-}

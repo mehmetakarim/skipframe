@@ -148,11 +148,23 @@ would never have shown:
 
 **Verdict: pass, by roughly 4x on the GPU and far more on the CPU.**
 
-What makes it cheap: one merged `LineSegments` geometry, animated only by `setDrawRange`. The
-position array is the parser's buffer with no copy. Feature colour is one `Uint8` attribute per
-vertex (1.5 MB) sampled against a 16x1 palette texture, so recolouring costs a 64-byte upload
-instead of rewriting the vertex buffer. Travels are hidden by collapsing them outside the clip
-volume in the vertex shader rather than by splitting the geometry into a second draw call.
+What makes it cheap: one geometry for the whole print, animated only by how much of it is
+drawn. The endpoints are the parser's buffer with no copy, and so are width, feature and tool —
+bound as instance attributes over the same bytes.
+
+The measurement above was first taken with a merged `LineSegments` geometry advanced by
+`setDrawRange`. The shipping renderer is an `InstancedBufferGeometry`: one hexagonal prism,
+uploaded once, drawn once per segment, advanced by `instanceCount`. `setDrawRange` counts
+indices _inside_ one instance and cannot express "the first n segments", so it could not
+survive the change — but everything the rule around it protected did: one geometry, one draw
+call, one scalar to animate, and no per-layer meshes. Both columns of the table are real
+measurements of the two renderers, which is why the cost of the change is visible rather than
+argued.
+
+Feature colour is one `Uint8` per segment sampled against a 16x1 palette texture, so recolouring
+costs a 64-byte upload instead of rewriting the vertex buffer; tool colour is a second texture
+read the same way. Travels are hidden by collapsing them outside the clip volume in the vertex
+shader rather than by splitting the geometry into a second draw call.
 
 The measurement was taken on a discrete GPU. Integrated graphics will be slower, and the
 headroom above is the argument that it will still clear 60 fps — but that is an inference, not a
@@ -296,8 +308,8 @@ files are ever needed, that is the one field to pin.
 
 - The IR format and the raw-byte IPC hold up: 22.5 MB crosses as an `ArrayBuffer` and becomes
   GPU buffers with one copy, for one attribute, once per file.
-- `setDrawRange` on a single merged geometry is not a compromise; it is the reason the scrub is
-  free.
+- One geometry for the whole print, animated by a single scalar, is not a compromise; it is the
+  reason the scrub is free. (`instanceCount`, not `setDrawRange` — see risk (b).)
 - Driving the animation by frame index rather than wall-clock time costs nothing and is what
   lets the encoder run at 235 fps instead of being paced at 60.
 - Nothing here needs FFmpeg, and nothing here needs a bundled codec.

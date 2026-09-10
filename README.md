@@ -6,8 +6,12 @@ for Reels and Shorts.
 Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
 
 > **Status: in progress.** The parser, the renderer, the studio, the export pipeline, the batch
-> queue and the settings screen work end to end. The external-FFmpeg outputs are not built yet,
-> and the WebCodecs path has not been run on macOS.
+> queue and the settings screen work end to end, on real files from OrcaSlicer, BambuStudio and
+> PrusaSlicer, single- and multi-material. Two things are outstanding: the external-FFmpeg
+> outputs are detected but not wired up, and the WebCodecs path has never been run on macOS.
+
+The interface is Turkish. The Rust crate, the CLI and the code are English; see
+[Language](#language).
 
 ![A print rendered as extrusion beads](docs/bead-render.png)
 
@@ -45,10 +49,11 @@ src/                      Vue 3 front end
   ir/                       TypedArray views over the parser's buffer
   render/                   the print scene: bead geometry, lighting, camera
   export/                   the render loop, the two sinks, the raw-byte file write
-  stores/                   scene, project, export job, queue — plain reactive modules
+  stores/                   scene, project, export job, queue, notices — plain reactive modules
   screens/                  empty state, studio, queue, settings
   queue/                    the queue's own renderer and its bridge to the folder watcher
   components/ui/            the design's component sheet, one file each
+  lib/messages.ts           the one file that turns a parser code into Turkish
   styles/tokens.css         every colour and spacing value in the app
   bench/                    phase-0 harness and development-only fixtures
 ```
@@ -61,14 +66,14 @@ One flat little-endian buffer, produced by Rust, consumed by JavaScript, cached 
 unchanged. The authoritative description is in
 [`crates/skipframe-gcode/src/ir.rs`](crates/skipframe-gcode/src/ir.rs).
 
-| Array         | Type           | Granularity               | Meaning                                                                             |
-| ------------- | -------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| `positions`   | `Float32Array` | per vertex, 2 per segment | `x, y, z` of the segment start then its end, millimetres, Z up                      |
-| `layerStart`  | `Uint32Array`  | per layer + 1             | segment offset where each layer begins; trailing sentinel is the segment count      |
-| `featureType` | `Uint8Array`   | per segment               | travel, outer/inner wall, solid/sparse infill, support, skirt, bridge, top          |
-| `toolIndex`   | `Uint8Array`   | per segment               | extruder, for multi-material prints                                                 |
-| `width`       | `Float32Array` | per segment               | extrusion width, millimetres                                                        |
-| `meta`        | JSON           | whole file                | slicer, printer, bed, layer count, layer Z list, estimated time, filament, warnings |
+| Array         | Type           | Granularity               | Meaning                                                                                  |
+| ------------- | -------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| `positions`   | `Float32Array` | per vertex, 2 per segment | `x, y, z` of the segment start then its end, millimetres, Z up                           |
+| `layerStart`  | `Uint32Array`  | per layer + 1             | segment offset where each layer begins; trailing sentinel is the segment count           |
+| `featureType` | `Uint8Array`   | per segment               | travel, outer/inner wall, solid/sparse infill, support, skirt, bridge, top               |
+| `toolIndex`   | `Uint8Array`   | per segment               | extruder, for multi-material prints                                                      |
+| `width`       | `Float32Array` | per segment               | extrusion width, millimetres                                                             |
+| `meta`        | JSON           | whole file                | slicer, printer, bed, layer count, layer Z list, estimated time, filament, warning codes |
 
 `width` drives the thickness of every bead the renderer draws, and `toolIndex` picks its colour
 on a multi-material print — the studio shows one colour row per extruder when a file uses more
@@ -79,6 +84,26 @@ Positions are stored per vertex so the pair of endpoints for each segment is con
 renderer binds them as two interleaved instance attributes over the same buffer, with no copy.
 `width` and `featureType` are bound the same way, which is why the bead geometry adds nothing to
 what the GPU already holds.
+
+---
+
+## Colour
+
+A print can be painted two ways, and only one can be in effect at a time — so the studio makes
+it a choice rather than a switch with a hidden consequence.
+
+**By filament** is what the print will look like. Every path takes the colour of the extruder
+that laid it. A single-material file gets one swatch; a multi-material file gets one row per
+extruder, because `meta.toolCount` says how many the file actually used.
+
+**By feature** is what the slicer decided. Filament colour stops applying and each path is
+coloured by its job instead — outer wall, inner wall, solid and sparse infill, support, brim,
+bridge, top surface. The legend lists only the features present in the open file, so it is as
+long as the print is complicated. This is the mode for reading a file before printing it: where
+the support went, whether the top is solid, whether an overhang was bridged or propped.
+
+Both palettes live in a 16x1 `DataTexture`, so changing a colour costs a 64-byte upload rather
+than rewriting tens of megabytes of vertex attributes. Neither mode touches the geometry.
 
 ---
 
@@ -159,6 +184,39 @@ for free. A file is offered only once its size has stopped changing.
 whether one is on `PATH` (or at a path the user chose) and what version it is. The outputs that
 unlocks are not written yet.
 
+**The parse cache** is keyed by the file's content hash, so the same bytes under two names share
+an entry and re-opening a file costs a read rather than a parse. The screen shows what it holds
+and empties it.
+
+---
+
+## When something goes wrong
+
+Failures are reported wherever the user is standing, not only on the screen that produced them.
+A batch job that fails while the studio is open, a watched folder that cannot write, a
+preferences file that will not save — each raises a notice in one global stack. Errors and
+warnings stay until they are dismissed; only plain information leaves on its own. A repeat
+increments a counter rather than stacking, because a watched folder that cannot write fails
+once per file that lands in it.
+
+Non-fatal parser degradations are separate: they travel in `meta.warnings`, the file still
+renders, and the studio's info rail lists them.
+
+## Language
+
+The interface is Turkish. The Rust crate is English, because it is an MIT library with a CLI and
+that is the right language for both.
+
+So nothing translates prose across that boundary. `Error::code` and `Warning::code` are stable
+identifiers — `no_moves`, `archive`, `unknown_dialect` — and they are what crosses the IPC, with
+the English message alongside. [`src/lib/messages.ts`](src/lib/messages.ts) is the only file that
+turns one into something a user reads, and the only file a second language would need. Every
+lookup falls back to the English that came with it, which is what keeps an unrecognised code —
+a cache entry written by an older build, say — readable rather than cryptic.
+
+One exception: `io` failures keep the operating system's own message. Windows tells "not found"
+apart from "access denied" and writes both in the user's language already.
+
 ---
 
 ## Development
@@ -168,9 +226,15 @@ npm install
 npm run app:dev      # Tauri dev build
 npm run lint         # ESLint
 npm run typecheck    # vue-tsc
+npm run format:check # Prettier
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all --check
 ```
+
+The studio can also be worked on in a plain browser tab, with no desktop shell and no fixture:
+`npm run dev`, then `http://localhost:1420/#preview` opens it against a synthetic four-extruder
+model. Anything that needs the parser or the filesystem is absent there by definition.
 
 Phase-0 measurements — parse speed, render speed, WebCodecs encoding — and how to re-take them
 are in [docs/phase-0.md](docs/phase-0.md). The harness runs inside the app:
