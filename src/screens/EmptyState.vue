@@ -7,15 +7,11 @@
  * turn people away from files the app handles fine. `.gcode.3mf` is added because Bambu and
  * Orca users have that container by default.
  */
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-
 import SfButton from '../components/ui/SfButton.vue';
 import SfMark from '../components/SfMark.vue';
 import TitleBar from '../components/studio/TitleBar.vue';
-import { openPath, pickAndOpen, project } from '../stores/project';
-
-const dragging = ref(false);
-let unlisten: (() => void) | null = null;
+import { pickAndOpen, project } from '../stores/project';
+import { ui } from '../stores/ui';
 
 const GUIDES = [
   {
@@ -34,27 +30,6 @@ const GUIDES = [
     path: 'Export plate sliced file → .gcode',
   },
 ];
-
-onMounted(async () => {
-  // Drag and drop is delivered by the webview, not by DOM drag events, because the payload is a
-  // real path on disk rather than a browser File handle.
-  try {
-    const { getCurrentWebview } = await import('@tauri-apps/api/webview');
-    unlisten = await getCurrentWebview().onDragDropEvent((event) => {
-      if (event.payload.type === 'over') dragging.value = true;
-      else if (event.payload.type === 'leave') dragging.value = false;
-      else if (event.payload.type === 'drop') {
-        dragging.value = false;
-        const first = event.payload.paths[0];
-        if (first) void openPath(first);
-      }
-    });
-  } catch {
-    // Running in a plain browser tab; the file picker still works.
-  }
-});
-
-onBeforeUnmount(() => unlisten?.());
 </script>
 
 <template>
@@ -63,7 +38,9 @@ onBeforeUnmount(() => unlisten?.());
 
     <div class="body">
       <section class="main">
-        <div :class="['dropzone', { dragging, busy: project.status === 'loading' }]">
+        <div
+          :class="['dropzone', { dragging: ui.fileDragging, busy: project.status === 'loading' }]"
+        >
           <SfMark :size="96" />
 
           <div class="copy">

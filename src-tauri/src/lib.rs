@@ -17,6 +17,20 @@ pub fn run() {
     }
 
     builder
+        .setup(|_app| {
+            // The window draws its own title bar, so the native one would be a second set of
+            // minimise, maximise and close buttons stacked above ours. macOS keeps its frame
+            // and gets `titleBarStyle: Overlay` from the config instead, so the real traffic
+            // lights float over our bar rather than being drawn twice.
+            #[cfg(target_os = "windows")]
+            {
+                use tauri::Manager;
+                if let Some(window) = _app.get_webview_window("main") {
+                    let _ = window.set_decorations(false);
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::parse_gcode,
             commands::list_plates,

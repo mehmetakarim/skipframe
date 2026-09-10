@@ -1,6 +1,6 @@
-import { computed, reactive } from 'vue';
+import { computed, reactive, watch } from 'vue';
 
-import { layerCount } from './project';
+import { ir, layerCount } from './project';
 
 /**
  * Everything the studio's controls change.
@@ -149,6 +149,12 @@ export const scene = reactive({
   playing: false,
   speed: 1,
   loop: false,
+});
+
+// Opening a different print should not leave the playhead wherever the last one ended.
+watch(ir, () => {
+  scene.frame = 0;
+  scene.playing = false;
 });
 
 export const frameCount = computed(() => Math.max(1, Math.round(scene.durationS * scene.fps)));

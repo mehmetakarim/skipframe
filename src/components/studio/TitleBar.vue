@@ -91,15 +91,8 @@ async function windowAction(action: 'minimize' | 'toggleMaximize' | 'close') {
 }
 
 .traffic {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.traffic span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--border-strong);
+  flex: none;
+  width: 68px;
 }
 
 .brand {

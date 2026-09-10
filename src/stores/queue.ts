@@ -132,19 +132,23 @@ export async function addPaths(paths: string[]): Promise<void> {
       tookS: null,
     };
     queue.jobs.push(job);
+    // `push` stores the object as it is; the reactive array hands back a proxy on read. Writing
+    // to the original changes the value but notifies nothing, so everything computed from it —
+    // the pending count, and with it whether "start" is enabled — would go quietly stale.
+    const tracked = queue.jobs[queue.jobs.length - 1]!;
 
     try {
       const { ir } = await parseFile(path);
-      job.name = ir.meta.sourceName || job.name;
-      job.layers = ir.layerCount;
-      job.bytes = ir.meta.sourceBytes;
-      job.dialect = ir.meta.dialect;
-      job.warnings = [...ir.meta.warnings];
-      job.status = 'pending';
+      tracked.name = ir.meta.sourceName || tracked.name;
+      tracked.layers = ir.layerCount;
+      tracked.bytes = ir.meta.sourceBytes;
+      tracked.dialect = ir.meta.dialect;
+      tracked.warnings = [...ir.meta.warnings];
+      tracked.status = 'pending';
       // The IR itself is deliberately not kept: the run re-reads it from the parse cache.
     } catch (e) {
-      job.status = 'failed';
-      job.error = messageOf(e);
+      tracked.status = 'failed';
+      tracked.error = messageOf(e);
     }
   }
 }

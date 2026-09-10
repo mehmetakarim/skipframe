@@ -15,7 +15,7 @@ import SfTabs from '../ui/SfTabs.vue';
 import SfColorDot from '../ui/SfColorDot.vue';
 import SfColorField from '../ui/SfColorField.vue';
 import SfButton from '../ui/SfButton.vue';
-import { ir, project } from '../../stores/project';
+import { ir, pickAndOpen, project } from '../../stores/project';
 import {
   BACKGROUND_STYLES,
   EASINGS,
@@ -75,6 +75,10 @@ function fitCamera() {
           }}{{ integer(ir?.layerCount ?? 0) }} katman
         </span>
       </div>
+
+      <SfButton variant="outline" :disabled="project.status === 'loading'" @click="pickAndOpen">
+        {{ project.status === 'loading' ? 'Okunuyor…' : 'Başka dosya seç' }}
+      </SfButton>
 
       <SfSlider
         v-model="scene.layerSkip"
