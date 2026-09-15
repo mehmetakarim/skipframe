@@ -5,7 +5,7 @@
  * It is the same modal in both states, because it is the same job — the settings collapse into a
  * summary and the buttons change. Closing it during a render does not stop the render.
  */
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 import SfModal from '../ui/SfModal.vue';
 import SfButton from '../ui/SfButton.vue';
@@ -23,6 +23,10 @@ import {
   startExport,
 } from '../../stores/exportJob';
 import { ASPECTS } from '../../stores/scene';
+import { account, loadAccountStatus } from '../../stores/account';
+import { ir } from '../../stores/project';
+import { openShareDialog } from '../../stores/share';
+import { revealFile } from '../../export/writeFile';
 import { STAGE_LABELS, type ExportFormat } from '../../export/types';
 import { decimal, integer } from '../../lib/format';
 
@@ -61,6 +65,38 @@ const fpsModel = computed({
 const finished = computed(() =>
   ['done', 'cancelled', 'failed'].includes(exportState.progress.stage),
 );
+
+/** A finished MP4 in a build that has StepperSkip. Nothing to share is not offered. */
+const shareable = computed(
+  () =>
+    exportState.progress.stage === 'done' &&
+    exportState.settings.format === 'mp4' &&
+    exportState.progress.outputPath !== null &&
+    account.status !== 'unconfigured',
+);
+
+function shareExport() {
+  const path = exportState.progress.outputPath;
+  if (!path) return;
+  const [width, height] = exportResolution.value;
+  openShareDialog(
+    {
+      path,
+      format: exportState.settings.format,
+      bytes: exportState.progress.bytes,
+      // Exactly the frames written, at the rate written: the length StepperSkip will measure.
+      durationS: exportFrameCount.value / exportState.settings.fps,
+      width,
+      height,
+      fps: exportState.settings.fps,
+    },
+    ir.value,
+  );
+  closeExportDialog();
+}
+
+// Enough to know whether to offer sharing; the account itself is read when someone shares.
+onMounted(() => void loadAccountStatus());
 </script>
 
 <template>
@@ -189,7 +225,14 @@ const finished = computed(() =>
       </template>
 
       <template v-else-if="finished">
-        <SfButton variant="primary" @click="closeExportDialog">Kapat</SfButton>
+        <template v-if="shareable">
+          <SfButton variant="primary" @click="shareExport">StepperSkip’te paylaş</SfButton>
+          <SfButton variant="outline" @click="revealFile(exportState.progress.outputPath!)">
+            Klasörde göster
+          </SfButton>
+          <SfButton variant="ghost" @click="closeExportDialog">Kapat</SfButton>
+        </template>
+        <SfButton v-else variant="primary" @click="closeExportDialog">Kapat</SfButton>
         <div class="spacer" />
         <span class="hint">
           {{

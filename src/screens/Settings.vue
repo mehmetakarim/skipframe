@@ -14,6 +14,7 @@ import SfSelect from '../components/ui/SfSelect.vue';
 import {
   account,
   cancelSignIn,
+  initialsOf,
   openCompanySetup,
   openStepperSkipUrl,
   refreshAccount,
@@ -66,17 +67,7 @@ function onScroll() {
   active.value = SECTIONS[0]!.id;
 }
 
-/** "Mert Kaya" -> "MK". Turkish casing, so "ilker" becomes "İ", not "I". */
-const initials = computed(() => {
-  const name = account.user?.displayName.trim() || account.user?.username || '';
-  const letters = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0] ?? '')
-    .join('');
-  return letters ? letters.toLocaleUpperCase('tr-TR') : '—';
-});
+const initials = computed(() => initialsOf(account.user));
 
 const usableCompanies = computed(() => account.companies.filter((c) => c.canPublish));
 

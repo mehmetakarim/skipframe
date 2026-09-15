@@ -76,7 +76,10 @@ const GUIDES = [
             />
             <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" />
           </svg>
-          <span>Dosyalarınız cihazınızdan çıkmıyor. Bütün işleme yerel olarak yapılır.</span>
+          <span>
+            G-code dosyalarınız cihazınızdan çıkmaz; bütün işleme yerel olarak yapılır. Yalnızca
+            paylaşmayı seçtiğiniz bitmiş video yüklenir.
+          </span>
         </div>
       </section>
 

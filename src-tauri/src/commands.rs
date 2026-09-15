@@ -151,7 +151,7 @@ pub fn bench_log(line: String) {
 /// Writing here rather than through the filesystem plugin means the destination the user chose
 /// in the save dialog is the destination used, with no scope list to keep in sync.
 #[tauri::command]
-pub fn write_export(request: tauri::ipc::Request<'_>) -> Result<(), String> {
+pub fn write_export(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<(), String> {
     let encoded = request
         .headers()
         .get("x-sf-path")
@@ -167,7 +167,20 @@ pub fn write_export(request: tauri::ipc::Request<'_>) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    std::fs::write(&path, bytes).map_err(|e| e.to_string())
+    std::fs::write(&path, bytes).map_err(|e| e.to_string())?;
+
+    // The share screen plays the video back before it is published. The asset protocol's scope
+    // is empty in the config, and this grants exactly one file: one SkipFrame itself just wrote,
+    // and only an MP4. Nothing else on disk becomes readable by the webview.
+    let is_mp4 = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| e.eq_ignore_ascii_case("mp4"));
+    if is_mp4 {
+        use tauri::Manager;
+        let _ = app.asset_protocol_scope().allow_file(&path);
+    }
+    Ok(())
 }
 
 /// Percent-decode a UTF-8 path. Headers are ASCII, so the front end encodes the path before

@@ -1,6 +1,6 @@
 import { computed, reactive } from 'vue';
 
-import { errorText, type IpcError } from '../lib/messages';
+import { errorCode, errorText } from '../lib/messages';
 import { notify, notifyError } from './notices';
 
 /**
@@ -75,20 +75,23 @@ export const selectedCompany = computed(
   () => account.companies.find((c) => c.id === account.selectedCompanyId) ?? null,
 );
 
-/** The one condition sharing needs that the interface can see before trying. */
-export const canShare = computed(
-  () => account.status === 'signed-in' && selectedCompany.value?.canPublish === true,
-);
+/** "Mert Kaya" -> "MK". Turkish casing, so "ilker" becomes "İ", not "I". */
+export function initialsOf(user: StepperSkipUser | null): string {
+  const name = user?.displayName.trim() || user?.username || '';
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0] ?? '')
+    .join('');
+  return letters ? letters.toLocaleUpperCase('tr-TR') : '—';
+}
 
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke<T>(command, args);
-}
-
-function codeOf(e: unknown): string | null {
-  return typeof e === 'object' && e !== null && 'code' in e ? (e as IpcError).code : null;
 }
 
 /**
@@ -126,6 +129,26 @@ export async function refreshAccount(): Promise<void> {
   }
 }
 
+/**
+ * Whether this build has StepperSkip, and whether a session is stored — without talking to the
+ * server. Enough to decide whether to offer sharing at all; reading the account itself waits
+ * until someone actually goes to share.
+ */
+export async function loadAccountStatus(): Promise<void> {
+  if (!inTauri) {
+    account.status = 'unconfigured';
+    return;
+  }
+  if (account.status !== 'unknown') return;
+  try {
+    const status = await call<{ configured: boolean; hasCredential: boolean }>('ss_status');
+    if (!status.configured) account.status = 'unconfigured';
+    else if (!status.hasCredential) forget();
+  } catch {
+    // Left as unknown; opening the share screen reads the account properly.
+  }
+}
+
 export async function signIn(): Promise<void> {
   if (!inTauri || account.status === 'signing-in') return;
   account.status = 'signing-in';
@@ -135,7 +158,7 @@ export async function signIn(): Promise<void> {
   } catch (e) {
     forget();
     // Pressing "Vazgeç" is not a failure worth a notice.
-    if (codeOf(e) !== 'sign_in_cancelled') notifyError('StepperSkip girişi tamamlanmadı', e);
+    if (errorCode(e) !== 'sign_in_cancelled') notifyError('StepperSkip girişi tamamlanmadı', e);
   }
 }
 
@@ -143,12 +166,13 @@ export function cancelSignIn(): void {
   if (inTauri) void call('ss_cancel_sign_in');
 }
 
-export async function signOut(): Promise<void> {
+/** `quiet` when signing out is only the first half of switching accounts. */
+export async function signOut(options: { quiet?: boolean } = {}): Promise<void> {
   if (!inTauri) return;
   try {
     await call('ss_sign_out');
     forget();
-    notify({ title: 'StepperSkip hesabı kaldırıldı' });
+    if (!options.quiet) notify({ title: 'StepperSkip hesabı kaldırıldı' });
   } catch (e) {
     notifyError('StepperSkip hesabı kaldırılamadı', e);
   }
@@ -195,7 +219,7 @@ function forget(): void {
 }
 
 function handleSessionFailure(e: unknown): void {
-  const code = codeOf(e);
+  const code = errorCode(e);
   if (code === 'session_expired' || code === 'not_signed_in') {
     forget();
     notify({

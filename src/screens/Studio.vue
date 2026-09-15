@@ -13,8 +13,10 @@ import Timeline from '../components/studio/Timeline.vue';
 import InfoRail from '../components/studio/InfoRail.vue';
 import ExportBar from '../components/studio/ExportBar.vue';
 import ExportDialog from '../components/studio/ExportDialog.vue';
+import ShareDialog from '../components/studio/ShareDialog.vue';
 import { ir } from '../stores/project';
 import { exportState } from '../stores/exportJob';
+import { share } from '../stores/share';
 </script>
 
 <template>
@@ -36,6 +38,7 @@ import { exportState } from '../stores/exportJob';
     <ExportBar />
 
     <ExportDialog v-if="exportState.open" />
+    <ShareDialog v-if="share.open" />
   </div>
 </template>
 

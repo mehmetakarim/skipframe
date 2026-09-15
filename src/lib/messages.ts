@@ -60,6 +60,46 @@ const ERRORS: Record<string, string> = {
   // -- StepperSkip: company profile ---------------------------------------------------------
   company_required: 'Paylaşım için StepperSkip’te aktif bir firma profili gerekli.',
   company_forbidden: 'Bu firma profilinde paylaşım yetkin yok ya da profil aktif değil.',
+
+  // -- Sharing: before anything is sent -----------------------------------------------------
+  not_mp4: 'Yalnızca MP4 videolar paylaşılabilir.',
+  file_read: 'Video dosyası okunamadı. Taşınmış ya da silinmiş olabilir.',
+  share_in_progress: 'Zaten paylaşılmakta olan bir video var.',
+  share_cancelled: 'Paylaşım iptal edildi.',
+
+  // -- Sharing: the upload --------------------------------------------------------------------
+  upload_too_large: 'Video, StepperSkip’in kabul ettiği boyuttan büyük.',
+  invalid_media_type: 'StepperSkip yalnızca MP4 video kabul ediyor.',
+  quota_exceeded: 'Yarım kalmış çok fazla yüklemen var. Biraz sonra tekrar dene.',
+  upload_not_found: 'Yükleme oturumu bulunamadı.',
+  upload_expired: 'Yükleme oturumunun süresi doldu. Paylaşımı yeniden başlat.',
+  upload_failed: 'Yükleme tamamlanamadı. Paylaşımı yeniden başlat.',
+  upload_completed: 'Bu yükleme zaten tamamlanmış.',
+  upload_offset_conflict: 'Yükleme sırası karıştı ve toparlanamadı. Tekrar dene.',
+  upload_state_mismatch: 'StepperSkip yüklemenin bir kısmını kaybetti. Tekrar dene.',
+  missing_content_range: 'Yükleme isteği eksik gönderildi.',
+  invalid_content_range: 'Yükleme isteği geçersiz bir aralık içeriyordu.',
+  chunk_too_large: 'Yükleme parçası StepperSkip’in sınırını aştı.',
+  size_mismatch: 'StepperSkip’e ulaşan video boyutu beklenenle uyuşmadı.',
+  write_incomplete: 'Video parçası StepperSkip’e eksik ulaştı.',
+  checksum_mismatch:
+    'StepperSkip’e ulaşan video diskteki dosyayla aynı değil, bu yüzden yayımlanmadı. Tekrar dene.',
+
+  // -- Sharing: StepperSkip's checks on the finished video ------------------------------------
+  invalid_mp4_container: 'StepperSkip videoyu geçerli bir MP4 olarak tanımadı.',
+  video_too_long: 'Video, StepperSkip’in izin verdiği süreden uzun.',
+  duration_validation_failed: 'StepperSkip videonun süresini doğrulayamadı.',
+  media_validation_unavailable:
+    'StepperSkip şu an videoları doğrulayamıyor. Daha sonra tekrar dene.',
+
+  // -- Sharing: publishing --------------------------------------------------------------------
+  upload_not_completed: 'Yükleme bitmeden yayımlanamaz.',
+  upload_forbidden: 'Bu yüklemeyi yayımlama yetkin yok.',
+  upload_invalid: 'Yüklenen video yayımlanabilir durumda değil.',
+  media_missing: 'Yüklenen video StepperSkip’te bulunamadı.',
+  upload_already_published: 'Bu video başka bir firma profilinde zaten yayımlanmış.',
+  publication_failed: 'Gönderi oluşturulamadı. Tekrar dene.',
+  post_not_found: 'Gönderi bulunamadı.',
 };
 
 /**
@@ -105,6 +145,11 @@ function isIpcError(e: unknown): e is IpcError {
  * Anything at all can arrive here — a coded parser failure, a plain `Error` from the front end,
  * a string from a Tauri plugin — and all of them have to come out as one readable line.
  */
+/** The code of a failed command, if it carried one. */
+export function errorCode(e: unknown): string | null {
+  return isIpcError(e) ? e.code : null;
+}
+
 export function errorText(e: unknown): string {
   if (isIpcError(e)) {
     const turkish = ERRORS[e.code];

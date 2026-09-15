@@ -3,12 +3,17 @@
 Turn a slicer's G-code into a layer-by-layer print animation and export it as a vertical video
 for Reels and Shorts.
 
-Files never leave the machine. No account, no upload, no telemetry. MIT licensed.
+Your G-code never leaves the machine: parsing, rendering and encoding all happen locally, with
+no account and no telemetry. The one thing that is ever uploaded is a finished video you choose
+to share to a StepperSkip company profile — that needs a StepperSkip account, and nothing else in
+the app does. MIT licensed.
 
 > **Status: in progress.** The parser, the renderer, the studio, the export pipeline, the batch
 > queue and the settings screen work end to end, on real files from OrcaSlicer, BambuStudio and
-> PrusaSlicer, single- and multi-material. Two things are outstanding: the external-FFmpeg
-> outputs are detected but not wired up, and the WebCodecs path has never been run on macOS.
+> PrusaSlicer, single- and multi-material. Sharing to StepperSkip works against its local
+> development install; its production deployment is not live. Also outstanding: the
+> external-FFmpeg outputs are detected but not wired up, and the WebCodecs path has never been run
+> on macOS.
 
 The interface is Turkish. The Rust crate, the CLI and the code are English; see
 [Language](#language).
@@ -45,6 +50,7 @@ crates/skipframe-gcode/   parser, IR, dialects, printer profiles, container hand
   src/bin/sf_gcode.rs       CLI: parse, plates, synth — used for benchmarking
 
 src-tauri/                desktop shell: IPC commands, parse cache, updater config
+  src/stepperskip/          StepperSkip sign-in, tokens, resumable upload and publishing
 src/                      Vue 3 front end
   ir/                       TypedArray views over the parser's buffer
   render/                   the print scene: bead geometry, lighting, camera
@@ -189,6 +195,32 @@ an entry and re-opening a file costs a read rather than a parse. The screen show
 and empties it.
 
 ---
+
+## Sharing to StepperSkip
+
+A finished MP4 can be published to a [StepperSkip](https://stepperskip.com) company profile
+from the export panel. It is the only thing in SkipFrame that talks to a server, it happens only
+when the user presses the button, and G-code is never part of it.
+
+**Signing in** uses OAuth 2.0 authorization code with PKCE in the system browser, returning to a
+one-request listener on `127.0.0.1`. SkipFrame is an open-source public client, so there is no
+client secret, and it never sees the password. The refresh token lives in the operating system's
+credential store — Windows Credential Manager, the macOS Keychain — and the access token only in
+memory. StepperSkip rotates refresh tokens and revokes the whole family when an old one is
+presented, so a refresh happens once however many requests need a token.
+
+**Uploading** sends strictly sequential chunks of at most 5 MiB and, after any failure, continues
+from the offset the server reports rather than from what the client believes it sent. The file is
+hashed first, and nothing is published unless the SHA-256 StepperSkip computes matches. Sharing
+the same file again continues an unfinished upload instead of opening a new session.
+
+**Before anything is sent**, the share screen checks what StepperSkip will check: an MP4, within
+the size and duration from `/api/v1/limits`, a title, and an active company profile. Whether a
+user may share at all is StepperSkip's decision; the screen explains it and does not re-implement
+it.
+
+The server is chosen at build time with `SKIPFRAME_STEPPERSKIP_URL`. A debug build defaults to a
+local development install; a release build with no URL has no sharing at all.
 
 ## When something goes wrong
 
