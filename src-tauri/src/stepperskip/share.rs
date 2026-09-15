@@ -12,11 +12,12 @@
 //! lost answer, a rate limit — the next offset comes from the server, never from what this side
 //! believes it sent.
 //!
-//! **One automatic restart.** On StepperSkip as it stands, a chunk whose body arrives cut short
-//! leaves its partial bytes on disk without recording them, and the next chunk then fails the
-//! whole session with `upload_state_mismatch` — reproduced by running `append_chunk` itself. A
-//! session that has died is therefore started over once, from zero, before giving up. A fixed
-//! server makes the restart unnecessary without changing this code.
+//! **One automatic restart.** Before StepperSkip commit `c182aec`, a chunk whose body arrived cut
+//! short left its partial bytes on disk without recording them, and the next chunk failed the
+//! whole session with `upload_state_mismatch`. That is fixed in the local install — `append_chunk`
+//! now rolls the partial write back — but production has not been verified and may still run the
+//! old code. A session that has died is therefore started over once, from zero, before giving up.
+//! Against a fixed server this path never runs.
 //!
 //! **What is published is what was exported.** The file is hashed before a byte is sent, and the
 //! SHA-256 the server computes on completion must match before anything is published.
@@ -706,10 +707,10 @@ mod tests {
         assert_eq!(mock.completed_sha256(), Some(sha(&file)));
     }
 
-    /// Today's StepperSkip: a chunk cut short poisons the session, and the one restart saves the
-    /// share.
+    /// StepperSkip before `c182aec`: a chunk cut short poisons the session, and the one restart
+    /// saves the share. Kept because production may still run that code.
     #[tokio::test]
-    async fn a_cut_chunk_on_stepperskip_as_it_is_restarts_once() {
+    async fn a_cut_chunk_on_a_server_without_the_fix_restarts_once() {
         let mock = MockServer::start().await;
         mock.set_chunk_bytes(MIB);
         mock.set_partial_write_bug(true);
@@ -726,7 +727,8 @@ mod tests {
         assert_eq!(mock.state.posts_created.load(Ordering::SeqCst), 1);
     }
 
-    /// The same cut on a server that rolls partial chunks back: a plain resume, no restart.
+    /// The same cut on a server that rolls partial chunks back — StepperSkip from `c182aec` on:
+    /// a plain resume, no restart.
     #[tokio::test]
     async fn a_cut_chunk_on_a_fixed_server_just_resumes() {
         let mock = MockServer::start().await;

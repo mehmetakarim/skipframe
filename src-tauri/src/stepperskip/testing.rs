@@ -7,8 +7,8 @@
 //!
 //! The upload endpoints follow `Skipframe_api.php` and `Skipframe_upload_service.php`: strictly
 //! sequential chunks, 308 until the last, the offset-conflict detail, idempotent publishing — and,
-//! when asked, the bug in `append_chunk` where a cut-short chunk is written to disk without being
-//! recorded, which then fails the session on the next chunk.
+//! when asked, `append_chunk` as it was before StepperSkip `c182aec`, where a cut-short chunk was
+//! written to disk without being recorded and failed the session on the next chunk.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
@@ -113,8 +113,8 @@ impl MockServer {
         self.state.chunk_bytes.store(bytes, Ordering::SeqCst);
     }
 
-    /// Whether a cut-short chunk behaves as `append_chunk` does today (partial bytes kept on disk,
-    /// not recorded) or as a fixed server would (rolled back).
+    /// Whether a cut-short chunk behaves as `append_chunk` did before `c182aec` (partial bytes
+    /// kept on disk, not recorded) or as it does since (rolled back).
     pub fn set_partial_write_bug(&self, on: bool) {
         self.state.partial_write_bug.store(on, Ordering::SeqCst);
     }
