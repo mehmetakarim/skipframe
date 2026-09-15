@@ -9,7 +9,7 @@
  * The design's tag row is gone. StepperSkip's company posts have no tags, and a field that sends
  * nothing anywhere would be worse than no field.
  */
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { convertFileSrc } from '@tauri-apps/api/core';
 
 import SfModal from '../ui/SfModal.vue';
@@ -35,12 +35,13 @@ import {
   cancelShare,
   closeShareDialog,
   copyPostLink,
+  durationOf,
   share,
   startShare,
   type Blocker,
 } from '../../stores/share';
 import { revealFile } from '../../export/writeFile';
-import { decimal, megabytes } from '../../lib/format';
+import { decimal, megabytes, shortPath } from '../../lib/format';
 
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -49,14 +50,21 @@ const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
  * this file when it wrote it; nothing else on disk is reachable this way.
  */
 const videoSrc = computed(() => {
-  const source = share.source;
-  if (!inTauri || !source || source.format !== 'mp4') return null;
-  return convertFileSrc(source.path);
+  const video = share.video;
+  if (!inTauri || !video || video.format !== 'mp4') return null;
+  return convertFileSrc(video.outputPath);
 });
 
+/**
+ * A video shared later may have been moved or deleted since it was written. Say so in the preview
+ * rather than show an empty frame; sharing it would fail on the same missing file.
+ */
+const previewMissing = ref(false);
+watch(videoSrc, () => (previewMissing.value = false));
+
 const aspect = computed(() => {
-  const s = share.source;
-  return s ? `${s.width} / ${s.height}` : '9 / 16';
+  const v = share.video;
+  return v ? `${v.width} / ${v.height}` : '9 / 16';
 });
 
 const percent = computed(() => {
@@ -108,14 +116,26 @@ const ACTION_LABELS: Record<NonNullable<Blocker['action']>, string> = {
       <!-- ------------------------------------------------------------- preview -->
       <aside class="preview">
         <div class="frame" :style="{ aspectRatio: aspect }">
-          <video v-if="videoSrc" :src="videoSrc" controls playsinline preload="metadata" />
+          <video
+            v-if="videoSrc && !previewMissing"
+            :src="videoSrc"
+            controls
+            playsinline
+            preload="metadata"
+            @error="previewMissing = true"
+          />
           <div v-else class="no-video">
-            <span class="t-overline">Önizleme yok</span>
+            <span class="t-overline">{{
+              previewMissing ? 'Video dosyası bulunamadı' : 'Önizleme yok'
+            }}</span>
           </div>
         </div>
-        <p v-if="share.source" class="facts">
-          {{ share.source.width }}×{{ share.source.height }} · {{ share.source.fps }} fps ·
-          {{ decimal(share.source.durationS, 0) }} sn · {{ megabytes(share.source.bytes) }}
+        <p v-if="share.video" class="facts">
+          {{ share.video.width }}×{{ share.video.height }} · {{ share.video.fps }} fps ·
+          {{ decimal(durationOf(share.video), 0) }} sn · {{ megabytes(share.video.bytes) }}
+        </p>
+        <p v-if="share.video" class="file" :title="share.video.outputPath">
+          {{ shortPath(share.video.outputPath) }}
         </p>
       </aside>
 
@@ -285,7 +305,7 @@ const ACTION_LABELS: Record<NonNullable<Blocker['action']>, string> = {
         <SfButton variant="primary" :disabled="blockers.length > 0" @click="startShare">
           {{ share.phase === 'failed' ? 'Tekrar dene' : 'StepperSkip’te paylaş' }}
         </SfButton>
-        <SfButton v-if="share.source" variant="outline" @click="revealFile(share.source.path)">
+        <SfButton v-if="share.video" variant="outline" @click="revealFile(share.video.outputPath)">
           Klasörde göster
         </SfButton>
         <div class="spacer" />
@@ -334,6 +354,19 @@ video {
 
 .no-video {
   color: var(--text-faint);
+  text-align: center;
+  padding: 0 var(--space-4);
+}
+
+.file {
+  margin: -6px 0 0;
+  max-width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--type-path-size);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .facts {

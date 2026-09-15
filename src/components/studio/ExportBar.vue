@@ -4,16 +4,30 @@
  * frame rate, codec. "Videoyu çıkart" renders this file now; "Kuyruğa ekle" hands it and the
  * current settings to the batch queue instead.
  */
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 
 import SfButton from '../ui/SfButton.vue';
 import { project } from '../../stores/project';
 import { duration, resolution, scene } from '../../stores/scene';
-import { openExportDialog } from '../../stores/exportJob';
+import { exportState, openExportDialog } from '../../stores/exportJob';
+import { account, loadAccountStatus } from '../../stores/account';
+import { openShareDialog } from '../../stores/share';
 import { addPaths, queue } from '../../stores/queue';
 import { goTo } from '../../stores/ui';
 
 const ready = computed(() => project.status === 'ready');
+
+/**
+ * The export panel offers sharing the moment a render finishes; this keeps that offer after the
+ * panel has been closed. Only an MP4, and only in a build that has StepperSkip.
+ */
+const lastVideo = computed(() =>
+  exportState.lastVideo?.format === 'mp4' && account.status !== 'unconfigured'
+    ? exportState.lastVideo
+    : null,
+);
+
+onMounted(() => void loadAccountStatus());
 const size = computed(() => `${resolution.value[0]} × ${resolution.value[1]}`);
 
 const alreadyQueued = computed(
@@ -52,6 +66,15 @@ async function addToQueue() {
     </div>
 
     <div class="spacer" />
+
+    <SfButton
+      v-if="lastVideo"
+      variant="ghost"
+      :title="lastVideo.outputPath"
+      @click="openShareDialog(lastVideo)"
+    >
+      Son videoyu paylaş
+    </SfButton>
 
     <SfButton variant="outline" :disabled="!ready || alreadyQueued" @click="addToQueue">
       {{ alreadyQueued ? 'Kuyrukta' : 'Kuyruğa ekle' }}

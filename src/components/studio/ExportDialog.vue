@@ -24,7 +24,6 @@ import {
 } from '../../stores/exportJob';
 import { ASPECTS } from '../../stores/scene';
 import { account, loadAccountStatus } from '../../stores/account';
-import { ir } from '../../stores/project';
 import { openShareDialog } from '../../stores/share';
 import { revealFile } from '../../export/writeFile';
 import { STAGE_LABELS, type ExportFormat } from '../../export/types';
@@ -70,28 +69,13 @@ const finished = computed(() =>
 const shareable = computed(
   () =>
     exportState.progress.stage === 'done' &&
-    exportState.settings.format === 'mp4' &&
-    exportState.progress.outputPath !== null &&
+    exportState.lastVideo?.format === 'mp4' &&
     account.status !== 'unconfigured',
 );
 
 function shareExport() {
-  const path = exportState.progress.outputPath;
-  if (!path) return;
-  const [width, height] = exportResolution.value;
-  openShareDialog(
-    {
-      path,
-      format: exportState.settings.format,
-      bytes: exportState.progress.bytes,
-      // Exactly the frames written, at the rate written: the length StepperSkip will measure.
-      durationS: exportFrameCount.value / exportState.settings.fps,
-      width,
-      height,
-      fps: exportState.settings.fps,
-    },
-    ir.value,
-  );
+  if (!exportState.lastVideo) return;
+  openShareDialog(exportState.lastVideo);
   closeExportDialog();
 }
 

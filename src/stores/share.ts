@@ -1,11 +1,13 @@
 import { computed, reactive } from 'vue';
 
-import type { Ir } from '../ir/types';
-import { draftCaption } from '../lib/captionDraft';
+import type { ExportedVideo } from '../export/types';
+import { parseFile } from '../ir/parseFile';
+import { draftCaption, readableName, type CaptionDraft } from '../lib/captionDraft';
 import { decimal, megabytes } from '../lib/format';
 import { errorCode, errorText } from '../lib/messages';
 import { account, refreshAccount, selectedCompany } from './account';
 import { notify, notifyError } from './notices';
+import { ir, project } from './project';
 
 /**
  * Sharing a finished video to a StepperSkip company profile — the share screen's state.
@@ -14,17 +16,6 @@ import { notify, notifyError } from './notices';
  * server's progress, verifies the SHA-256 and publishes. This module decides whether sharing can
  * start, carries the progress events to the screen, and keeps going if the screen is closed.
  */
-
-/** What was exported, as the share screen describes and checks it. */
-export interface ShareSource {
-  path: string;
-  format: 'mp4' | 'frames';
-  bytes: number;
-  durationS: number;
-  width: number;
-  height: number;
-  fps: number;
-}
 
 export type ShareStage = 'preparing' | 'uploading' | 'reconnecting' | 'restarting' | 'publishing';
 
@@ -58,7 +49,7 @@ export type SharePhase = 'form' | 'sharing' | 'done' | 'failed';
 
 export const share = reactive({
   open: false,
-  source: null as ShareSource | null,
+  video: null as ExportedVideo | null,
   title: '',
   description: '',
   phase: 'form' as SharePhase,
@@ -85,9 +76,9 @@ const characters = (s: string) => [...s].length;
  */
 export const blockers = computed<Blocker[]>(() => {
   const list: Blocker[] = [];
-  const source = share.source;
+  const video = share.video;
 
-  if (source && source.format !== 'mp4') {
+  if (video && video.format !== 'mp4') {
     list.push({ reason: 'Yalnızca MP4 çıktılar paylaşılabilir; kare sekansı paylaşılamaz.' });
   }
 
@@ -124,21 +115,21 @@ export const blockers = computed<Blocker[]>(() => {
   }
 
   const limits = account.limits;
-  if (source && limits) {
-    if (source.bytes > limits.maxFileSizeBytes) {
+  if (video && limits) {
+    if (video.bytes > limits.maxFileSizeBytes) {
       list.push({
         reason:
-          `Video ${megabytes(source.bytes)}; StepperSkip en fazla ` +
+          `Video ${megabytes(video.bytes)}; StepperSkip en fazla ` +
           `${megabytes(limits.maxFileSizeBytes)} kabul ediyor. Kare hızını, render ölçeğini ya da ` +
           'süreyi düşürüp yeniden render al.',
       });
     }
     // Exports are a whole number of frames, so their length is exact; the tolerance only absorbs
     // floating-point noise, never a real extra frame.
-    if (source.durationS > limits.maxVideoDurationSeconds + 1e-6) {
+    if (durationOf(video) > limits.maxVideoDurationSeconds + 1e-6) {
       list.push({
         reason:
-          `Video ${decimal(source.durationS, 1)} sn; StepperSkip en fazla ` +
+          `Video ${decimal(durationOf(video), 1)} sn; StepperSkip en fazla ` +
           `${decimal(limits.maxVideoDurationSeconds, 0)} sn kabul ediyor.`,
       });
     }
@@ -158,21 +149,39 @@ export const blockers = computed<Blocker[]>(() => {
 
 const inTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
+/** Length in seconds: exports are a whole number of frames at a fixed rate. */
+export function durationOf(video: ExportedVideo): number {
+  return video.frameCount / video.fps;
+}
+
+/** Guards against a slow draft for one video landing on the form of another. */
+let draftFor: string | null = null;
+
 /**
- * Open the share screen for an export. A different file than last time starts a fresh draft; the
- * same file keeps what was typed, and a share that is still running is simply shown again.
+ * Open the share screen for a video SkipFrame wrote — just now in the export panel, earlier from
+ * the export bar, or from a finished row in the queue.
+ *
+ * A different video than last time starts a fresh form; the same one keeps what was typed; and a
+ * share still running is simply shown again rather than replaced.
  */
-export function openShareDialog(source: ShareSource, model: Ir | null): void {
-  if (share.phase !== 'sharing' && share.source?.path !== source.path) {
-    const draft = model ? draftCaption(model) : { title: '', description: '' };
-    share.source = source;
-    share.title = draft.title;
-    share.description = draft.description;
+export function openShareDialog(video: ExportedVideo): void {
+  if (share.phase !== 'sharing' && share.video?.outputPath !== video.outputPath) {
+    share.video = video;
+    share.title = '';
+    share.description = '';
     share.phase = 'form';
     share.post = null;
     share.error = null;
     share.errorCode = null;
     share.linkCopied = false;
+
+    draftFor = video.outputPath;
+    void draftCaptionFor(video).then((draft) => {
+      // Only fill a form that is still for this video and that nobody has typed into.
+      if (draftFor !== video.outputPath || share.video?.outputPath !== video.outputPath) return;
+      if (share.title === '') share.title = draft.title;
+      if (share.description === '') share.description = draft.description;
+    });
   }
   share.open = true;
 
@@ -180,23 +189,42 @@ export function openShareDialog(source: ShareSource, model: Ir | null): void {
   if (account.status !== 'signed-in' && account.status !== 'signing-in') void refreshAccount();
 }
 
+/**
+ * The draft comes from the print the video was rendered from. That is the open file when it is
+ * the same one; otherwise it is read again — a parse-cache hit, since the queue parsed it to
+ * render it. A G-code that has since moved leaves only its name to go on.
+ */
+async function draftCaptionFor(video: ExportedVideo): Promise<CaptionDraft> {
+  if (video.sourcePath && video.sourcePath === project.path && ir.value) {
+    return draftCaption(ir.value.meta);
+  }
+  if (video.sourcePath) {
+    try {
+      return draftCaption((await parseFile(video.sourcePath)).ir.meta);
+    } catch {
+      // Fall through to the name.
+    }
+  }
+  return { title: readableName(video.sourceName), description: '' };
+}
+
 export function closeShareDialog(): void {
   share.open = false;
-  // A finished share has nothing left to show; the next export starts clean.
-  if (share.phase === 'done') share.source = null;
+  // A finished share has nothing left to show; the next one starts clean.
+  if (share.phase === 'done') share.video = null;
 }
 
 export async function startShare(): Promise<void> {
-  const source = share.source;
+  const video = share.video;
   const company = selectedCompany.value;
-  if (!inTauri || !source || !company || share.phase === 'sharing' || blockers.value.length > 0) {
+  if (!inTauri || !video || !company || share.phase === 'sharing' || blockers.value.length > 0) {
     return;
   }
 
   share.phase = 'sharing';
   share.error = null;
   share.errorCode = null;
-  share.progress = { stage: 'preparing', sentBytes: 0, totalBytes: source.bytes };
+  share.progress = { stage: 'preparing', sentBytes: 0, totalBytes: video.bytes };
 
   const [{ invoke }, { listen }] = await Promise.all([
     import('@tauri-apps/api/core'),
@@ -209,7 +237,7 @@ export async function startShare(): Promise<void> {
   try {
     const post = await invoke<SharedPost>('ss_share', {
       request: {
-        path: source.path,
+        path: video.outputPath,
         companyId: company.id,
         title: share.title.trim(),
         description: share.description.trim(),

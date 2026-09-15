@@ -99,7 +99,7 @@ export function buildBeadGeometry(ir: Ir): THREE.InstancedBufferGeometry {
 }
 
 /** Nominal layer height, from the gaps between layer Z values. Falls back to a sane default. */
-export function layerHeightOf(ir: Ir): number {
+export function layerHeightOf(ir: { meta: Pick<Ir['meta'], 'layerZ'> }): number {
   const zs = ir.meta.layerZ;
   if (zs.length < 2) return 0.2;
   // The median gap, so one odd first layer or one variable-height stretch cannot skew it.

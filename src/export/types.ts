@@ -41,6 +41,24 @@ export interface ExportProgress {
   error: string | null;
 }
 
+/**
+ * A video SkipFrame has finished writing, described well enough to share it later — from the
+ * export panel, the studio's export bar, or a finished row in the queue.
+ */
+export interface ExportedVideo {
+  outputPath: string;
+  format: ExportFormat;
+  bytes: number;
+  /** Exactly what was encoded; its length in seconds is `frameCount / fps`. */
+  frameCount: number;
+  fps: number;
+  width: number;
+  height: number;
+  /** The G-code it was rendered from, so a caption can be drafted from the print. */
+  sourcePath: string | null;
+  sourceName: string;
+}
+
 export interface ExportTarget {
   width: number;
   height: number;

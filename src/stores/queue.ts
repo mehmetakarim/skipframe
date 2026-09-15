@@ -11,7 +11,7 @@ import { notify, notifyError } from './notices';
 import { goTo } from './ui';
 import { ASPECTS, applyPreset, layerTiming, scene, type Aspect, type PresetId } from './scene';
 import { decorateStem, settings } from './settings';
-import type { ExportFormat } from '../export/types';
+import type { ExportedVideo, ExportFormat } from '../export/types';
 
 /**
  * The batch queue.
@@ -56,6 +56,8 @@ export interface QueueJob {
   error: string | null;
   /** Wall-clock seconds the finished job took. */
   tookS: number | null;
+  /** What the finished job wrote, for sharing it from its row. Null until it is done. */
+  video: ExportedVideo | null;
 }
 
 export const queue = reactive({
@@ -133,6 +135,7 @@ export async function addPaths(paths: string[]): Promise<void> {
       outputPath: null,
       error: null,
       tookS: null,
+      video: null,
     };
     queue.jobs.push(job);
     // `push` stores the object as it is; the reactive array hands back a proxy on read. Writing
@@ -259,7 +262,7 @@ export async function startQueue(): Promise<void> {
             : new FrameSequenceSink(job.outputPath, stem, frameCount);
 
         job.status = 'rendering';
-        await runExport({
+        const bytes = await runExport({
           scene: printScene,
           canvas,
           sink,
@@ -280,6 +283,17 @@ export async function startQueue(): Promise<void> {
           job.status = 'done';
           job.tookS = (performance.now() - startedAt) / 1000;
           job.etaS = null;
+          job.video = {
+            outputPath: job.outputPath,
+            format: queue.settings.format,
+            bytes,
+            frameCount,
+            fps: queue.settings.fps,
+            width,
+            height,
+            sourcePath: job.path,
+            sourceName: ir.meta.sourceName || job.name,
+          };
         }
       } catch (e) {
         sink?.abort();

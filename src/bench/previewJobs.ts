@@ -23,6 +23,7 @@ export function seedPreviewJobs(): void {
       outputPath: `${base}/vazo_spiral.mp4`,
       error: null,
       tookS: null,
+      video: null,
     },
     {
       id: 'preview-2',
@@ -39,6 +40,7 @@ export function seedPreviewJobs(): void {
       outputPath: `${base}/dis_carki_pa6.mp4`,
       error: null,
       tookS: null,
+      video: null,
     },
     {
       id: 'preview-3',
@@ -55,6 +57,17 @@ export function seedPreviewJobs(): void {
       outputPath: `${base}/kulaklik_askisi.mp4`,
       error: null,
       tookS: 47,
+      video: {
+        outputPath: `${base}/kulaklik_askisi.mp4`,
+        format: 'mp4',
+        bytes: 9_800_000,
+        frameCount: 380,
+        fps: 30,
+        width: 1080,
+        height: 1920,
+        sourcePath: '/tmp/kulaklik_askisi.gcode',
+        sourceName: 'kulaklik_askisi.gcode',
+      },
     },
     {
       id: 'preview-4',
@@ -71,6 +84,7 @@ export function seedPreviewJobs(): void {
       outputPath: `${base}/kapak_v3.mp4`,
       error: null,
       tookS: null,
+      video: null,
     },
   ];
   queue.jobs = jobs;

@@ -5,9 +5,9 @@ import { runExport } from '../export/runExport';
 import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } from '../export/sinks';
 import { defaultBitrate } from '../export/h264';
 import { revealFile, stemOf } from '../export/writeFile';
-import type { ExportProgress, ExportSettings } from '../export/types';
+import type { ExportedVideo, ExportProgress, ExportSettings } from '../export/types';
 import { errorText } from '../lib/messages';
-import { ir } from './project';
+import { ir, project } from './project';
 import { ASPECTS, layerTiming, scene } from './scene';
 import { decorateStem, settings } from './settings';
 
@@ -35,6 +35,11 @@ export const exportState = reactive({
     openWhenDone: false,
   } as ExportSettings,
   progress: idleProgress(),
+  /**
+   * The last video this panel finished writing. It outlives the panel, so the export bar can
+   * still offer to share it after the panel is closed.
+   */
+  lastVideo: null as ExportedVideo | null,
 });
 
 let controller: AbortController | null = null;
@@ -132,6 +137,17 @@ export async function startExport(): Promise<void> {
 
     exportState.progress.bytes = bytes;
     exportState.progress.stage = 'done';
+    exportState.lastVideo = {
+      outputPath,
+      format: exportState.settings.format,
+      bytes,
+      frameCount,
+      fps: exportState.settings.fps,
+      width,
+      height,
+      sourcePath: project.path,
+      sourceName: model.meta.sourceName,
+    };
     if (exportState.settings.openWhenDone) await revealFile(outputPath);
   } catch (e) {
     sink.abort();

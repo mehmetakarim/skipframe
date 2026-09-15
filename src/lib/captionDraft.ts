@@ -1,4 +1,4 @@
-import type { Ir } from '../ir/types';
+import type { IrMeta } from '../ir/types';
 import { layerHeightOf } from '../render/beadGeometry';
 import { stemOf } from '../export/writeFile';
 import { decimal, integer } from './format';
@@ -19,15 +19,18 @@ export interface CaptionDraft {
   description: string;
 }
 
-export function draftCaption(ir: Ir): CaptionDraft {
-  const meta = ir.meta;
+/**
+ * Takes the parser's `meta` rather than the whole IR: a video rendered in the queue is shared
+ * after its IR has been let go, and `meta` is all the draft reads.
+ */
+export function draftCaption(meta: IrMeta): CaptionDraft {
   const name = readableName(meta.sourceName);
-  const height = layerHeightOf(ir);
+  const height = layerHeightOf({ meta });
 
-  const title = `${name} · ${integer(ir.layerCount)} katman`;
+  const title = `${name} · ${integer(meta.layerCount)} katman`;
 
   const lines = [
-    `${decimal(height, 2)} mm katman yüksekliği, ${integer(ir.layerCount)} katman.`,
+    `${decimal(height, 2)} mm katman yüksekliği, ${integer(meta.layerCount)} katman.`,
     meta.estimatedTimeS ? `Tahmini baskı süresi: ${spokenDuration(meta.estimatedTimeS)}.` : null,
     meta.filamentGrams ? `Filament: ${decimal(meta.filamentGrams, 1)} g.` : null,
     meta.printerModel ? `Yazıcı: ${meta.printerModel}.` : null,
@@ -38,7 +41,7 @@ export function draftCaption(ir: Ir): CaptionDraft {
 }
 
 /** `erglagalvabamboo_ABS_3h45m.gcode` -> `erglagalvabamboo ABS 3h45m`. */
-function readableName(sourceName: string): string {
+export function readableName(sourceName: string): string {
   const stem = stemOf(sourceName || 'SkipFrame')
     .replace(/[_]+/g, ' ')
     .trim();

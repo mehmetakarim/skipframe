@@ -34,6 +34,8 @@ import {
 } from '../stores/queue';
 import { ASPECTS, PRESETS } from '../stores/scene';
 import { revealFile } from '../export/writeFile';
+import { account, loadAccountStatus } from '../stores/account';
+import { openShareDialog } from '../stores/share';
 import { integer, megabytes, shortPath } from '../lib/format';
 
 const FPS_OPTIONS = [
@@ -123,7 +125,15 @@ async function openOutputFolder() {
   await revealFile(dir).catch(() => {});
 }
 
+/** A finished MP4 row, in a build that has StepperSkip. */
+function shareableVideo(job: (typeof queue.jobs)[number]) {
+  return job.status === 'done' && job.video?.format === 'mp4' && account.status !== 'unconfigured'
+    ? job.video
+    : null;
+}
+
 onMounted(async () => {
+  void loadAccountStatus();
   queue.outputDir ??= await defaultOutputDir();
 });
 </script>
@@ -239,9 +249,19 @@ onMounted(async () => {
           <span class="note">{{ progressNote(job) }}</span>
         </div>
 
-        <span class="path" :title="job.outputPath ?? ''">
-          {{ job.outputPath ? shortPath(job.outputPath) : '—' }}
-        </span>
+        <div class="output">
+          <span class="path" :title="job.outputPath ?? ''">
+            {{ job.outputPath ? shortPath(job.outputPath) : '—' }}
+          </span>
+          <button
+            v-if="shareableVideo(job)"
+            type="button"
+            class="share"
+            @click="openShareDialog(shareableVideo(job)!)"
+          >
+            Paylaş
+          </button>
+        </div>
 
         <button
           class="remove"
@@ -437,6 +457,41 @@ onMounted(async () => {
   font-family: var(--font-mono);
   font-size: var(--type-overline-size);
   color: var(--text-muted);
+}
+
+.output {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.output .path {
+  flex: 1;
+  min-width: 0;
+}
+
+.share {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.share:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+}
+
+.share:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .path {
