@@ -1,12 +1,14 @@
 mod cache;
 mod commands;
 mod settings;
+mod stepperskip;
 mod watch;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .manage(watch::WatchState::default())
+        .manage(stepperskip::StepperSkip::from_environment())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init());
@@ -44,6 +46,12 @@ pub fn run() {
             settings::probe_ffmpeg,
             watch::start_watch,
             watch::stop_watch,
+            stepperskip::ss_status,
+            stepperskip::ss_sign_in,
+            stepperskip::ss_cancel_sign_in,
+            stepperskip::ss_account,
+            stepperskip::ss_sign_out,
+            stepperskip::ss_open_page,
         ])
         .run(tauri::generate_context!())
         .expect("error while running SkipFrame");

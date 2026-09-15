@@ -26,5 +26,29 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
 
+# StepperSkip account and upload. `reqwest` is already in the tree through the updater; the
+# features match its choice exactly — rustls with the `ring` provider rather than reqwest's
+# default `aws-lc-rs`, which needs a C toolchain and NASM on Windows to build.
+reqwest = { version = "0.13", default-features = false, features = ["json", "form", "stream", "rustls-no-provider", "system-proxy"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+tokio = { version = "1", features = ["net", "io-util", "time", "sync", "macros"] }
+sha2.workspace = true
+base64 = "0.22"
+getrandom = "0.3"
+url = "2"
+
+# The refresh token lives in the operating system's credential store, never in settings.json.
+# keyring 3 falls back to an in-memory mock store when no platform feature is enabled — a
+# token saved there is gone on the next launch without a single error — so the features below
+# are load-bearing, not optional.
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }

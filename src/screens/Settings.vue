@@ -5,11 +5,22 @@
  * One scrolling page with a rail that jumps between its sections, which is how the design draws
  * it — the rail marks where you are rather than swapping panels.
  */
-import { onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 
 import TitleBar from '../components/studio/TitleBar.vue';
 import SfButton from '../components/ui/SfButton.vue';
 import SfSwitch from '../components/ui/SfSwitch.vue';
+import SfSelect from '../components/ui/SfSelect.vue';
+import {
+  account,
+  cancelSignIn,
+  openCompanySetup,
+  openStepperSkipUrl,
+  refreshAccount,
+  selectedCompany,
+  signIn,
+  signOut,
+} from '../stores/account';
 import {
   checkForUpdate,
   clearFfmpegPath,
@@ -55,7 +66,36 @@ function onScroll() {
   active.value = SECTIONS[0]!.id;
 }
 
+/** "Mert Kaya" -> "MK". Turkish casing, so "ilker" becomes "İ", not "I". */
+const initials = computed(() => {
+  const name = account.user?.displayName.trim() || account.user?.username || '';
+  const letters = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0] ?? '')
+    .join('');
+  return letters ? letters.toLocaleUpperCase('tr-TR') : '—';
+});
+
+const usableCompanies = computed(() => account.companies.filter((c) => c.canPublish));
+
+const companyOptions = computed(() =>
+  usableCompanies.value.map((c) => ({ value: String(c.id), label: c.name })),
+);
+
+const companyModel = computed({
+  get: () => (account.selectedCompanyId === null ? '' : String(account.selectedCompanyId)),
+  set: (v: string) => {
+    account.selectedCompanyId = v ? Number(v) : null;
+  },
+});
+
 onMounted(async () => {
+  // Only now, and only here: reading the account refreshes its token, and there is no reason to
+  // rotate a refresh token on every launch for a user who never opens this screen or shares.
+  void refreshAccount();
+
   try {
     const { getVersion } = await import('@tauri-apps/api/app');
     version.value = await getVersion();
@@ -177,16 +217,116 @@ onMounted(async () => {
         <!-- Hesap -->
         <section id="set-account" class="group">
           <span class="t-overline">StepperSkip hesabı</span>
+          <p class="lede">
+            Bitmiş bir videoyu StepperSkip’teki firma profilinde paylaşmak için. SkipFrame’in geri
+            kalanı hesapsız çalışır ve G-code dosyaların hiçbir durumda cihazdan çıkmaz. Giriş
+            sistem tarayıcısında yapılır; SkipFrame parolanı görmez.
+          </p>
+
           <div class="card">
-            <div class="avatar">—</div>
+            <div :class="['avatar', { filled: account.status === 'signed-in' }]">
+              {{ account.status === 'signed-in' ? initials : '—' }}
+            </div>
+
             <div class="card-body">
-              <span class="title">Hesap bağlama henüz yok</span>
-              <span class="hint">
-                SkipFrame’in çalışması için hesap gerekmiyor; dosyalar zaten cihazdan çıkmıyor. Bu
-                bölüm paylaşım akışıyla birlikte gelecek.
-              </span>
+              <template v-if="account.status === 'signed-in' && account.user">
+                <span class="title">{{ account.user.displayName }}</span>
+                <span class="hint mono">@{{ account.user.username }}</span>
+              </template>
+              <template v-else-if="account.status === 'signing-in'">
+                <span class="title">Tarayıcıda devam et</span>
+                <span class="hint">
+                  StepperSkip giriş sayfası sistem tarayıcında açıldı. İzin verdiğinde buraya
+                  kendiliğinden dönülür.
+                </span>
+              </template>
+              <template v-else-if="account.status === 'loading' || account.status === 'unknown'">
+                <span class="title">Hesap okunuyor…</span>
+              </template>
+              <template v-else-if="account.status === 'unreachable'">
+                <!-- The reason is in the hint, in StepperSkip's or our own words; the title only
+                     says the account is still there. -->
+                <span class="title">Hesap şu an okunamadı</span>
+                <span class="hint">{{ account.problem }} Oturum silinmedi.</span>
+              </template>
+              <template v-else-if="account.status === 'unconfigured'">
+                <span class="title">Bu sürümde StepperSkip bağlantısı yok</span>
+                <span class="hint"
+                  >Paylaşım, yapılandırılmış bir StepperSkip sunucusu gerektiriyor.</span
+                >
+              </template>
+              <template v-else>
+                <span class="title">Hesap bağlı değil</span>
+                <span class="hint">Paylaşmak istediğinde giriş yapman yeterli.</span>
+              </template>
+            </div>
+
+            <div class="card-actions">
+              <SfButton v-if="account.status === 'signed-out'" variant="outline" @click="signIn">
+                StepperSkip ile giriş yap
+              </SfButton>
+              <SfButton
+                v-if="account.status === 'signing-in'"
+                variant="ghost"
+                @click="cancelSignIn"
+              >
+                Vazgeç
+              </SfButton>
+              <SfButton
+                v-if="account.status === 'unreachable'"
+                variant="outline"
+                @click="refreshAccount"
+              >
+                Tekrar dene
+              </SfButton>
+              <SfButton
+                v-if="account.status === 'signed-in' || account.status === 'unreachable'"
+                variant="ghost"
+                @click="signOut"
+              >
+                Hesabı kaldır
+              </SfButton>
             </div>
           </div>
+
+          <!-- Paylaşım firma profiline yapılır. Kural StepperSkip'in; burada yalnızca anlatılıyor. -->
+          <template v-if="account.status === 'signed-in'">
+            <div v-if="usableCompanies.length === 0" class="company-missing">
+              <span class="title">Firma profili yok</span>
+              <span class="hint">
+                Paylaşım StepperSkip’teki firma profillerine yapılır. Koşulları karşılıyorsan
+                StepperSkip’te bir firma profili açıp buraya dönebilirsin.
+              </span>
+              <div class="update-row">
+                <SfButton variant="outline" @click="openCompanySetup">
+                  StepperSkip’te firma profili aç
+                </SfButton>
+                <SfButton variant="ghost" @click="refreshAccount">Yeniden kontrol et</SfButton>
+              </div>
+            </div>
+
+            <div v-else-if="usableCompanies.length === 1 && selectedCompany" class="setting">
+              <div class="card-body">
+                <span class="t-overline">Paylaşılacak firma</span>
+                <span class="title">{{ selectedCompany.name }}</span>
+              </div>
+              <SfButton
+                v-if="selectedCompany.profileUrl"
+                variant="ghost"
+                @click="openStepperSkipUrl(selectedCompany.profileUrl)"
+              >
+                Profili aç
+              </SfButton>
+            </div>
+
+            <SfSelect
+              v-else
+              v-model="companyModel"
+              class="company-select"
+              label="Paylaşılacak firma"
+              :options="companyOptions"
+            />
+          </template>
         </section>
 
         <div class="divider" />
@@ -419,11 +559,36 @@ onMounted(async () => {
   font-weight: 700;
 }
 
+.avatar.filled {
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
 .card-body {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  flex: 1;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.company-missing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 720px;
+}
+
+.company-select {
+  max-width: 360px;
 }
 
 .update-row {

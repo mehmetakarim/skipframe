@@ -1,5 +1,5 @@
 /**
- * Turkish for the codes the parser sends.
+ * Turkish for the codes the Rust side sends — from the parser and from StepperSkip.
  *
  * The Rust crate speaks English: it is an MIT library with a CLI, and that is the right
  * language for both. What crosses the IPC boundary is therefore a stable code —
@@ -7,9 +7,13 @@
  * file is the only place that turns one into something the user reads, and the only file a
  * second language would need.
  *
- * Every lookup falls back to the English the parser sent. An unknown code means either a build
- * mismatch or a cache entry written before codes existed, and in both cases the user is better
- * served by an English sentence than by a bare identifier.
+ * StepperSkip follows the same rule: its errors carry a code, and those codes are passed through
+ * unchanged. The ones listed here were read from StepperSkip's source, not its written handoff.
+ *
+ * Every lookup falls back to the message that came with the code. For the parser that is
+ * English — an unknown code means a build mismatch or an old cache entry, and an English
+ * sentence still beats a bare identifier. StepperSkip writes its own messages in Turkish, so a
+ * code this file has not heard of yet still reads correctly.
  */
 
 const ERRORS: Record<string, string> = {
@@ -19,6 +23,43 @@ const ERRORS: Record<string, string> = {
   unsupported_container: 'Bu dosya biçimi desteklenmiyor.',
   io: 'Dosya okunamadı',
   worker: 'Okuma işlemi tamamlanamadı.',
+
+  // -- StepperSkip: reaching it -------------------------------------------------------------
+  stepperskip_unconfigured: 'Bu sürümde StepperSkip bağlantısı yapılandırılmamış.',
+  network: 'StepperSkip’e ulaşılamadı. Bağlantını ya da sunucunun çalıştığını kontrol et.',
+  timeout: 'StepperSkip zamanında yanıt vermedi.',
+  bad_response: 'StepperSkip’ten beklenmeyen bir yanıt geldi.',
+  rate_limited: 'StepperSkip’e çok sık istek gönderildi. Biraz bekleyip tekrar dene.',
+  server_error: 'StepperSkip tarafında beklenmeyen bir hata oluştu.',
+  method_not_allowed: 'StepperSkip’ten beklenmeyen bir yanıt geldi.',
+
+  // -- StepperSkip: signing in --------------------------------------------------------------
+  sign_in_in_progress: 'Tarayıcıda zaten bekleyen bir giriş var.',
+  sign_in_cancelled: 'Giriş iptal edildi.',
+  sign_in_timeout: 'Tarayıcıdan dönülmedi; giriş zaman aşımına uğradı.',
+  state_mismatch: 'Giriş yanıtı bu isteğe ait değil, güvenlik için durduruldu. Tekrar dene.',
+  invalid_callback: 'Tarayıcıdan eksik bir giriş yanıtı geldi. Tekrar dene.',
+  browser_open_failed: 'Sistem tarayıcısı açılamadı.',
+  loopback: 'Giriş dönüşü için yerel bağlantı açılamadı.',
+  random: 'Güvenli rastgele değer üretilemedi.',
+  access_denied: 'StepperSkip’te SkipFrame’e izin verilmedi.',
+  invalid_client: 'StepperSkip bu SkipFrame sürümünü tanımıyor.',
+  invalid_scope: 'StepperSkip istenen izinleri vermedi.',
+  unsupported_response_type: 'StepperSkip giriş isteğini geçersiz buldu.',
+  invalid_request: 'StepperSkip isteği geçersiz buldu.',
+  invalid_grant: 'Giriş kodu geçersiz ya da süresi dolmuş. Tekrar dene.',
+
+  // -- StepperSkip: the session -------------------------------------------------------------
+  credential_store:
+    'Oturum bilgisi işletim sisteminin anahtar deposuna yazılamadı ya da okunamadı.',
+  not_signed_in: 'StepperSkip hesabına giriş yapılmamış.',
+  session_expired: 'StepperSkip oturumunun süresi doldu. Yeniden giriş yap.',
+  invalid_token: 'StepperSkip oturumu geçersiz. Yeniden giriş yap.',
+  insufficient_scope: 'StepperSkip oturumunun bu işlem için izni yok. Yeniden giriş yap.',
+
+  // -- StepperSkip: company profile ---------------------------------------------------------
+  company_required: 'Paylaşım için StepperSkip’te aktif bir firma profili gerekli.',
+  company_forbidden: 'Bu firma profilinde paylaşım yetkin yok ya da profil aktif değil.',
 };
 
 /**
