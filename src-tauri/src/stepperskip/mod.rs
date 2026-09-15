@@ -13,19 +13,25 @@ mod credentials;
 mod loopback;
 mod pkce;
 mod session;
+mod share;
 #[cfg(test)]
 mod testing;
 
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::commands::IpcError;
 use api::ApiError;
+use api::Post;
 use credentials::KeyringStore;
 use session::{Account, AccountSnapshot};
+use share::ShareRequest;
+
+/// Emitted as a shared video uploads and publishes; the payload is `share::ShareProgress`.
+const SHARE_PROGRESS: &str = "skipframe://share-progress";
 
 /// Where StepperSkip is.
 ///
@@ -133,6 +139,30 @@ pub async fn ss_account(state: State<'_, StepperSkip>) -> Result<AccountSnapshot
 #[tauri::command]
 pub async fn ss_sign_out(state: State<'_, StepperSkip>) -> Result<(), IpcError> {
     Ok(state.account()?.sign_out().await?)
+}
+
+/// Upload a finished MP4 and publish it to one of the account's company profiles. Progress
+/// arrives as `skipframe://share-progress` events; the result is the published post.
+#[tauri::command]
+pub async fn ss_share(
+    app: AppHandle,
+    state: State<'_, StepperSkip>,
+    request: ShareRequest,
+) -> Result<Post, IpcError> {
+    let account = state.account()?;
+    let post = account
+        .share(&request, |progress| {
+            let _ = app.emit(SHARE_PROGRESS, progress);
+        })
+        .await?;
+    Ok(post)
+}
+
+#[tauri::command]
+pub fn ss_cancel_share(state: State<'_, StepperSkip>) {
+    if let Some(account) = state.account.as_ref() {
+        account.cancel_share();
+    }
 }
 
 #[derive(Deserialize)]

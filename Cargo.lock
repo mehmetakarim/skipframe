@@ -3493,6 +3493,7 @@ name = "skipframe"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "bytes",
  "getrandom 0.3.4",
  "keyring",
  "reqwest",
@@ -3509,6 +3510,7 @@ dependencies = [
  "tauri-plugin-updater",
  "thiserror 2.0.20",
  "tokio",
+ "tokio-util",
  "url",
 ]
 

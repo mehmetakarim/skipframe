@@ -21,6 +21,7 @@ use std::time::{Duration, Instant};
 use serde::Serialize;
 use tokio::sync::{oneshot, Mutex};
 
+use super::api::Response;
 use super::api::{
     self, ApiError, Capabilities, CompaniesData, Company, Http, Limits, LimitsData, MeData, User,
 };
@@ -28,6 +29,7 @@ use super::callback_page::{self, Outcome};
 use super::credentials::CredentialStore;
 use super::loopback::{Callback, Loopback};
 use super::pkce::{self, Pkce};
+use super::share::ShareState;
 
 /// Refresh this long before expiry rather than find out from a 401 halfway through a request.
 const REFRESH_MARGIN: Duration = Duration::from_secs(5 * 60);
@@ -65,11 +67,13 @@ pub struct AccountSnapshot {
 }
 
 pub struct Account {
-    http: Http,
+    pub(super) http: Http,
     store: Arc<dyn CredentialStore>,
     token: Mutex<Option<AccessToken>>,
     /// Present while a sign-in is waiting on the browser; sending on it abandons that wait.
     pending_sign_in: StdMutex<Option<oneshot::Sender<()>>>,
+    /// Uploads in progress and the one that did not finish, for `share.rs`.
+    pub(super) share: ShareState,
 }
 
 impl Account {
@@ -79,6 +83,7 @@ impl Account {
             store,
             token: Mutex::new(None),
             pending_sign_in: StdMutex::new(None),
+            share: ShareState::default(),
         })
     }
 
@@ -259,6 +264,7 @@ impl Account {
                     status: e.status,
                     code: "session_expired".into(),
                     message: e.message,
+                    detail: e.detail,
                 })
             }
             // Network trouble: keep the refresh token and let the caller try again later.
@@ -278,12 +284,27 @@ impl Account {
 
     /// GET a resource with the account's token. A 401 earns exactly one refresh and one retry.
     pub async fn get<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T, ApiError> {
+        let url = self.http.url(path);
+        let response = self
+            .authorized(|token| self.http.client().get(&url).bearer_auth(token))
+            .await?;
+        Ok(response.data)
+    }
+
+    /// Send any request with the account's token. `build` is called once per attempt with the
+    /// token to use: a 401 earns exactly one refresh and one retry, and a request body cannot be
+    /// sent twice, so it is rebuilt rather than cloned.
+    pub(super) async fn authorized<T, B>(&self, build: B) -> Result<Response<T>, ApiError>
+    where
+        T: serde::de::DeserializeOwned,
+        B: Fn(&str) -> reqwest::RequestBuilder,
+    {
         let token = self.access_token().await?;
-        match self.http.get(path, &token).await {
+        match self.http.send(build(&token)).await {
             Err(e) if e.status == 401 => {
                 self.invalidate(&token).await;
                 let token = self.access_token().await?;
-                self.http.get(path, &token).await
+                self.http.send(build(&token)).await
             }
             other => other,
         }
@@ -309,6 +330,8 @@ impl Account {
     /// Revoke the session on the server if it can be reached, and forget it locally regardless.
     pub async fn sign_out(&self) -> Result<(), ApiError> {
         self.cancel_sign_in();
+        self.cancel_share();
+        self.forget_unfinished();
         let refresh_token = self.load().await.ok().flatten();
         *self.token.lock().await = None;
         if let Some(token) = refresh_token {

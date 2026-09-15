@@ -21,12 +21,14 @@ pub const SCOPES: &str = "profile:read company:read video:write";
 ///
 /// `code` is what the interface translates. Server codes pass through unchanged; failures that
 /// never reached the server (`network`, `bad_response`, ...) get codes of our own. `status` is 0
-/// for those.
+/// for those. `detail` is the server's machine-readable extra, when it sent one — the upload
+/// protocol relies on it: an offset conflict says where the server actually is.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApiError {
     pub status: u16,
     pub code: String,
     pub message: String,
+    pub detail: serde_json::Value,
 }
 
 impl ApiError {
@@ -35,6 +37,7 @@ impl ApiError {
             status: 0,
             code: code.to_string(),
             message: message.into(),
+            detail: serde_json::Value::Null,
         }
     }
 }
@@ -108,6 +111,51 @@ pub struct LimitsData {
     pub capabilities: Capabilities,
 }
 
+/// One upload session, as `POST /uploads`, `PUT /uploads/{id}` and `GET /uploads/{id}` all
+/// describe it. Fields appear or not depending on the endpoint and the status, hence the
+/// options.
+#[derive(Debug, Clone, Deserialize)]
+pub struct UploadState {
+    pub id: String,
+    pub status: String,
+    pub total_size: u64,
+    pub received_size: u64,
+    #[serde(default)]
+    pub next_offset: Option<u64>,
+    #[serde(default)]
+    pub preferred_chunk_size_bytes: Option<u64>,
+    #[serde(default)]
+    pub sha256: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UploadData {
+    pub upload: UploadState,
+}
+
+/// A published company video post. `post_url` is used exactly as given — never assembled from
+/// the id or slug.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
+pub struct Post {
+    pub id: u64,
+    pub slug: String,
+    pub company_id: u64,
+    pub title: String,
+    pub post_url: String,
+    #[serde(default)]
+    pub media_url: Option<String>,
+    #[serde(default)]
+    pub published: bool,
+    #[serde(default)]
+    pub published_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PostData {
+    pub post: Post,
+}
+
 /// `POST /oauth/token`. Unlike every other endpoint this one answers success in plain RFC 6749
 /// form, not inside the `{success, data}` envelope — but its errors do use the envelope.
 #[derive(Deserialize)]
@@ -152,6 +200,7 @@ pub fn decode_envelope<T: DeserializeOwned>(status: u16, body: &[u8]) -> Result<
         status,
         code: "bad_response".into(),
         message: format!("HTTP {status} without a recognisable body"),
+        detail: serde_json::Value::Null,
     })
 }
 
@@ -177,6 +226,7 @@ fn error_in(status: u16, value: &serde_json::Value) -> Option<ApiError> {
             status,
             code: code.to_string(),
             message: message.to_string(),
+            detail: error.get("detail").cloned().unwrap_or_default(),
         });
     }
     let code = error.as_str()?;
@@ -188,6 +238,7 @@ fn error_in(status: u16, value: &serde_json::Value) -> Option<ApiError> {
         status,
         code: code.to_string(),
         message: message.to_string(),
+        detail: serde_json::Value::Null,
     })
 }
 
@@ -197,6 +248,7 @@ fn non_json(status: u16) -> ApiError {
         status,
         code: "bad_response".into(),
         message: format!("HTTP {status} with a body that is not JSON"),
+        detail: serde_json::Value::Null,
     }
 }
 
@@ -238,8 +290,25 @@ impl Http {
         &self.base
     }
 
-    fn url(&self, path: &str) -> String {
+    pub fn client(&self) -> &reqwest::Client {
+        &self.client
+    }
+
+    pub fn url(&self, path: &str) -> String {
         format!("{}{}", self.base, path)
+    }
+
+    /// Send a built request and unwrap its envelope, keeping the status: the upload protocol
+    /// tells an intermediate chunk (308) from the last one (200) by it, and a first publish (201)
+    /// from a repeated one (200).
+    pub async fn send<T: DeserializeOwned>(
+        &self,
+        request: reqwest::RequestBuilder,
+    ) -> Result<Response<T>, ApiError> {
+        let response = request.send().await.map_err(transport)?;
+        let status = response.status().as_u16();
+        let body = response.bytes().await.map_err(transport)?;
+        decode_envelope(status, &body).map(|data| Response { status, data })
     }
 
     pub async fn exchange_code(
@@ -290,25 +359,11 @@ impl Http {
             .map_err(transport)?;
         Ok(())
     }
+}
 
-    pub async fn get<T: DeserializeOwned>(
-        &self,
-        path: &str,
-        access_token: &str,
-    ) -> Result<T, ApiError> {
-        let response = self
-            .client
-            .get(self.url(path))
-            // The only place a token is ever sent. StepperSkip accepts it nowhere else — not in
-            // the query string, not in a cookie — and neither would we.
-            .bearer_auth(access_token)
-            .send()
-            .await
-            .map_err(transport)?;
-        let status = response.status().as_u16();
-        let body = response.bytes().await.map_err(transport)?;
-        decode_envelope(status, &body)
-    }
+pub struct Response<T> {
+    pub status: u16,
+    pub data: T,
 }
 
 /// Could not reach the server, or the connection broke. reqwest's message names the URL, which
@@ -488,12 +543,52 @@ mod tests {
             "expected the login page: {location}"
         );
 
-        let err = http
-            .get::<LimitsData>("/api/v1/limits", "not-a-real-token")
-            .await
-            .unwrap_err();
+        let request = http
+            .client()
+            .get(http.url("/api/v1/limits"))
+            .bearer_auth("not-a-real-token");
+        let err = http.send::<LimitsData>(request).await.err().unwrap();
         println!("limits with a bogus token -> {} {}", err.status, err.code);
         assert_eq!(err.status, 401);
         assert_eq!(err.code, "invalid_token");
+
+        // The upload and publish routes exist at the paths `share.rs` builds, with the methods it
+        // uses, and answer in the envelope. A bogus token keeps this from creating anything: the
+        // 401 comes before any upload session, chunk or post is touched.
+        let id = "0".repeat(64);
+        let c = http.client();
+        let routes = [
+            (
+                "POST /uploads",
+                c.post(http.url("/api/v1/uploads")).body("{}"),
+            ),
+            (
+                "GET /uploads/{id}",
+                c.get(http.url(&format!("/api/v1/uploads/{id}"))),
+            ),
+            (
+                "PUT /uploads/{id}",
+                c.put(http.url(&format!("/api/v1/uploads/{id}")))
+                    .header("Content-Range", "bytes 0-0/1")
+                    .body(vec![0u8]),
+            ),
+            (
+                "POST /company-posts",
+                c.post(http.url("/api/v1/company-posts")).body("{}"),
+            ),
+        ];
+        for (name, request) in routes {
+            let err = http
+                .send::<serde_json::Value>(request.bearer_auth("not-a-real-token"))
+                .await
+                .err()
+                .unwrap();
+            println!("{name} with a bogus token -> {} {}", err.status, err.code);
+            assert_eq!(
+                (err.status, err.code.as_str()),
+                (401, "invalid_token"),
+                "{name}"
+            );
+        }
     }
 }

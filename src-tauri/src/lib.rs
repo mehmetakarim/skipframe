@@ -52,6 +52,8 @@ pub fn run() {
             stepperskip::ss_account,
             stepperskip::ss_sign_out,
             stepperskip::ss_open_page,
+            stepperskip::ss_share,
+            stepperskip::ss_cancel_share,
         ])
         .run(tauri::generate_context!())
         .expect("error while running SkipFrame");
