@@ -24,6 +24,7 @@ use tokio::sync::{oneshot, Mutex};
 use super::api::{
     self, ApiError, Capabilities, CompaniesData, Company, Http, Limits, LimitsData, MeData, User,
 };
+use super::callback_page::{self, Outcome};
 use super::credentials::CredentialStore;
 use super::loopback::{Callback, Loopback};
 use super::pkce::{self, Pkce};
@@ -128,7 +129,7 @@ impl Account {
 
         open_browser(&authorize).map_err(|e| ApiError::local("browser_open_failed", e))?;
 
-        let callback = tokio::select! {
+        let (callback, reply) = tokio::select! {
             result = loopback.accept_callback() => {
                 result.map_err(|e| ApiError::local("loopback", e.to_string()))?
             }
@@ -140,6 +141,32 @@ impl Account {
             }
         };
 
+        let result = self
+            .complete_sign_in(callback, &state, &pkce, loopback.redirect_uri())
+            .await;
+
+        // Only now does the browser tab find out what happened — after the code was exchanged,
+        // the token stored and the account read, not when the code merely arrived.
+        let page = match &result {
+            Ok(snapshot) => callback_page::render(&Outcome::SignedIn {
+                user: &snapshot.user,
+                companies: &snapshot.companies,
+            }),
+            Err(e) => callback_page::render(&Outcome::Failed { code: &e.code }),
+        };
+        reply.send(&page).await;
+
+        result
+    }
+
+    /// Everything between the browser coming back and the account being known.
+    async fn complete_sign_in(
+        &self,
+        callback: Callback,
+        state: &str,
+        pkce: &Pkce,
+        redirect_uri: &str,
+    ) -> Result<AccountSnapshot, ApiError> {
         let code = match callback {
             Callback::Code {
                 code,
@@ -166,9 +193,8 @@ impl Account {
 
         let tokens = self
             .http
-            .exchange_code(&code, loopback.redirect_uri(), &pkce.verifier)
+            .exchange_code(&code, redirect_uri, &pkce.verifier)
             .await?;
-        drop(loopback);
 
         // The refresh token is persisted before anything uses the session.
         self.save(&tokens.refresh_token).await?;
@@ -363,6 +389,10 @@ mod tests {
 
         assert_eq!(snapshot.user.username, "mert.kaya");
         assert_eq!(snapshot.companies.len(), 1);
+        // The tab was answered after the account was known, so it can name it.
+        let page = mock.last_page().await;
+        assert!(page.contains("Giriş tamamlandı"), "{page}");
+        assert!(page.contains("@mert.kaya") && page.contains("Teknovada"));
         assert_eq!(snapshot.limits.max_file_size_bytes, 52_428_800);
         // PKCE was actually checked by the mock: a wrong verifier would have been refused.
         assert_eq!(mock.state.code_exchanges.load(Ordering::SeqCst), 1);
@@ -381,6 +411,10 @@ mod tests {
 
         assert_eq!(err.code, "state_mismatch");
         assert_eq!(mock.state.code_exchanges.load(Ordering::SeqCst), 0);
+        // The browser is told the truth too, not "complete".
+        let page = mock.last_page().await;
+        assert!(page.contains("Giriş tamamlanmadı"), "{page}");
+        assert!(!page.contains("Giriş tamamlandı"));
         assert!(store.load().unwrap().is_none());
     }
 

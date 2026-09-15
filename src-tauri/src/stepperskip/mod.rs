@@ -8,6 +8,7 @@
 //! handoff; see `api.rs` for what differed.
 
 mod api;
+mod callback_page;
 mod credentials;
 mod loopback;
 mod pkce;

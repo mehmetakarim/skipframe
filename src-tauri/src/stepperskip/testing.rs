@@ -25,6 +25,8 @@ pub struct MockState {
     current_refresh: Mutex<String>,
     retired_refresh: Mutex<HashSet<String>>,
     valid_access: Mutex<HashSet<String>>,
+    /// The body of the last page the pretend browser was shown at the loopback.
+    last_page: Mutex<Option<String>>,
 }
 
 #[derive(Clone)]
@@ -58,6 +60,18 @@ impl MockServer {
     pub fn set_refresh_token(&self, token: &str) {
         *self.state.current_refresh.lock().unwrap() = token.to_string();
     }
+
+    /// The page the browser landed on. Waits briefly, because the browser task reads it after
+    /// the sign-in call has already returned.
+    pub async fn last_page(&self) -> String {
+        for _ in 0..100 {
+            if let Some(page) = self.state.last_page.lock().unwrap().clone() {
+                return page;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        panic!("the browser was never shown a page");
+    }
 }
 
 /// Play the browser: note the challenge the server would have stored, then come back to the
@@ -74,7 +88,12 @@ pub fn browser_returns(
             .map(str::to_string)
             .unwrap_or(query["state"].clone());
         let target = format!("/callback?code=good-code&state={state}");
-        tokio::spawn(visit(query["redirect_uri"].clone(), target));
+        let shown = mock.state.clone();
+        let redirect_uri = query["redirect_uri"].clone();
+        tokio::spawn(async move {
+            let page = visit(redirect_uri, target).await;
+            *shown.last_page.lock().unwrap() = Some(page);
+        });
         Ok(())
     }
 }
@@ -85,12 +104,14 @@ pub fn browser_denies() -> impl FnOnce(&str) -> Result<(), String> {
         let url = url::Url::parse(authorize).map_err(|e| e.to_string())?;
         let query: std::collections::HashMap<_, _> = url.query_pairs().into_owned().collect();
         let target = format!("/callback?error=access_denied&state={}", query["state"]);
-        tokio::spawn(visit(query["redirect_uri"].clone(), target));
+        tokio::spawn(async move {
+            visit(query["redirect_uri"].clone(), target).await;
+        });
         Ok(())
     }
 }
 
-async fn visit(redirect_uri: String, target: String) {
+async fn visit(redirect_uri: String, target: String) -> String {
     let addr = redirect_uri
         .trim_start_matches("http://")
         .trim_end_matches("/callback")
@@ -98,8 +119,9 @@ async fn visit(redirect_uri: String, target: String) {
     let mut s = TcpStream::connect(&addr).await.unwrap();
     let req = format!("GET {target} HTTP/1.1\r\nHost: {addr}\r\n\r\n");
     s.write_all(req.as_bytes()).await.unwrap();
-    let mut sink = Vec::new();
-    let _ = s.read_to_end(&mut sink).await;
+    let mut page = Vec::new();
+    let _ = s.read_to_end(&mut page).await;
+    String::from_utf8_lossy(&page).into_owned()
 }
 
 async fn handle(mut stream: TcpStream, state: Arc<MockState>) {

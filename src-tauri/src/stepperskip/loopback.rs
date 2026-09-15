@@ -6,9 +6,12 @@
 //!
 //! Only the loopback interface is bound. Nothing on the network can reach the port, and
 //! StepperSkip refuses any redirect that is not `127.0.0.1` or `::1` with the path `/callback`.
+//!
+//! The callback's connection is handed back open, as a [`Reply`]. The browser tab waits on it
+//! while SkipFrame finishes signing in, and is answered with the real outcome rather than a guess.
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 
 /// The most of a request we will read. A callback URL is a few hundred bytes; anything past this
 /// is not our browser.
@@ -51,8 +54,9 @@ impl Loopback {
     /// Wait until the browser delivers a callback, answering anything else with a 404.
     ///
     /// Has no timeout of its own: the caller races it against a deadline and a cancel signal,
-    /// because only the caller knows whether the user closed the tab.
-    pub async fn accept_callback(&self) -> std::io::Result<Callback> {
+    /// because only the caller knows whether the user closed the tab. The returned [`Reply`]
+    /// must be sent — the tab shows a loading page until it is.
+    pub async fn accept_callback(&self) -> std::io::Result<(Callback, Reply)> {
         loop {
             let (mut stream, _) = self.listener.accept().await?;
 
@@ -75,29 +79,40 @@ impl Loopback {
             let first_line = request.lines().next().unwrap_or_default();
             let callback = parse_request_line(first_line);
 
-            let (status, body) = match &callback {
-                Callback::Code { .. } => ("200 OK", page(true)),
-                Callback::Error { .. } => ("200 OK", page(false)),
-                Callback::Other => ("404 Not Found", String::new()),
-            };
-            let response = format!(
-                "HTTP/1.1 {status}\r\n\
-                 Content-Type: text/html; charset=utf-8\r\n\
-                 Content-Length: {}\r\n\
-                 Cache-Control: no-store\r\n\
-                 Referrer-Policy: no-referrer\r\n\
-                 Connection: close\r\n\r\n{body}",
-                body.len()
-            );
-            // A browser that gave up before reading the page does not change the outcome.
-            let _ = stream.write_all(response.as_bytes()).await;
-            let _ = stream.shutdown().await;
-
-            if callback != Callback::Other {
-                return Ok(callback);
+            if callback == Callback::Other {
+                respond(&mut stream, "404 Not Found", "").await;
+                continue;
             }
+            return Ok((callback, Reply { stream }));
         }
     }
+}
+
+/// The browser's callback request, still waiting for its page.
+pub struct Reply {
+    stream: TcpStream,
+}
+
+impl Reply {
+    pub async fn send(mut self, html: &str) {
+        respond(&mut self.stream, "200 OK", html).await;
+    }
+}
+
+async fn respond(stream: &mut TcpStream, status: &str, body: &str) {
+    let response = format!(
+        "HTTP/1.1 {status}\r\n\
+         Content-Type: text/html; charset=utf-8\r\n\
+         Content-Length: {}\r\n\
+         Cache-Control: no-store\r\n\
+         Referrer-Policy: no-referrer\r\n\
+         X-Content-Type-Options: nosniff\r\n\
+         Connection: close\r\n\r\n{body}",
+        body.len()
+    );
+    // A browser that gave up before reading the page does not change the outcome.
+    let _ = stream.write_all(response.as_bytes()).await;
+    let _ = stream.shutdown().await;
 }
 
 /// Parse `GET /callback?code=...&state=... HTTP/1.1`.
@@ -137,30 +152,6 @@ pub fn parse_request_line(line: &str) -> Callback {
             state: None,
         },
     }
-}
-
-/// The page the browser tab lands on. No script, no external resource, nothing to leak the
-/// code in the address bar anywhere.
-fn page(ok: bool) -> String {
-    let (title, line) = if ok {
-        (
-            "Giriş tamamlandı",
-            "SkipFrame'e dönebilirsin. Bu sekmeyi kapatabilirsin.",
-        )
-    } else {
-        (
-            "Giriş tamamlanmadı",
-            "SkipFrame'e dönüp tekrar deneyebilirsin. Bu sekmeyi kapatabilirsin.",
-        )
-    };
-    format!(
-        "<!doctype html><html lang=\"tr\"><head><meta charset=\"utf-8\">\
-         <meta name=\"referrer\" content=\"no-referrer\"><title>SkipFrame · {title}</title>\
-         <style>html{{background:#0b0b0b;color:#c9ccc6;font:15px/1.6 system-ui,sans-serif}}\
-         main{{max-width:28rem;margin:18vh auto;padding:0 1.5rem}}\
-         h1{{color:#fff;font-size:1.25rem;margin:0 0 .5rem}}b{{color:#ebb60e}}</style></head>\
-         <body><main><h1><b>SkipFrame</b> · {title}</h1><p>{line}</p></main></body></html>"
-    )
 }
 
 #[cfg(test)]
@@ -237,13 +228,16 @@ mod tests {
         let browser = tokio::spawn(async move {
             let favicon = raw_get(&base, "/favicon.ico").await;
             assert!(favicon.starts_with("HTTP/1.1 404"));
-            let page = raw_get(&base, "/callback?code=c0de&state=st4te").await;
-            assert!(page.starts_with("HTTP/1.1 200"));
-            assert!(page.contains("Giriş tamamlandı"));
+            raw_get(&base, "/callback?code=c0de&state=st4te").await
         });
 
-        let got = loopback.accept_callback().await.unwrap();
-        browser.await.unwrap();
+        let (got, reply) = loopback.accept_callback().await.unwrap();
+        // The tab is still waiting: nothing has been written until the outcome is known.
+        assert!(!browser.is_finished());
+        reply.send("<p>the real outcome</p>").await;
+        let page = browser.await.unwrap();
+        assert!(page.starts_with("HTTP/1.1 200"));
+        assert!(page.ends_with("<p>the real outcome</p>"));
         assert_eq!(
             got,
             Callback::Code {
