@@ -15,6 +15,7 @@ import Studio from './screens/Studio.vue';
 import Queue from './screens/Queue.vue';
 import Settings from './screens/Settings.vue';
 import SfNotices from './components/ui/SfNotices.vue';
+import SfAlert from './components/ui/SfAlert.vue';
 import ShareDialog from './components/studio/ShareDialog.vue';
 import { openPath, project } from './stores/project';
 import { goTo, ui } from './stores/ui';
@@ -59,6 +60,10 @@ onBeforeUnmount(() => unlisten?.());
   <!-- Sharing is reached from the studio and from the queue, and an upload keeps running when
        the user moves between them — so the screen lives above both. -->
   <ShareDialog v-if="share.open" />
+
+  <!-- Errors and warnings about what the user just did: a file that will not open, a render
+       that will not fit. Above the share and export panels, which is where some of them start. -->
+  <SfAlert />
 
   <!-- Outside the screens on purpose: what a notice reports is usually something that happened
        on a screen the user is not looking at. -->

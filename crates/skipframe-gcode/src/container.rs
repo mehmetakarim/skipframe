@@ -12,6 +12,10 @@ use crate::error::{Error, Result};
 
 const READ_BUFFER: usize = 1 << 20; // 1 MiB; G-code lines are tiny and reads dominate.
 
+/// Model formats people drop on a slicer — and, by mistake, on SkipFrame. Named so the interface
+/// can say "that is a 3D model, slice it first" instead of a generic "unsupported".
+const MODEL_EXTENSIONS: &[&str] = &["stl", "obj", "step", "stp", "amf", "ply", "3ds"];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Container {
     /// `.gcode`, `.gco`, `.g` -- plain text, streamed straight off disk.
@@ -29,6 +33,13 @@ impl Container {
             .and_then(|n| n.to_str())
             .ok_or_else(|| Error::UnsupportedContainer("file has no readable name".into()))?
             .to_ascii_lowercase();
+
+        if let Some(ext) = MODEL_EXTENSIONS
+            .iter()
+            .find(|ext| name.ends_with(&format!(".{ext}")))
+        {
+            return Err(Error::ModelFile((*ext).to_string()));
+        }
 
         if name.ends_with(".3mf") {
             Ok(Container::ThreeMf)
@@ -134,7 +145,18 @@ mod tests {
             Container::of(Path::new("a/b.bgcode")).unwrap(),
             Container::BinaryGcode
         );
-        assert!(Container::of(Path::new("a/b.stl")).is_err());
+        assert!(matches!(
+            Container::of(Path::new("a/kapak_v3.STL")),
+            Err(Error::ModelFile(ext)) if ext == "stl"
+        ));
+        assert!(matches!(
+            Container::of(Path::new("a/bracket.step")),
+            Err(Error::ModelFile(_))
+        ));
+        assert!(matches!(
+            Container::of(Path::new("a/notes.pdf")),
+            Err(Error::UnsupportedContainer(_))
+        ));
     }
 
     #[test]

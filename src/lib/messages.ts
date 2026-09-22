@@ -21,6 +21,8 @@ const ERRORS: Record<string, string> = {
   archive: 'Arşiv okunamadı. Dosya bozuk ya da geçerli bir .3mf değil.',
   no_gcode_in_archive: 'Arşivin içinde plaka G-code’u bulunamadı.',
   unsupported_container: 'Bu dosya biçimi desteklenmiyor.',
+  model_file: 'Bu bir 3D model, dilimlenmiş G-code değil. Önce slicer’da dilimle.',
+  truncated: 'Dosya baskı bitmeden kesilmiş. Aktarma yarıda kalmış olabilir.',
   io: 'Dosya okunamadı',
   worker: 'Okuma işlemi tamamlanamadı.',
 
@@ -128,6 +130,8 @@ const WARNINGS: Record<string, string> = {
 export interface IpcError {
   code: string;
   message: string;
+  /** Particulars beyond the code — the line a truncated file stops at. Absent when none. */
+  detail?: Record<string, unknown>;
 }
 
 function isIpcError(e: unknown): e is IpcError {
@@ -148,6 +152,19 @@ function isIpcError(e: unknown): e is IpcError {
 /** The code of a failed command, if it carried one. */
 export function errorCode(e: unknown): string | null {
   return isIpcError(e) ? e.code : null;
+}
+
+/** The English message of a failed command, or whatever else was thrown, as a string. */
+export function errorMessage(e: unknown): string {
+  if (isIpcError(e)) return e.message;
+  if (e instanceof Error) return e.message;
+  return String(e);
+}
+
+/** One number from a failed command's detail, if it is there. */
+export function errorDetailNumber(e: unknown, key: string): number | null {
+  const value = isIpcError(e) ? e.detail?.[key] : undefined;
+  return typeof value === 'number' ? value : null;
 }
 
 export function errorText(e: unknown): string {

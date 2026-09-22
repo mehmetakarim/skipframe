@@ -3,10 +3,12 @@ import { computed, reactive } from 'vue';
 import { getActiveScene } from '../render/activeScene';
 import { runExport } from '../export/runExport';
 import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } from '../export/sinks';
-import { defaultBitrate } from '../export/h264';
+import { estimateOutputBytes } from '../export/estimate';
 import { revealFile, stemOf } from '../export/writeFile';
 import type { ExportedVideo, ExportProgress, ExportSettings } from '../export/types';
+import { DISK_MARGIN, diskSpaceAlert, freeSpace } from '../lib/diskSpace';
 import { errorText } from '../lib/messages';
+import { showAlert } from './alerts';
 import { ir, project } from './project';
 import { ASPECTS, layerTiming, scene } from './scene';
 import { decorateStem, settings } from './settings';
@@ -63,11 +65,7 @@ export const exportResolution = computed<[number, number]>(() => {
 export const estimatedBytes = computed(() => {
   const [w, h] = exportResolution.value;
   const { fps, format } = exportState.settings;
-  if (format === 'frames') {
-    // PNG of a mostly flat render compresses hard; roughly a third of a byte per pixel.
-    return w * h * 0.33 * exportFrameCount.value;
-  }
-  return (defaultBitrate(w, h, fps) / 8) * (exportFrameCount.value / fps);
+  return estimateOutputBytes(w, h, fps, exportFrameCount.value, format);
 });
 
 export function openExportDialog(): void {
@@ -91,7 +89,19 @@ export function cancelExport(): void {
   controller?.abort();
 }
 
-export async function startExport(): Promise<void> {
+/** Render and write the open print, asking where first. */
+export function startExport(): Promise<void> {
+  return exportTo(null);
+}
+
+/**
+ * `destination` skips the save dialog — the disk space alert's "smaller render" answer keeps
+ * the place the user already chose.
+ *
+ * Kept apart from `startExport` on purpose: that one is bound straight to a button, and a
+ * parameter there receives the click event — which was once taken for a file path.
+ */
+async function exportTo(destination: string | null): Promise<void> {
   if (running.value) return;
 
   const active = getActiveScene();
@@ -105,9 +115,10 @@ export async function startExport(): Promise<void> {
   let sink: FrameSink;
   let outputPath: string;
   try {
-    const chosen = await chooseDestination(stem);
+    const chosen = destination ?? (await chooseDestination(stem));
     if (!chosen) return;
     outputPath = chosen;
+    if (!(await fitsOnDisk(outputPath))) return;
     sink =
       exportState.settings.format === 'mp4'
         ? new Mp4Sink(outputPath, width, height, exportState.settings.fps)
@@ -156,6 +167,27 @@ export async function startExport(): Promise<void> {
   } finally {
     controller = null;
   }
+}
+
+/** Whether the render fits where it is going; if not, says so and offers the two ways out. */
+async function fitsOnDisk(outputPath: string): Promise<boolean> {
+  const needed = estimatedBytes.value * DISK_MARGIN;
+  const free = await freeSpace(outputPath);
+  if (free === null || free >= needed) return true;
+
+  showAlert(
+    diskSpaceAlert(needed, free, {
+      changeFolder: () => startExport(),
+      halveScale:
+        exportState.settings.scale > 0.5
+          ? () => {
+              exportState.settings.scale = 0.5;
+              return exportTo(outputPath);
+            }
+          : undefined,
+    }),
+  );
+  return false;
 }
 
 /** MP4 asks for a file, a frame sequence asks for a folder. */

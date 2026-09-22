@@ -6,7 +6,10 @@ import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } fro
 import { stemOf } from '../export/writeFile';
 import { applySceneTo } from '../render/applyScene';
 import { acquireQueueRenderer, releaseQueueRenderer } from '../queue/queueRenderer';
+import { estimateOutputBytes } from '../export/estimate';
+import { DISK_MARGIN, diskSpaceAlert, freeSpace } from '../lib/diskSpace';
 import { errorText } from '../lib/messages';
+import { showAlert } from './alerts';
 import { notify, notifyError } from './notices';
 import { goTo } from './ui';
 import { ASPECTS, applyPreset, layerTiming, scene, type Aspect, type PresetId } from './scene';
@@ -198,13 +201,45 @@ export async function defaultOutputDir(): Promise<string> {
   }
 }
 
-export async function pickOutputDir(): Promise<void> {
+/** Resolves to false when the user cancelled. */
+export async function pickOutputDir(): Promise<boolean> {
   const { open } = await import('@tauri-apps/plugin-dialog');
   const dir = await open({ directory: true, multiple: false, title: 'Çıktı klasörü' });
-  if (typeof dir === 'string') queue.outputDir = dir;
+  if (typeof dir !== 'string') return false;
+  queue.outputDir = dir;
+  return true;
 }
 
 // -- running --------------------------------------------------------------------------------
+
+/**
+ * Whether every pending job fits in the output folder. Checked once for the run: pressing start
+ * is the moment the user is there to answer, not twenty minutes in.
+ */
+async function queueFitsOnDisk(outputDir: string, jobs: number): Promise<boolean> {
+  const [width, height] = resolutionFor.value;
+  const { fps, format } = queue.settings;
+  const needed =
+    jobs * estimateOutputBytes(width, height, fps, frameCountFor.value, format) * DISK_MARGIN;
+  const free = await freeSpace(outputDir);
+  if (free === null || free >= needed) return true;
+
+  showAlert(
+    diskSpaceAlert(needed, free, {
+      changeFolder: async () => {
+        if (await pickOutputDir()) await startQueue();
+      },
+      halveScale:
+        queue.settings.scale > 0.5
+          ? () => {
+              queue.settings.scale = 0.5;
+              return startQueue();
+            }
+          : undefined,
+    }),
+  );
+  return false;
+}
 
 export function cancelQueue(): void {
   controller?.abort();
@@ -217,6 +252,7 @@ export async function startQueue(): Promise<void> {
 
   queue.outputDir ??= await defaultOutputDir();
   const dir = queue.outputDir.replace(/[\\/]+$/, '');
+  if (!(await queueFitsOnDisk(queue.outputDir, todo.length))) return;
 
   // One preset for the whole run, written into the scene the renderer reads from.
   applyPreset(queue.settings.preset);

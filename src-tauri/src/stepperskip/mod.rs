@@ -65,9 +65,11 @@ impl StepperSkip {
     }
 
     fn account(&self) -> Result<&Account, IpcError> {
-        self.account.as_ref().ok_or_else(|| IpcError {
-            code: "stepperskip_unconfigured".into(),
-            message: "this build has no StepperSkip server configured".into(),
+        self.account.as_ref().ok_or_else(|| {
+            IpcError::new(
+                "stepperskip_unconfigured",
+                "this build has no StepperSkip server configured",
+            )
         })
     }
 }
@@ -77,6 +79,7 @@ impl From<ApiError> for IpcError {
         IpcError {
             code: e.code,
             message: e.message,
+            detail: e.detail,
         }
     }
 }
@@ -188,17 +191,9 @@ pub fn ss_open_page(
     let url = match page {
         Page::CompanySetup => format!("{base}/profil/company"),
         Page::Url(url) if url.starts_with(&format!("{base}/")) => url,
-        Page::Url(_) => {
-            return Err(IpcError {
-                code: "invalid_request".into(),
-                message: "not a StepperSkip page".into(),
-            })
-        }
+        Page::Url(_) => return Err(IpcError::new("invalid_request", "not a StepperSkip page")),
     };
     app.opener()
         .open_url(url, None::<&str>)
-        .map_err(|e| IpcError {
-            code: "browser_open_failed".into(),
-            message: e.to_string(),
-        })
+        .map_err(|e| IpcError::new("browser_open_failed", e.to_string()))
 }

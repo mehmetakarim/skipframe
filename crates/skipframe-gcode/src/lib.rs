@@ -13,6 +13,7 @@
 pub mod container;
 pub mod dialect;
 pub mod error;
+pub mod header;
 pub mod ir;
 pub mod parse;
 pub mod profile;

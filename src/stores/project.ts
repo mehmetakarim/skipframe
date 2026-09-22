@@ -1,7 +1,8 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
 
 import { parseFile } from '../ir/parseFile';
-import { notifyError } from './notices';
+import { openFailureAlert, unknownDialectAlert } from '../lib/openAlerts';
+import { showAlert } from './alerts';
 import type { Ir } from '../ir/types';
 
 /**
@@ -36,6 +37,12 @@ export const project = readonly(state);
 export const layerCount = computed(() => ir.value?.layerCount ?? 0);
 export const warnings = computed(() => ir.value?.meta.warnings ?? []);
 
+/**
+ * Files already warned about an unrecognised slicer this session. Reopening the same print, or
+ * switching plates in it, is not news.
+ */
+const dialectWarned = new Set<string>();
+
 export async function openPath(path: string, options: { plate?: number } = {}): Promise<void> {
   // What to fall back to if this file turns out not to be readable. A bad second file used to
   // empty the studio and drop the user back on the drop screen with the print they were working
@@ -51,6 +58,11 @@ export async function openPath(path: string, options: { plate?: number } = {}): 
     state.bytes = result.ir.meta.sourceBytes;
     state.elapsedMs = result.elapsedMs;
     state.status = 'ready';
+
+    if (result.ir.meta.warnings.includes('unknown_dialect') && !dialectWarned.has(path)) {
+      dialectWarned.add(path);
+      showAlert(unknownDialectAlert(path, result.ir.layerCount));
+    }
   } catch (e) {
     if (hadFile) {
       state.status = previous.status;
@@ -60,10 +72,15 @@ export async function openPath(path: string, options: { plate?: number } = {}): 
       ir.value = null;
       state.status = 'error';
     }
-    // One mechanism, wherever the user is standing. The drop screen used to print this in the
-    // middle of itself while the studio said nothing at all: the same event reported two
-    // different ways, and one of them only on one screen.
-    notifyError(`${nameOf(path)} açılamadı`, e);
+    // The user just chose this file and is waiting on it, so this stops them rather than
+    // sliding a notice into the corner. The file is not opened, whatever the failure: a
+    // truncated print rendered as far as it goes would look like a finished one.
+    showAlert(
+      openFailureAlert(path, e, {
+        retry: () => openPath(path, options),
+        pickAnother: () => void pickAndOpen(),
+      }),
+    );
   }
 }
 
@@ -96,8 +113,4 @@ export function closeProject(): void {
   state.status = 'empty';
   state.path = null;
   state.bytes = null;
-}
-
-function nameOf(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path;
 }

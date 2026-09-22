@@ -18,6 +18,21 @@ pub enum Error {
 
     #[error("file contains no printable moves")]
     NoMoves,
+
+    /// A 3D model — an `.stl`, a `.step` — rather than the G-code a slicer makes from one.
+    #[error(".{0} is a 3D model, not sliced G-code")]
+    ModelFile(String),
+
+    /// The file stops before the end of the print its own header describes: cut off while it was
+    /// being copied or downloaded.
+    #[error(
+        "file ends at line {line}, before the end of the print ({layers_read} of {layers_declared} layers)"
+    )]
+    Truncated {
+        line: u64,
+        layers_read: u32,
+        layers_declared: u32,
+    },
 }
 
 impl Error {
@@ -37,6 +52,27 @@ impl Error {
             Error::UnsupportedContainer(_) => "unsupported_container",
             Error::NoGcodeInArchive => "no_gcode_in_archive",
             Error::NoMoves => "no_moves",
+            Error::ModelFile(_) => "model_file",
+            Error::Truncated { .. } => "truncated",
+        }
+    }
+
+    /// The machine-readable particulars of a failure, for an interface that wants to say more
+    /// than the code — the line a file was cut at, the kind of file that was dropped. `Null` when
+    /// there is nothing beyond the code. Part of the IPC contract, like the code.
+    pub fn detail(&self) -> serde_json::Value {
+        match self {
+            Error::ModelFile(extension) => serde_json::json!({ "extension": extension }),
+            Error::Truncated {
+                line,
+                layers_read,
+                layers_declared,
+            } => serde_json::json!({
+                "line": line,
+                "layersRead": layers_read,
+                "layersDeclared": layers_declared,
+            }),
+            _ => serde_json::Value::Null,
         }
     }
 }

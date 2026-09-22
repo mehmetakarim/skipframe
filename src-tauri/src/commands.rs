@@ -16,11 +16,14 @@ use crate::cache;
 /// A bare string would have to be translated by matching on English prose, and the interface
 /// is Turkish. `code` is [`skipframe_gcode::Error::code`] where the failure came from the
 /// parser, and a coarse label otherwise; `message` is always the original English, which is
-/// what gets shown when a code is not recognised.
+/// what gets shown when a code is not recognised. `detail` carries particulars the interface
+/// shows — the line a truncated file stops at — and is left out when there are none.
 #[derive(Debug, serde::Serialize)]
 pub struct IpcError {
     pub code: String,
     pub message: String,
+    #[serde(skip_serializing_if = "serde_json::Value::is_null")]
+    pub detail: serde_json::Value,
 }
 
 impl From<skipframe_gcode::Error> for IpcError {
@@ -28,25 +31,28 @@ impl From<skipframe_gcode::Error> for IpcError {
         IpcError {
             code: e.code().to_string(),
             message: e.to_string(),
+            detail: e.detail(),
         }
     }
 }
 
 impl IpcError {
-    fn other(code: &str, e: impl std::fmt::Display) -> Self {
+    pub fn new(code: &str, message: impl Into<String>) -> Self {
         IpcError {
             code: code.to_string(),
-            message: e.to_string(),
+            message: message.into(),
+            detail: serde_json::Value::Null,
         }
+    }
+
+    fn other(code: &str, e: impl std::fmt::Display) -> Self {
+        IpcError::new(code, e.to_string())
     }
 }
 
 impl From<String> for IpcError {
     fn from(message: String) -> Self {
-        IpcError {
-            code: "other".to_string(),
-            message,
-        }
+        IpcError::new("other", message)
     }
 }
 
@@ -222,5 +228,166 @@ mod tests {
         );
         assert_eq!(percent_decode("plain.mp4").unwrap(), "plain.mp4");
         assert!(percent_decode("bad%2").is_err());
+    }
+}
+
+/// Free bytes on the volume that holds `path`, for checking a render will fit before starting it.
+///
+/// `path` may be a file that does not exist yet — the output the save dialog just named — so the
+/// nearest existing folder above it is what gets asked.
+#[tauri::command]
+pub fn free_space(path: String) -> Result<u64, IpcError> {
+    let mut dir = PathBuf::from(path);
+    while !dir.is_dir() {
+        if !dir.pop() {
+            return Err(IpcError::new("io", "no existing folder in the path"));
+        }
+    }
+    available_bytes(&dir).map_err(|e| IpcError::other("io", e))
+}
+
+#[cfg(windows)]
+fn available_bytes(dir: &std::path::Path) -> std::io::Result<u64> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+
+    let wide: Vec<u16> = dir.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut available = 0u64;
+    // SAFETY: `wide` is a NUL-terminated UTF-16 path that outlives the call, `available` is a
+    // valid out pointer, and the two totals are optional and passed as null.
+    let ok = unsafe {
+        GetDiskFreeSpaceExW(
+            wide.as_ptr(),
+            &mut available,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
+    };
+    if ok == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(available)
+    }
+}
+
+#[cfg(unix)]
+fn available_bytes(dir: &std::path::Path) -> std::io::Result<u64> {
+    use std::os::unix::ffi::OsStrExt;
+
+    let c = std::ffi::CString::new(dir.as_os_str().as_bytes())
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
+    // SAFETY: `c` is a valid NUL-terminated path and `stats` is a zeroed statvfs owned here.
+    let mut stats: libc::statvfs = unsafe { std::mem::zeroed() };
+    if unsafe { libc::statvfs(c.as_ptr(), &mut stats) } != 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    // Blocks available to an unprivileged user, not the root reserve.
+    Ok(stats.f_bavail as u64 * stats.f_frsize as u64)
+}
+
+/// The readable comment lines at the top of a G-code file — where a slicer names itself.
+///
+/// Also answers for a file that failed to parse, so a copied error report can say which slicer
+/// wrote it.
+#[tauri::command]
+pub async fn gcode_header(path: String) -> Result<Vec<String>, IpcError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        skipframe_gcode::header::read_header(
+            &PathBuf::from(path),
+            skipframe_gcode::header::MAX_LINES,
+        )
+    })
+    .await
+    .map_err(|e| IpcError::other("worker", e))?
+    .map_err(IpcError::from)
+}
+
+/// Open a pre-filled GitHub issue about a slicer SkipFrame did not recognise.
+///
+/// Nothing is sent. The browser opens an issue draft on this project's repository containing
+/// only the file's header comments — the slicer's banner and first settings, never geometry, a
+/// thumbnail or the file's name — and the user reads it, edits it and submits it, or does not.
+#[tauri::command]
+pub async fn report_dialect(
+    app: AppHandle,
+    path: String,
+    layers: Option<u32>,
+) -> Result<(), IpcError> {
+    let header = gcode_header(path).await?;
+    let url = dialect_issue_url(&header, layers)?;
+    use tauri_plugin_opener::OpenerExt;
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| IpcError::other("browser_open_failed", e))
+}
+
+fn dialect_issue_url(header: &[String], layers: Option<u32>) -> Result<String, IpcError> {
+    // The banner is the first line that names something; fall back to a plain title.
+    let banner = header
+        .iter()
+        .find(|l| !l.ends_with("BLOCK_START") && !l.ends_with("BLOCK_END"))
+        .map(|l| l.chars().take(80).collect::<String>())
+        .unwrap_or_else(|| "no header comments".into());
+    let title = format!("Unrecognised slicer: {banner}");
+
+    let layers_line = match layers {
+        Some(n) => format!("SkipFrame read it with the fallback reader and inferred {n} layers."),
+        None => "SkipFrame read it with the fallback reader.".to_string(),
+    };
+    let comments = if header.is_empty() {
+        "(the file has no header comments)".to_string()
+    } else {
+        header
+            .iter()
+            .map(|l| format!("; {l}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    let body = format!(
+        "SkipFrame {version} did not recognise the slicer that wrote a G-code file. {layers_line}\n\n\
+         Header comments from the file — no geometry, no thumbnail, no file name:\n\n\
+         ```\n{comments}\n```\n\n\
+         <!-- Anything that helps: the slicer and its version, and a link to the file if you can \
+         share it. Remove anything above you would rather not post. -->\n",
+        version = env!("CARGO_PKG_VERSION"),
+    );
+
+    let base = format!("{}/issues/new", env!("CARGO_PKG_REPOSITORY"));
+    url::Url::parse_with_params(&base, &[("title", title.as_str()), ("body", body.as_str())])
+        .map(String::from)
+        .map_err(|e| IpcError::other("other", e))
+}
+
+#[cfg(test)]
+mod system_tests {
+    use super::*;
+
+    #[test]
+    fn the_issue_draft_carries_the_header_and_nothing_else() {
+        let header = vec![
+            "HEADER_BLOCK_START".to_string(),
+            "generated by FooSlicer 3.1 on 2026-09-15".to_string(),
+            "total layer number: 318".to_string(),
+        ];
+        let url = url::Url::parse(&dialect_issue_url(&header, Some(318)).unwrap()).unwrap();
+        assert_eq!(url.host_str(), Some("github.com"));
+        assert_eq!(url.path(), "/mehmetakarim/skipframe/issues/new");
+
+        let q: std::collections::HashMap<_, _> = url.query_pairs().into_owned().collect();
+        assert_eq!(
+            q["title"],
+            "Unrecognised slicer: generated by FooSlicer 3.1 on 2026-09-15"
+        );
+        assert!(q["body"].contains("; total layer number: 318"));
+        assert!(q["body"].contains("inferred 318 layers"));
+        assert_eq!(q.len(), 2, "only a title and a body");
+    }
+
+    #[test]
+    fn free_space_finds_the_folder_above_a_file_that_does_not_exist_yet() {
+        let dir = std::env::temp_dir();
+        let missing = dir.join("skipframe-not-written-yet").join("clip.mp4");
+        let bytes = free_space(missing.to_string_lossy().into_owned()).unwrap();
+        assert!(bytes > 0);
     }
 }
