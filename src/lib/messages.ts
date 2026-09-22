@@ -76,6 +76,8 @@ const ERRORS: Record<string, string> = {
   upload_not_found: 'Yükleme oturumu bulunamadı.',
   upload_expired: 'Yükleme oturumunun süresi doldu. Paylaşımı yeniden başlat.',
   upload_failed: 'Yükleme tamamlanamadı. Paylaşımı yeniden başlat.',
+  upload_finalize_failed:
+    'StepperSkip videoyu son aşamada doğrularken bir hata oluştu. Paylaşımı yeniden başlat.',
   upload_completed: 'Bu yükleme zaten tamamlanmış.',
   upload_offset_conflict: 'Yükleme sırası karıştı ve toparlanamadı. Tekrar dene.',
   upload_state_mismatch: 'StepperSkip yüklemenin bir kısmını kaybetti. Tekrar dene.',

@@ -307,8 +307,21 @@ impl Http {
     ) -> Result<Response<T>, ApiError> {
         let response = request.send().await.map_err(transport)?;
         let status = response.status().as_u16();
+        let path = response.url().path().to_string();
         let body = response.bytes().await.map_err(transport)?;
-        decode_envelope(status, &body).map(|data| Response { status, data })
+        let decoded = decode_envelope(status, &body).map(|data| Response { status, data });
+        // What the server actually said when it was not our JSON — an error page, a PHP fatal.
+        // Development builds only; the body is the server's, never anything carrying a token.
+        if cfg!(debug_assertions) {
+            if let Err(e) = &decoded {
+                if e.code == "bad_response" {
+                    let snippet: String =
+                        String::from_utf8_lossy(&body).chars().take(600).collect();
+                    eprintln!("[stepperskip] {path} -> HTTP {status}: {snippet}");
+                }
+            }
+        }
+        decoded
     }
 
     pub async fn exchange_code(

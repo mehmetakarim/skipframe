@@ -36,9 +36,9 @@ const SHARE_PROGRESS: &str = "skipframe://share-progress";
 /// Where StepperSkip is.
 ///
 /// In order: `SKIPFRAME_STEPPERSKIP_URL` at run time, the same variable at build time, and in a
-/// debug build only, the local XAMPP install. A release build with none of these has no
-/// StepperSkip at all — production is not live yet, and a release must not ship pointing at a
-/// server that has not been verified.
+/// debug build only, the local XAMPP install. The release workflow sets the build-time variable
+/// to production; a release built without it has no StepperSkip at all rather than pointing at
+/// a server nobody has verified.
 fn base_url() -> Option<String> {
     let chosen = std::env::var("SKIPFRAME_STEPPERSKIP_URL")
         .ok()

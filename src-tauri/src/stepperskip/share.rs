@@ -452,10 +452,16 @@ impl Account {
 }
 
 /// Worth waiting and trying again. A 503 `media_validation_unavailable` is not: the server
-/// cannot validate video at all, and re-sending will not change that.
+/// cannot validate video at all, and re-sending will not change that. Nor is a 500
+/// `upload_finalize_failed`: StepperSkip has already marked that session failed, so sending the
+/// last chunk again cannot succeed.
 fn is_transient(e: &ApiError) -> bool {
     matches!(e.code.as_str(), "network" | "timeout" | "rate_limited")
-        || (e.status >= 500 && e.code != "media_validation_unavailable")
+        || (e.status >= 500
+            && !matches!(
+                e.code.as_str(),
+                "media_validation_unavailable" | "upload_finalize_failed"
+            ))
 }
 
 /// The session cannot continue; a new one might.

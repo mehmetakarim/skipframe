@@ -53,6 +53,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Read at build time by `stepperskip::base_url`; without it a release has no sharing.
+          # Verified against production on 2026-09-22 with the `live_contract` test.
+          SKIPFRAME_STEPPERSKIP_URL: https://www.stepperskip.com
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || inputs.version }}
           releaseName: 'SkipFrame __VERSION__'
