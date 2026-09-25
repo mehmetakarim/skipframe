@@ -54,6 +54,8 @@ mod platform {
     /// dark menu bar. The design's own rule — the gold layer turns black here too.
     const TEMPLATE: &[u8] = include_bytes!("../icons/menubar-template@2x.png");
 
+    const TRAY_ID: &str = "render-progress";
+
     pub fn set(
         app: &AppHandle,
         state: &MenuBar,
@@ -61,8 +63,11 @@ mod platform {
     ) -> Result<(), IpcError> {
         let mut held = state.0.lock().unwrap();
         let Some(progress) = progress else {
-            // Dropping the icon removes it from the bar.
+            // Dropping our handle is not enough: `build` also registers the icon in the app's own
+            // resource table, which keeps it in the bar showing the last count it was given.
+            // Removing it by id is what closes it.
             held.take();
+            app.remove_tray_by_id(TRAY_ID);
             return Ok(());
         };
 
@@ -74,7 +79,7 @@ mod platform {
             None => {
                 let icon = Image::from_bytes(TEMPLATE)
                     .map_err(|e| IpcError::new("other", e.to_string()))?;
-                let tray = TrayIconBuilder::with_id("render-progress")
+                let tray = TrayIconBuilder::with_id(TRAY_ID)
                     .icon(icon)
                     .icon_as_template(true)
                     .title(title)
