@@ -88,7 +88,7 @@ export class Mp4Sink implements FrameSink {
       // finalize with an error that names neither the chunk nor the cause. Keep the real one.
       output: (chunk, meta) => {
         try {
-          this.muxer?.addVideoChunk(chunk, limitedRange(meta));
+          this.muxer?.addVideoChunk(chunk, bt709Limited(meta));
         } catch (e) {
           this.error ??= String(e);
         }
@@ -171,24 +171,48 @@ export class Mp4Sink implements FrameSink {
 }
 
 /**
- * The colour space the muxer writes into the MP4's `colr` box, made to say what the H.264 stream
- * actually holds.
+ * What the muxer writes into the MP4's `colr` box: limited-range BT.709, stated rather than
+ * repeated back from the encoder.
  *
- * Every encoder behind WebCodecs on the two platforms we ship writes limited-range video: luma
- * 16–235, and `video_full_range_flag = 0` in the stream's own VUI. WebView2 reports that honestly.
- * WKWebView reports `fullRange: true` for the very same kind of stream — measured on macOS 27 by
- * encoding a black-to-white ramp and reading 16..235 back — and a player that trusts the
- * container then stretches 16–235 as if it were 0–255: greyed blacks, dimmed whites, a flat,
- * washed-out video. Only the range is corrected; primaries, transfer and matrix pass through.
+ * The H.264 these encoders produce carries no colour description of its own — no
+ * `video_signal_type` in the SPS, checked on every file this app has written — so the `colr` box
+ * is the only thing that says how to read the picture, and both platforms get it wrong in their
+ * own way.
+ *
+ * **Range.** Every encoder behind WebCodecs here writes limited-range video: luma 16–235.
+ * WebView2 reports that honestly. WKWebView reports `fullRange: true` for the very same kind of
+ * stream — measured on macOS 27 by encoding a black-to-white ramp and reading 16..235 back — and
+ * a player that trusts the container then stretches 16–235 as if it were 0–255: greyed blacks,
+ * dimmed whites, a flat, washed-out video.
+ *
+ * **Transfer.** WebView2 labelled the same render `bt709` in September and `iec61966-2-1` (sRGB)
+ * after a runtime update, with nothing changed here. The two curves part company in exactly the
+ * tones this app renders most: at code 8 the sRGB reading is a third of the BT.709 one, at 32 it
+ * is half, and by 200 they agree. A colour-managed player — macOS honours the tag, most Windows
+ * players ignore it — therefore showed the same video differently on the two platforms.
+ *
+ * So the box is written, not echoed: BT.709 primaries, transfer and matrix, limited range. The
+ * frames come from an sRGB canvas and nothing converts them, which makes `sRGB` the more literal
+ * label; BT.709 is what SDR video means by convention and what every platform assumes of an
+ * upload, and one answer on both platforms is worth more here than a distinction players
+ * disagree about.
  */
-function limitedRange(
+function bt709Limited(
   meta: EncodedVideoChunkMetadata | undefined,
 ): EncodedVideoChunkMetadata | undefined {
   const config = meta?.decoderConfig;
-  if (!config?.colorSpace?.fullRange) return meta;
+  if (!config) return meta;
   return {
     ...meta,
-    decoderConfig: { ...config, colorSpace: { ...config.colorSpace, fullRange: false } },
+    decoderConfig: {
+      ...config,
+      colorSpace: {
+        primaries: 'bt709',
+        transfer: 'bt709',
+        matrix: 'bt709',
+        fullRange: false,
+      },
+    },
   };
 }
 
