@@ -69,7 +69,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "category": "Graphics",
+    "category": "Graphics and Design",
     "shortDescription": "Layer-by-layer 3D print animation, exported as Reels and Shorts.",
     "longDescription": "SkipFrame turns a slicer's G-code into a layer-by-layer print animation and exports it as a vertical video. G-code never leaves the machine; a finished video is uploaded only when you choose to share it.",
     "copyright": "MIT licensed. Copyright the SkipFrame contributors.",

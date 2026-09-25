@@ -12,6 +12,12 @@ on:
 permissions:
   contents: write
 
+# A tag push has arrived twice before, a second apart, and two runs racing to create the same
+# draft release is a mess to untangle. The first one through wins.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     strategy:
