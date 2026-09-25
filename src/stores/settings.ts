@@ -17,6 +17,8 @@ export interface Settings {
   ffmpegPath: string | null;
   autoUpdate: boolean;
   lastUpdateCheck: number | null;
+  /** Colours saved from the colour picker, newest first. */
+  colourLibrary: string[];
 }
 
 export interface FfmpegInfo {
@@ -32,6 +34,7 @@ export const settings = reactive<Settings>({
   ffmpegPath: null,
   autoUpdate: true,
   lastUpdateCheck: null,
+  colourLibrary: [],
 });
 
 export const settingsState = reactive({
@@ -195,4 +198,28 @@ export function sinceLastCheck(): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `son kontrol ${hours} sa önce`;
   return `son kontrol ${Math.floor(hours / 24)} gün önce`;
+}
+
+// -- saved colours --------------------------------------------------------------------------
+
+/** How many saved colours the picker keeps. Two rows of its seven-wide grid. */
+const LIBRARY_LIMIT = 14;
+
+/**
+ * Save a colour, newest first.
+ *
+ * Saving one that is already there moves it to the front rather than adding it twice — pressing
+ * the button again on a colour you already kept should not quietly do nothing.
+ */
+export function saveColour(hex: string): void {
+  const colour = hex.toLowerCase();
+  settings.colourLibrary = [
+    colour,
+    ...settings.colourLibrary.filter((c) => c.toLowerCase() !== colour),
+  ].slice(0, LIBRARY_LIMIT);
+}
+
+export function forgetColour(hex: string): void {
+  const colour = hex.toLowerCase();
+  settings.colourLibrary = settings.colourLibrary.filter((c) => c.toLowerCase() !== colour);
 }

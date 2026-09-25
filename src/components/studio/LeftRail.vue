@@ -14,6 +14,7 @@ import SfSelect from '../ui/SfSelect.vue';
 import SfTabs from '../ui/SfTabs.vue';
 import SfColorDot from '../ui/SfColorDot.vue';
 import SfColorField from '../ui/SfColorField.vue';
+import SfOptionGrid from '../ui/SfOptionGrid.vue';
 import SfButton from '../ui/SfButton.vue';
 import { ir, pickAndOpen, project } from '../../stores/project';
 import {
@@ -190,7 +191,14 @@ function fitCamera() {
           />
         </div>
 
-        <SfColorField v-model="filamentColour" label="Renk" />
+        <SfColorField v-model="filamentColour" label="Renk" picker-title="Filament rengi">
+          <SfOptionGrid
+            v-model="scene.surface"
+            label="Yüzey dokusu"
+            :options="SURFACES"
+            @update:model-value="touched"
+          />
+        </SfColorField>
       </template>
 
       <!-- Multi-material: the file says how many extruders it used, so there is one row each. -->
@@ -202,12 +210,16 @@ function fitCamera() {
           <SfColorField
             class="tool-colour"
             :model-value="scene.toolColours[tool - 1] ?? '#c9ccc6'"
+            :picker-title="`T${tool - 1} rengi`"
             @update:model-value="(v: string) => setToolColour(tool - 1, v)"
           />
         </div>
       </template>
 
+      <!-- With one filament the texture lives inside the colour picker (FRAME 09). It stays
+           out here for the other two, where it belongs to the print rather than to one colour. -->
       <SfSelect
+        v-if="colourMode === 'feature' || toolCount > 1"
         v-model="scene.surface"
         label="Yüzey"
         :options="SURFACES"

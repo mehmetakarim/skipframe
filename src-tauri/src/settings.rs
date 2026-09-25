@@ -28,6 +28,8 @@ pub struct Settings {
     pub auto_update: bool,
     /// Unix seconds of the last update check.
     pub last_update_check: Option<i64>,
+    /// Colours the user saved from the colour picker, newest first, as `#rrggbb`.
+    pub colour_library: Vec<String>,
 }
 
 impl Default for Settings {
@@ -40,6 +42,7 @@ impl Default for Settings {
             ffmpeg_path: None,
             auto_update: true,
             last_update_check: None,
+            colour_library: Vec::new(),
         }
     }
 }

@@ -1,29 +1,59 @@
 <script setup lang="ts">
 /**
- * A colour swatch and its hex, opening the OS colour picker.
+ * A colour swatch and its hex, opening SkipFrame's own picker.
  *
- * The design's own picker (a popover with a guide palette, RGB fields and a surface texture
- * choice) is its own piece of work; this is the field it will eventually open from, and until
- * then the system picker does the job without pretending to be that panel.
+ * It used to open the operating system's colour dialog, which meant a Windows dialog on Windows
+ * and a Mac one on macOS, neither of them knowing anything about filament or about the colours
+ * this app keeps. The picker is a slot-through, so a caller can put its own control inside —
+ * the surface texture, for a single filament.
  */
-import { computed } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 
-withDefaults(defineProps<{ label?: string; disabled?: boolean }>(), { disabled: false });
+import SfColorPicker from './SfColorPicker.vue';
+
+const props = withDefaults(
+  defineProps<{ label?: string; disabled?: boolean; pickerTitle?: string }>(),
+  { disabled: false },
+);
 
 const model = defineModel<string>({ required: true });
 
 const hex = computed(() => model.value.toUpperCase());
+const open = ref(false);
+const fieldRef = useTemplateRef<HTMLButtonElement>('field');
+
+function toggle() {
+  if (!props.disabled) open.value = !open.value;
+}
 </script>
 
 <template>
   <div :class="['sf-color-field', { disabled }]">
     <span v-if="label" class="t-overline">{{ label }}</span>
 
-    <label class="field">
+    <button
+      ref="field"
+      class="field"
+      type="button"
+      :disabled="disabled"
+      :aria-label="label ? `${label}: ${hex}` : hex"
+      :aria-expanded="open"
+      aria-haspopup="dialog"
+      @click="toggle"
+    >
       <span class="swatch" :style="{ background: model }" />
       <span class="hex">{{ hex }}</span>
-      <input v-model="model" type="color" :disabled="disabled" :aria-label="label" />
-    </label>
+    </button>
+
+    <SfColorPicker
+      v-if="open"
+      v-model="model"
+      :anchor="fieldRef"
+      :title="pickerTitle ?? label ?? 'Renk'"
+      @close="open = false"
+    >
+      <slot />
+    </SfColorPicker>
   </div>
 </template>
 
@@ -36,26 +66,32 @@ const hex = computed(() => model.value.toUpperCase());
 }
 
 .field {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 8px 11px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-base);
   cursor: pointer;
+  text-align: left;
   transition:
     border-color 90ms ease,
     background 90ms ease;
 }
 
-.field:hover {
+.field:hover:not(:disabled) {
   border-color: var(--border-strong);
   background: var(--bg-raised);
 }
 
-.field:has(input:focus-visible) {
+.field[aria-expanded='true'] {
+  border-color: var(--gold);
+}
+
+.field:focus-visible {
+  outline: none;
   border-color: var(--gold);
   box-shadow: var(--focus-ring);
 }
@@ -84,17 +120,5 @@ const hex = computed(() => model.value.toUpperCase());
 
 .disabled .hex {
   color: var(--border-strong);
-}
-
-/* The native swatch is invisible; the styled row above is the control. */
-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: inherit;
 }
 </style>
