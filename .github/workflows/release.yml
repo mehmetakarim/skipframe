@@ -45,6 +45,10 @@ jobs:
 
       - run: npm ci
 
+      # The About window's licence list is generated from what is actually installed, so it is
+      # refreshed here rather than trusted to be current in the repository.
+      - run: npm run licenses
+
       # SkipFrame ships unsigned. TAURI_SIGNING_* is the updater's minisign key, which has
       # nothing to do with OS code signing -- it only lets the app verify that an update came
       # from this repository.

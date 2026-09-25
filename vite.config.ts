@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
@@ -28,5 +29,13 @@ export default defineConfig({
     // about a 500 kB chunk is measuring something that does not apply here. Three.js is most
     // of it and splitting it would only add a round trip to the first frame.
     chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      // The splash is its own page so it can draw before the studio's bundle is parsed.
+      input: {
+        main: resolve(fileURLToPath(new URL('.', import.meta.url)), 'index.html'),
+        splash: resolve(fileURLToPath(new URL('.', import.meta.url)), 'splash.html'),
+        about: resolve(fileURLToPath(new URL('.', import.meta.url)), 'about.html'),
+      },
+    },
   },
 });

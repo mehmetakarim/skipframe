@@ -1,0 +1,156 @@
+/* Like the splash, this window carries only the tokens it needs rather than the studio's theme. */
+
+:root {
+  --bg-surface: #101010;
+  --bg-base: #0b0b0b;
+  --bg-overlay: #1f1f1f;
+  --border: #2a2a2a;
+  --border-strong: #3f4441;
+  --gold: #ebb60e;
+  --text-primary: #ffffff;
+  --text-secondary: #c9ccc6;
+  --text-muted: #8a8f88;
+  --text-faint: #7c817b;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+}
+
+body {
+  display: flex;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.about {
+  flex: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 30px;
+  text-align: center;
+  user-select: none;
+}
+
+.mark {
+  width: 72px;
+  height: 72px;
+  color: var(--text-primary);
+}
+
+.accent {
+  fill: var(--gold);
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.name {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.by {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  /* The version is the one thing here anyone is ever asked to read out. */
+  user-select: text;
+}
+
+.actions {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.actions button,
+.licence-head button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.actions button:hover,
+.licence-head button:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-overlay);
+  color: var(--text-primary);
+}
+
+.actions button:focus-visible,
+.licence-head button:focus-visible,
+.licence-text:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-surface),
+    0 0 0 4px var(--gold);
+}
+
+.licences {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.licence-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.licence-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.licence-text {
+  flex: 1;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  background: var(--bg-base);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

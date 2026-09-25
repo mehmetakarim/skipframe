@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 
 import App from './App.vue';
+import { bootDone, bootStage } from './boot';
 import './styles/base.css';
 
 // The phase-0 harness is a separate entry point so it can be opened in a plain browser tab as
@@ -12,6 +13,7 @@ const isBench = location.hash.startsWith('#bench') || import.meta.env.VITE_BENCH
 if (isBench) {
   import('./bench/BenchApp.vue').then(({ default: BenchApp }) => {
     createApp(BenchApp).mount('#app');
+    void bootDone();
   });
 } else {
   // `#preview` opens the studio against a synthetic model, so the screens can be worked on in a
@@ -34,5 +36,13 @@ if (isBench) {
   // read before anything can act on their defaults.
   void import('./stores/settings').then(({ loadSettings }) => loadSettings());
   void import('./queue/watchBridge').then(({ installWatchBridge }) => installWatchBridge());
+
+  // The splash is watching. By the time this module runs the bundle is parsed — Three.js and all
+  // — so the expensive part is behind us and what is left is mounting and the fonts.
+  void bootStage(0.45, 'SAHNE MOTORU HAZIRLANIYOR');
   createApp(App).mount('#app');
+
+  void bootStage(0.75, 'YAZI TİPLERİ YÜKLENİYOR');
+  const fonts = document.fonts?.ready ?? Promise.resolve();
+  void fonts.catch(() => undefined).then(() => bootDone());
 }

@@ -1,5 +1,6 @@
 mod cache;
 mod commands;
+mod menubar;
 mod settings;
 mod stepperskip;
 mod watch;
@@ -8,6 +9,7 @@ mod watch;
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .manage(watch::WatchState::default())
+        .manage(menubar::MenuBar::default())
         .manage(stepperskip::StepperSkip::from_environment())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -31,6 +33,25 @@ pub fn run() {
                     let _ = window.set_decorations(false);
                 }
             }
+            // The main window is configured hidden and the splash covers the wait. If the
+            // front end never reports in — a bundle that fails to parse, an error before the
+            // first line runs — this shows it anyway: a window with something wrong in it can
+            // be read, a splash that never goes away cannot.
+            {
+                use tauri::Manager;
+                let handle = _app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(std::time::Duration::from_secs(20)).await;
+                    if handle
+                        .get_webview_window("main")
+                        .is_some_and(|w| w.is_visible().unwrap_or(false))
+                    {
+                        return;
+                    }
+                    commands::reveal_main_window(&handle);
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -41,6 +62,11 @@ pub fn run() {
             commands::clear_cache,
             commands::bench_log,
             commands::write_export,
+            commands::app_ready,
+            commands::build_number,
+            commands::third_party_licenses,
+            commands::open_about,
+            menubar::render_progress,
             commands::free_space,
             commands::gcode_header,
             commands::report_dialect,

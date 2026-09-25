@@ -21,7 +21,14 @@ skipframe-gcode.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tauri = { version = "2", features = ["protocol-asset"] }
+# `tray-icon` and `image-png` are the menu bar render counter; it is built on macOS only but
+# the feature is not platform-specific.
+tauri = { version = "2", features = [
+  "macos-private-api",
+  "protocol-asset",
+  "tray-icon",
+  "image-png",
+] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"

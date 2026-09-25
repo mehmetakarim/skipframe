@@ -4,6 +4,7 @@ import { getActiveScene } from '../render/activeScene';
 import { runExport } from '../export/runExport';
 import { FrameSequenceSink, Mp4Sink, UnsupportedCodecError, type FrameSink } from '../export/sinks';
 import { estimateOutputBytes } from '../export/estimate';
+import { clearRenderProgress, reportRenderProgress } from '../export/menuBarProgress';
 import { revealFile, stemOf } from '../export/writeFile';
 import type { ExportedVideo, ExportProgress, ExportSettings } from '../export/types';
 import { DISK_MARGIN, diskSpaceAlert, freeSpace } from '../lib/diskSpace';
@@ -141,7 +142,11 @@ async function exportTo(destination: string | null): Promise<void> {
       layerCount: model.layerCount,
       timing: layerTiming(),
       signal: controller.signal,
-      onProgress: (patch) => Object.assign(exportState.progress, patch),
+      onProgress: (patch) => {
+        Object.assign(exportState.progress, patch);
+        const { frame, frameCount: total, etaS } = exportState.progress;
+        reportRenderProgress(frame, total, etaS);
+      },
     });
 
     if (exportState.progress.stage === 'cancelled') return;
@@ -166,6 +171,7 @@ async function exportTo(destination: string | null): Promise<void> {
     exportState.progress.error = e instanceof UnsupportedCodecError ? e.message : errorText(e);
   } finally {
     controller = null;
+    clearRenderProgress();
   }
 }
 

@@ -1,0 +1,95 @@
+/* The splash draws in its own window, so it carries the handful of tokens it needs rather than
+   pulling in the whole theme and reset the studio uses. */
+
+:root {
+  --bg-surface: #101010;
+  --border: #2a2a2a;
+  --gold: #ebb60e;
+  --text-primary: #ffffff;
+  --text-faint: #7c817b;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  /* Nothing here is interactive, and a splash that can be text-selected looks broken. */
+  user-select: none;
+  cursor: default;
+}
+
+.splash {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.lockup {
+  width: 230px;
+  height: auto;
+  color: var(--text-primary);
+  /* The mark sits a little above centre: the status block owns the bottom of the window. */
+  margin-bottom: 26px;
+}
+
+.accent {
+  fill: var(--gold);
+}
+
+.word {
+  font-family: var(--font-sans);
+  font-size: 100px;
+  font-weight: 700;
+}
+
+.by {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 40px 30px;
+}
+
+.track {
+  position: relative;
+  height: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--gold);
+  transition: width 220ms ease;
+}
+
+.line {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkipFrame Hakkında</title>
+  </head>
+  <body>
+    <!-- FRAME 11's about window: 420 x 400, the framed mark, what this build is, and the two
+         things someone opening it is after — what it is made of, and what changed. -->
+    <main id="about" class="about">
+      <svg class="mark" viewBox="0 0 100 100" role="img" aria-label="SkipFrame">
+        <rect
+          x="10"
+          y="10"
+          width="80"
+          height="80"
+          rx="10"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="10"
+        />
+        <g fill="currentColor">
+          <rect x="25" y="72" width="50" height="10" />
+          <rect x="30" y="57" width="40" height="10" />
+          <rect x="35" y="42" width="30" height="10" />
+        </g>
+        <rect x="40" y="27" width="20" height="10" class="accent" />
+      </svg>
+
+      <div class="names">
+        <span class="name">SkipFrame</span>
+        <span class="by">BY STEPPERSKIP</span>
+      </div>
+
+      <div class="facts">
+        <span id="build">Sürüm —</span>
+        <span id="stack">Tauri 2 · Vue 3</span>
+      </div>
+
+      <div class="actions">
+        <button id="licences" type="button">Lisanslar</button>
+        <button id="notes" type="button">Sürüm notları</button>
+      </div>
+    </main>
+
+    <section id="licence-view" class="licences" hidden>
+      <header class="licence-head">
+        <button id="back" type="button">← Geri</button>
+        <span class="licence-title">Üçüncü taraf lisanslar</span>
+      </header>
+      <pre id="licence-text" class="licence-text" tabindex="0">Yükleniyor…</pre>
+    </section>
+
+    <script type="module" src="/src/about/main.ts"></script>
+  </body>
+</html>

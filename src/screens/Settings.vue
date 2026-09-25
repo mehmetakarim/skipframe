@@ -11,6 +11,7 @@ import TitleBar from '../components/studio/TitleBar.vue';
 import SfButton from '../components/ui/SfButton.vue';
 import SfSwitch from '../components/ui/SfSwitch.vue';
 import SfSelect from '../components/ui/SfSelect.vue';
+import { notifyError } from '../stores/notices';
 import {
   account,
   cancelSignIn,
@@ -46,6 +47,15 @@ const SECTIONS = [
 const active = ref('output');
 const pageRef = useTemplateRef<HTMLDivElement>('page');
 const version = ref('0.1.0');
+
+async function openAbout() {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('open_about');
+  } catch (e) {
+    notifyError('Hakkında penceresi açılamadı', e);
+  }
+}
 
 function jumpTo(id: string) {
   active.value = id;
@@ -119,10 +129,13 @@ onMounted(async () => {
 
         <div class="spacer" />
 
-        <div class="version">
+        <!-- The version was already here; pressing it is the obvious way to ask what this
+             build is made of, so it opens the About window (FRAME 11). -->
+        <button type="button" class="version" @click="openAbout">
           <span class="t-overline">Sürüm</span>
           <span class="version-number">{{ version }}</span>
-        </div>
+          <span class="version-more">Hakkında →</span>
+        </button>
       </nav>
 
       <!-- page ------------------------------------------------------------------------- -->
@@ -416,9 +429,32 @@ onMounted(async () => {
 .version {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1);
   padding: var(--space-3);
+  border: 0;
   border-top: 1px solid var(--border);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.version:hover {
+  background: var(--bg-raised);
+}
+
+.version:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.version-more {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.version:hover .version-more {
+  color: var(--gold);
 }
 
 .version-number {

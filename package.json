@@ -16,6 +16,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"*.{ts,json,md}\"",
+    "licenses": "node scripts/third-party-licenses.mjs",
     "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"*.{ts,json,md}\""
   },
   "dependencies": {

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkipFrame</title>
+  </head>
+  <body>
+    <!--
+      FRAME 11's splash: 620 x 400, the vertical lockup, and a bar that reports what the app is
+      actually doing while the studio's bundle — Three.js is most of it — is parsed and the fonts
+      arrive. Its own page rather than a route, so it draws before any of that is loaded.
+    -->
+    <main class="splash">
+      <svg class="lockup" viewBox="0 0 400 230" role="img" aria-label="SkipFrame">
+        <g transform="translate(145 0) scale(1.1)">
+          <rect
+            x="10"
+            y="10"
+            width="80"
+            height="80"
+            rx="10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="10"
+          />
+          <g fill="currentColor">
+            <rect x="25" y="72" width="50" height="10" />
+            <rect x="30" y="57" width="40" height="10" />
+            <rect x="35" y="42" width="30" height="10" />
+          </g>
+          <rect x="40" y="27" width="20" height="10" class="accent" />
+        </g>
+        <!-- The wordmark is drawn at its own size and scaled as a whole, the way the logo kit
+             composes the lockup. Fitting the glyphs by letter-spacing instead would close the
+             word up until the letters touched. -->
+        <g transform="translate(30 128) scale(0.68)">
+          <text class="word" y="80" textLength="492" lengthAdjust="spacing" fill="currentColor">
+            SkipFrame
+          </text>
+        </g>
+        <g transform="translate(118.3 202) scale(0.5)">
+          <text class="by" y="30" textLength="316" lengthAdjust="spacing" fill="currentColor">
+            BY STEPPERSKIP
+          </text>
+        </g>
+      </svg>
+
+      <footer class="status">
+        <div class="track"><div id="bar" class="bar"></div></div>
+        <div class="line">
+          <span id="stage">BAŞLATILIYOR</span>
+          <span id="version"></span>
+        </div>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/splash/main.ts"></script>
+  </body>
+</html>

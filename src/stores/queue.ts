@@ -7,6 +7,7 @@ import { stemOf } from '../export/writeFile';
 import { applySceneTo } from '../render/applyScene';
 import { acquireQueueRenderer, releaseQueueRenderer } from '../queue/queueRenderer';
 import { estimateOutputBytes } from '../export/estimate';
+import { clearRenderProgress, reportRenderProgress } from '../export/menuBarProgress';
 import { DISK_MARGIN, diskSpaceAlert, freeSpace } from '../lib/diskSpace';
 import { errorText } from '../lib/messages';
 import { showAlert } from './alerts';
@@ -310,6 +311,7 @@ export async function startQueue(): Promise<void> {
           onProgress: (patch) => {
             if (patch.frame !== undefined) job.frame = patch.frame;
             if (patch.etaS !== undefined) job.etaS = patch.etaS;
+            reportRenderProgress(job.frame, job.frameCount, job.etaS);
           },
         });
 
@@ -340,6 +342,7 @@ export async function startQueue(): Promise<void> {
   } finally {
     queue.running = false;
     controller = null;
+    clearRenderProgress();
     // Hand the print's buffers back rather than holding them until the next run.
     releaseQueueRenderer();
   }

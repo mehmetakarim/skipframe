@@ -21,7 +21,23 @@
         "dragDropEnabled": true,
         "theme": "Dark",
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "visible": false,
+        "label": "main"
+      },
+      {
+        "label": "splash",
+        "url": "splash.html",
+        "title": "SkipFrame",
+        "width": 620,
+        "height": 400,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "center": true,
+        "shadow": true,
+        "skipTaskbar": true,
+        "theme": "Dark"
       }
     ],
     "security": {
@@ -39,7 +55,8 @@
         "enable": true,
         "scope": []
       }
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
@@ -63,7 +80,8 @@
     },
     "macOS": {
       "minimumSystemVersion": "13.0"
-    }
+    },
+    "resources": ["licenses/THIRD-PARTY.txt"]
   },
   "plugins": {
     "updater": {

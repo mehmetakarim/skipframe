@@ -17,6 +17,11 @@ export default tseslint.config(
     },
   },
   {
+    // The build scripts run in Node, not in the app's webview.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'vue/multi-word-component-names': 'off',
