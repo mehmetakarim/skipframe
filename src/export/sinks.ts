@@ -26,6 +26,19 @@ export interface FrameSink {
 
 export class UnsupportedCodecError extends Error {}
 
+/** How long the encoder may sit on a full queue without handing back a single chunk. */
+const STALL_TIMEOUT_MS = 15_000;
+
+/** The encoder accepted frames and then stopped producing output, with no error of its own. */
+export class EncoderStalledError extends UnsupportedCodecError {
+  constructor(frame: number) {
+    super(
+      `H.264 kodlayıcı ${frame + 1}. karede yanıt vermeyi bıraktı. ` +
+        'Kare sekansı olarak dışa aktarabilirsin.',
+    );
+  }
+}
+
 /**
  * H.264 in MP4, encoded by the operating system through `VideoEncoder`.
  *
@@ -39,6 +52,7 @@ export class Mp4Sink implements FrameSink {
   private muxer: Muxer<ArrayBufferTarget> | null = null;
   private encoder: VideoEncoder | null = null;
   private error: string | null = null;
+  private frames = 0;
   private readonly path: string;
   private readonly width: number;
   private readonly height: number;
@@ -70,7 +84,15 @@ export class Mp4Sink implements FrameSink {
     });
 
     this.encoder = new VideoEncoder({
-      output: (chunk, meta) => this.muxer?.addVideoChunk(chunk, meta),
+      // An exception thrown here is swallowed by the encoder, and the muxer then fails at
+      // finalize with an error that names neither the chunk nor the cause. Keep the real one.
+      output: (chunk, meta) => {
+        try {
+          this.muxer?.addVideoChunk(chunk, limitedRange(meta));
+        } catch (e) {
+          this.error ??= String(e);
+        }
+      },
       error: (e) => {
         this.error = String(e);
       },
@@ -83,17 +105,38 @@ export class Mp4Sink implements FrameSink {
     const encoder = this.encoder;
     if (!encoder) throw new Error('encoder is not open');
 
+    // The duration is stated, not left to the encoder: Chromium fills it in on the way out, but
+    // WebKit hands back chunks with `duration: null`, which the muxer refuses outright.
     const frameObject = new VideoFrame(canvas, {
       timestamp: Math.round((frame * 1e6) / this.fps),
+      duration: Math.round(1e6 / this.fps),
     });
     // A keyframe every two seconds: enough for scrubbing, not enough to bloat the file.
     encoder.encode(frameObject, { keyFrame: frame % (this.fps * 2) === 0 });
+    this.frames = frame + 1;
     frameObject.close();
 
-    // Let the encoder drain rather than queueing every frame of a long export at once.
+    // Let the encoder drain rather than queueing every frame of a long export at once. An
+    // encoder that stops draining — or dies, which WebKit reports by closing it — must end the
+    // export with an error rather than leave the progress panel waiting forever.
     if (encoder.encodeQueueSize > 8) {
-      await new Promise<void>((resolve) => {
-        const wait = () => (encoder.encodeQueueSize > 4 ? setTimeout(wait, 1) : resolve());
+      await new Promise<void>((resolve, reject) => {
+        let lastSize = encoder.encodeQueueSize;
+        let lastProgress = performance.now();
+        const wait = () => {
+          if (this.error) return reject(new Error(this.error));
+          if (encoder.state === 'closed') return reject(new Error('encoder closed unexpectedly'));
+          const size = encoder.encodeQueueSize;
+          if (size <= 4) return resolve();
+          const now = performance.now();
+          if (size < lastSize) {
+            lastSize = size;
+            lastProgress = now;
+          } else if (now - lastProgress > STALL_TIMEOUT_MS) {
+            return reject(new EncoderStalledError(frame));
+          }
+          setTimeout(wait, 1);
+        };
         wait();
       });
     }
@@ -101,7 +144,15 @@ export class Mp4Sink implements FrameSink {
 
   async close(): Promise<number> {
     if (!this.encoder || !this.muxer) return 0;
-    await this.encoder.flush();
+    // The same stall can hide here on a short export that never filled the queue.
+    const flushed = await Promise.race([
+      this.encoder.flush().then(() => true),
+      new Promise<false>((resolve) => setTimeout(() => resolve(false), STALL_TIMEOUT_MS)),
+    ]);
+    if (!flushed) {
+      this.abort();
+      throw new EncoderStalledError(Math.max(0, this.frames - 1));
+    }
     this.encoder.close();
     this.muxer.finalize();
     if (this.error) throw new Error(this.error);
@@ -117,6 +168,28 @@ export class Mp4Sink implements FrameSink {
     this.encoder = null;
     this.muxer = null;
   }
+}
+
+/**
+ * The colour space the muxer writes into the MP4's `colr` box, made to say what the H.264 stream
+ * actually holds.
+ *
+ * Every encoder behind WebCodecs on the two platforms we ship writes limited-range video: luma
+ * 16–235, and `video_full_range_flag = 0` in the stream's own VUI. WebView2 reports that honestly.
+ * WKWebView reports `fullRange: true` for the very same kind of stream — measured on macOS 27 by
+ * encoding a black-to-white ramp and reading 16..235 back — and a player that trusts the
+ * container then stretches 16–235 as if it were 0–255: greyed blacks, dimmed whites, a flat,
+ * washed-out video. Only the range is corrected; primaries, transfer and matrix pass through.
+ */
+function limitedRange(
+  meta: EncodedVideoChunkMetadata | undefined,
+): EncodedVideoChunkMetadata | undefined {
+  const config = meta?.decoderConfig;
+  if (!config?.colorSpace?.fullRange) return meta;
+  return {
+    ...meta,
+    decoderConfig: { ...config, colorSpace: { ...config.colorSpace, fullRange: false } },
+  };
 }
 
 /**

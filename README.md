@@ -9,11 +9,19 @@ to share to a StepperSkip company profile — that needs a StepperSkip account, 
 the app does. MIT licensed.
 
 > **Status: in progress.** The parser, the renderer, the studio, the export pipeline, the batch
-> queue and the settings screen work end to end, on real files from OrcaSlicer, BambuStudio and
-> PrusaSlicer, single- and multi-material. Sharing to StepperSkip works against its local
-> development install; its production deployment is not live. Also outstanding: the
-> external-FFmpeg outputs are detected but not wired up, and the WebCodecs path has never been run
-> on macOS.
+> queue and the settings screen work end to end on Windows, on real files from OrcaSlicer,
+> BambuStudio and PrusaSlicer, single- and multi-material. Sharing to StepperSkip works against
+> production at `https://www.stepperskip.com`: release builds point there, and debug builds use a
+> local development install unless `SKIPFRAME_STEPPERSKIP_URL` says otherwise.
+>
+> Development happens on Windows. macOS testing (Apple Silicon) is under way. MP4 export works
+> there now, but only in H.264 Baseline: WKWebView accepts High and Main and then never returns
+> a frame, so the encoder is picked by a trial encode rather than by `isConfigSupported` (see
+> [`src/export/h264.ts`](src/export/h264.ts)). WKWebView also labels its limited-range output as
+> full range, which made players show it washed out; the MP4 now carries the range the stream
+> actually has, the same `tv` / BT.709 a Windows export does. Not yet confirmed on macOS: the
+> Keychain token store and the unsigned-build first launch. Also outstanding: the external-FFmpeg
+> outputs are detected but not wired up.
 
 The interface is Turkish. The Rust crate, the CLI and the code are English; see
 [Language](#language).
