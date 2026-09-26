@@ -19,9 +19,11 @@ the app does. MIT licensed.
 > a frame, so the encoder is picked by a trial encode rather than by `isConfigSupported` (see
 > [`src/export/h264.ts`](src/export/h264.ts)). WKWebView also labels its limited-range output as
 > full range, which made players show it washed out; the MP4 now carries the range the stream
-> actually has, the same `tv` / BT.709 a Windows export does. Not yet confirmed on macOS: the
-> Keychain token store and the unsigned-build first launch. Also outstanding: the external-FFmpeg
-> outputs are detected but not wired up.
+> actually has, the same `tv` / BT.709 a Windows export does. The Keychain token store works:
+> sign-in writes the refresh token, a relaunch stays signed in and saves the rotated token without
+> a Keychain prompt, and sign-out removes the entry. Not yet confirmed on macOS: the
+> unsigned-build first launch. Also outstanding: the external-FFmpeg outputs are detected but not
+> wired up.
 
 The interface is Turkish. The Rust crate, the CLI and the code are English; see
 [Language](#language).
