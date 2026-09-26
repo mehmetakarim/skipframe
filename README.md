@@ -21,9 +21,8 @@ the app does. MIT licensed.
 > full range, which made players show it washed out; the MP4 now carries the range the stream
 > actually has, the same `tv` / BT.709 a Windows export does. The Keychain token store works:
 > sign-in writes the refresh token, a relaunch stays signed in and saves the rotated token without
-> a Keychain prompt, and sign-out removes the entry. Not yet confirmed on macOS: the
-> unsigned-build first launch. Also outstanding: the external-FFmpeg outputs are detected but not
-> wired up.
+> a Keychain prompt, and sign-out removes the entry. Still outstanding: the external-FFmpeg
+> outputs are detected but not wired up.
 
 The interface is Turkish. The Rust crate, the CLI and the code are English; see
 [Language](#language).
@@ -304,10 +303,26 @@ repository; `--dialect`, `--feature-every` and `--retract-every` shape what it p
 ## Releases and updates
 
 Builds are produced by GitHub Actions for Windows x64 and macOS (Apple Silicon and Intel) and
-published to GitHub Releases. They are **not** code signed, so the first launch needs
-"Run anyway" on Windows and a quarantine removal on macOS.
+published to GitHub Releases. They are **not** code signed, and that is a decision, not a gap.
+What it costs on the first launch:
 
-The Tauri updater is configured from day one so that the first install is the only friction a
+- **Windows:** SmartScreen warns once; "More info", then "Run anyway".
+- **macOS:** a downloaded copy is refused as damaged ("SkipFrame hasar görmüş olduğu için
+  açılamıyor"), with only "Move to Trash" and "Cancel" — there is no "Open Anyway" for it in
+  System Settings, and ad-hoc signing the bundle does not change that. Removing the quarantine
+  flag once is the way in:
+
+  ```bash
+  xattr -dr com.apple.quarantine /Applications/SkipFrame.app
+  ```
+
+- **macOS, Keychain:** a build's identity is its own hash, so a newly installed copy is a
+  stranger to the Keychain entry an earlier one wrote. The first StepperSkip request after an
+  install asks for the login keychain password, once to read the token and once to save the
+  rotated one; "Always Allow" ends it until the next version. Measured on macOS 27 with the
+  v0.1.0 and v0.1.1 DMGs; "Allow" alone asks again on every access.
+
+The Tauri updater is configured from day one so that the first install is the biggest friction a
 user meets. Its minisign key pair is unrelated to OS code signing: it only lets an installed copy
 verify that an update really came from this repository.
 
