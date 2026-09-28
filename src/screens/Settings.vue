@@ -26,6 +26,7 @@ import {
 import {
   checkForUpdate,
   clearFfmpegPath,
+  installUpdate,
   decorateStem,
   pickFfmpeg,
   pickOutputDir,
@@ -47,6 +48,12 @@ const SECTIONS = [
 const active = ref('output');
 const pageRef = useTemplateRef<HTMLDivElement>('page');
 const version = ref('0.1.0');
+
+const updateButtonLabel = computed(() => {
+  const progress = settingsState.updateProgress;
+  if (progress === null) return `Sürüm ${settingsState.updateReady} · şimdi kur`;
+  return progress >= 1 ? 'Kuruluyor…' : `%${Math.round(progress * 100)}`;
+});
 
 async function openAbout() {
   try {
@@ -350,9 +357,18 @@ onMounted(async () => {
 
           <div class="update-row">
             <SfButton
+              v-if="settingsState.updateReady"
+              variant="primary"
+              :disabled="settingsState.updateProgress !== null"
+              @click="installUpdate"
+            >
+              {{ updateButtonLabel }}
+            </SfButton>
+            <SfButton
+              v-else
               variant="outline"
               :disabled="settingsState.checkingUpdate"
-              @click="checkForUpdate"
+              @click="checkForUpdate()"
             >
               {{ settingsState.checkingUpdate ? 'Bakılıyor…' : 'Güncelleme ara' }}
             </SfButton>

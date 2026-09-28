@@ -1,6 +1,6 @@
 import { reactive, watch } from 'vue';
 
-import { notifyError } from './notices';
+import { notify, notifyError } from './notices';
 
 /**
  * Preferences, loaded once at boot and written back whenever they change.
@@ -45,6 +45,10 @@ export const settingsState = reactive({
   /** Last thing the updater said, for the line under the check button. */
   updateMessage: null as string | null,
   checkingUpdate: false,
+  /** The version waiting to be installed, once a check has found one. */
+  updateReady: null as string | null,
+  /** 0 to 1 while it downloads, null when nothing is downloading. */
+  updateProgress: null as number | null,
   watchError: null as string | null,
 });
 
@@ -68,6 +72,9 @@ export async function loadSettings(): Promise<void> {
 
   await probeFfmpeg();
   if (settings.watchEnabled && settings.watchDir) await startWatching();
+
+  // After the rest of the boot, and never in the way of it: an update is not urgent.
+  setTimeout(() => void checkForUpdateInBackground(), 4000);
 }
 
 function scheduleSave() {
@@ -170,22 +177,116 @@ async function stopWatching(): Promise<void> {
 
 // -- updates -----------------------------------------------------------------------------------
 
-export async function checkForUpdate(): Promise<void> {
-  if (!inTauri || settingsState.checkingUpdate) return;
+/**
+ * What a check found, kept so that installing it does not have to ask the server again — the
+ * plugin's own handle carries the download URL and the signature it will verify against.
+ */
+let pending: Awaited<ReturnType<typeof checkUpdate>> | null = null;
+
+async function checkUpdate() {
+  const { check } = await import('@tauri-apps/plugin-updater');
+  return check();
+}
+
+/** `quiet` is the check made at startup: it says nothing when there is nothing to say. */
+export async function checkForUpdate(options: { quiet?: boolean } = {}): Promise<void> {
+  if (!inTauri || settingsState.checkingUpdate || settingsState.updateProgress !== null) return;
   settingsState.checkingUpdate = true;
-  settingsState.updateMessage = null;
+  if (!options.quiet) settingsState.updateMessage = null;
   try {
-    const { check } = await import('@tauri-apps/plugin-updater');
-    const update = await check();
-    settingsState.updateMessage = update
-      ? `Sürüm ${update.version} hazır`
-      : 'Güncel sürümü kullanıyorsun';
+    const update = await checkUpdate();
+    pending = update;
+    settingsState.updateReady = update?.version ?? null;
+    if (update) {
+      settingsState.updateMessage = `Sürüm ${update.version} hazır`;
+    } else if (!options.quiet) {
+      settingsState.updateMessage = 'Güncel sürümü kullanıyorsun';
+    }
   } catch (e) {
-    settingsState.updateMessage = `Kontrol edilemedi — ${String(e)}`;
+    if (!options.quiet) settingsState.updateMessage = `Kontrol edilemedi — ${String(e)}`;
   } finally {
     settings.lastUpdateCheck = Math.floor(Date.now() / 1000);
     settingsState.checkingUpdate = false;
   }
+}
+
+/**
+ * Download the update the last check found, install it, and restart into it.
+ *
+ * Never on its own: installing replaces the running program and takes the window with it, so a
+ * render or an upload in progress would be thrown away. The user presses the button, and even
+ * then a busy app says no rather than doing it anyway.
+ */
+export async function installUpdate(): Promise<void> {
+  if (!inTauri || !pending || settingsState.updateProgress !== null) return;
+
+  const busy = await busyReason();
+  if (busy) {
+    settingsState.updateMessage = busy;
+    return;
+  }
+
+  settingsState.updateProgress = 0;
+  settingsState.updateMessage = 'İndiriliyor…';
+  let downloaded = 0;
+  let total = 0;
+  try {
+    await pending.downloadAndInstall((event) => {
+      if (event.event === 'Started') {
+        total = event.data.contentLength ?? 0;
+      } else if (event.event === 'Progress') {
+        downloaded += event.data.chunkLength;
+        settingsState.updateProgress = total > 0 ? Math.min(1, downloaded / total) : null;
+      } else if (event.event === 'Finished') {
+        settingsState.updateProgress = 1;
+        settingsState.updateMessage = 'Kuruluyor…';
+      }
+    });
+    settingsState.updateMessage = 'Yeniden başlatılıyor…';
+    const { relaunch } = await import('@tauri-apps/plugin-process');
+    await relaunch();
+  } catch (e) {
+    settingsState.updateProgress = null;
+    settingsState.updateMessage = `Güncellenemedi — ${String(e)}`;
+    notifyError('Güncelleme tamamlanamadı', e);
+  }
+}
+
+/** Why now is a bad moment, or null when it is not. */
+async function busyReason(): Promise<string | null> {
+  const [{ running }, { queue }, { share }] = await Promise.all([
+    import('./exportJob'),
+    import('./queue'),
+    import('./share'),
+  ]);
+  if (running.value) return 'Render sürerken güncellenemez; bitince tekrar dene.';
+  if (queue.running) return 'Kuyruk çalışırken güncellenemez; bitince tekrar dene.';
+  if (share.phase === 'sharing') return 'Paylaşım sürerken güncellenemez; bitince tekrar dene.';
+  return null;
+}
+
+/**
+ * The quiet check at startup, for "Otomatik güncelle".
+ *
+ * It downloads nothing and installs nothing: it puts a notice in the corner with a way to the
+ * button. An app that restarted itself while someone was working would be a worse app than one
+ * that is a version behind.
+ */
+export async function checkForUpdateInBackground(): Promise<void> {
+  if (!inTauri || !settings.autoUpdate) return;
+  await checkForUpdate({ quiet: true });
+  if (!settingsState.updateReady) return;
+  notify({
+    kind: 'info',
+    title: `SkipFrame ${settingsState.updateReady} hazır`,
+    detail: 'Ayarlar → Güncelleme bölümünden kurabilirsin.',
+    action: { label: 'Ayarlar’a git', run: () => void goToSettings() },
+  });
+}
+
+async function goToSettings(): Promise<void> {
+  const { goTo } = await import('./ui');
+  goTo('settings');
 }
 
 /** "2 sa önce", for the line beside the check button. */

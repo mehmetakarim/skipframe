@@ -17,6 +17,7 @@
     "dialog:allow-save",
     "dialog:allow-message",
     "updater:default",
+    "process:allow-restart",
     {
       "identifier": "fs:allow-write-file",
       "allow": [
